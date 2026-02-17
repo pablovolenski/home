@@ -1,2 +1,288 @@
-<!-- Content of 1.html -->
-<!-- Please replace with actual content -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Paint - Retro Edition</title>
+    <style>
+        :root {
+            --win-grey: #c0c0c0;
+            --win-white: #ffffff;
+            --win-dark: #808080;
+            --win-black: #000000;
+            --win-blue: #000080;
+        }
+
+        body {
+            background-color: #008080; /* Classic Teal Desktop */
+            margin: 0;
+            padding: 10px;
+            font-family: "MS Sans Serif", Tahoma, sans-serif;
+            display: flex;
+            justify-content: center;
+            height: 95vh;
+            overflow: hidden;
+        }
+
+        /* Window Container */
+        .window {
+            background: var(--win-grey);
+            border: 2px solid;
+            border-color: var(--win-white) var(--win-dark) var(--win-dark) var(--win-white);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: 2px 2px 0 var(--win-black);
+        }
+
+        /* Title Bar */
+        .title-bar {
+            background: var(--win-blue);
+            color: white;
+            padding: 3px 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Menu Bar */
+        .menu-bar {
+            padding: 2px 5px;
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            border-bottom: 1px solid var(--win-dark);
+        }
+
+        .main-area {
+            display: flex;
+            flex: 1;
+            padding: 4px;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        /* Toolbox */
+        .toolbox {
+            width: 50px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: 25px;
+            gap: 2px;
+            background: var(--win-grey);
+        }
+
+        .tool-btn {
+            border: 1px solid;
+            border-color: var(--win-white) var(--win-dark) var(--win-dark) var(--win-white);
+            background: var(--win-grey);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .tool-btn.active {
+            border-color: var(--win-dark) var(--win-white) var(--win-white) var(--win-dark);
+            background: #e0e0e0;
+            outline: 1px dotted black;
+        }
+
+        /* Canvas Wrapper */
+        .canvas-container {
+            flex: 1;
+            background: var(--win-dark);
+            border: 2px inset var(--win-white);
+            overflow: auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            background: white;
+            cursor: crosshair;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Color Palette */
+        .bottom-bar {
+            padding: 5px;
+            background: var(--win-grey);
+            border-top: 1px solid var(--win-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .current-colors {
+            width: 30px;
+            height: 30px;
+            border: 2px inset white;
+            background: black;
+        }
+
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(14, 15px);
+            grid-template-rows: repeat(2, 15px);
+            gap: 1px;
+        }
+
+        .color-swatch {
+            width: 15px;
+            height: 15px;
+            border: 1px inset white;
+            cursor: pointer;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .toolbox { width: 30px; grid-template-columns: 1fr; }
+            .palette { grid-template-columns: repeat(7, 20px); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="window">
+    <div class="title-bar">
+        <span>untitled - Paint</span>
+        <div style="font-size: 10px;">[ _ ] [ □ ] [ X ]</div>
+    </div>
+    
+    <div class="menu-bar">
+        <span>File</span> <span>Edit</span> <span>View</span> <span>Image</span> <span>Help</span>
+    </div>
+
+    <div class="main-area">
+        <div class="toolbox">
+            <button class="tool-btn active" onclick="setTool('brush')" title="Brush">🖌️</button>
+            <button class="tool-btn" onclick="setTool('eraser')" title="Eraser">🧽</button>
+            <button class="tool-btn" onclick="clearCanvas()" title="Clear">🗑️</button>
+            <button class="tool-btn" onclick="saveImage()" title="Save">💾</button>
+        </div>
+
+        <div class="canvas-container" id="container">
+            <canvas id="paintCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <div class="current-colors" id="activeColor"></div>
+        <div class="palette" id="palette"></div>
+        <input type="range" id="sizeSlider" min="1" max="20" value="5" title="Brush Size">
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('paintCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('container');
+    const activeColorDiv = document.getElementById('activeColor');
+    const sizeSlider = document.getElementById('sizeSlider');
+
+    let drawing = false;
+    let tool = 'brush';
+    let currentColor = '#000000';
+
+    // Initialize Canvas Size
+    function initCanvas() {
+        canvas.width = container.clientWidth - 20;
+        canvas.height = container.clientHeight - 20;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        // Set white background initially
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Tools logic
+    function setTool(newTool) {
+        tool = newTool;
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    // Drawing Logic
+    function startPosition(e) {
+        drawing = true;
+        draw(e);
+    }
+
+    function finishedPosition() {
+        drawing = false;
+        ctx.beginPath();
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+
+        // Get correct coordinates relative to canvas
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        ctx.lineWidth = sizeSlider.value;
+        ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : currentColor;
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    // Color Palette Setup
+    const colors = [
+        '#000000', '#808080', '#800000', '#808000', '#008000', '#008080', '#000080', '#800080', '#808040', '#004040', '#0080FF', '#004080', '#4000FF', '#804000',
+        '#FFFFFF', '#C0C0C0', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FFFF80', '#00FF80', '#80FFFF', '#8080FF', '#FF0080', '#FF8040'
+    ];
+
+    const paletteContainer = document.getElementById('palette');
+    colors.forEach(color => {
+        const swatch = document.createElement('div');
+        swatch.className = 'color-swatch';
+        swatch.style.backgroundColor = color;
+        swatch.onclick = () => {
+            currentColor = color;
+            activeColorDiv.style.backgroundColor = color;
+            if(tool === 'eraser') setTool('brush');
+        };
+        paletteContainer.appendChild(swatch);
+    });
+
+    function clearCanvas() {
+        if(confirm("Clear your masterpiece?")) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    function saveImage() {
+        const link = document.createElement('a');
+        link.download = 'my-art.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Event Listeners
+    canvas.addEventListener('mousedown', startPosition);
+    canvas.addEventListener('mouseup', finishedPosition);
+    canvas.addEventListener('mousemove', draw);
+    
+    // Touch support
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPosition(e); });
+    canvas.addEventListener('touchend', finishedPosition);
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+
+    window.addEventListener('resize', initCanvas);
+    initCanvas();
+</script>
+
+</body>
+</html>
