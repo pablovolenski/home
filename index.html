@@ -3,10 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/1.html">
-    <title>Document</title>
+    <title>Pablo Volenski | Portfolio</title>
+    <style>
+        :root {
+            --border-thickness: 5px; 
+            --color-a: #ff595e;
+            --color-b: #ffca3a;
+            --color-c: #8ac926;
+            --color-d: #1982c4;
+            --color-e: #6a4c93;
+            --color-f: #ff924c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            background-color: black;
+            overflow: hidden;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .container {
+            display: grid;
+            width: 100vw;
+            height: 100vh;
+            gap: 0; 
+            grid-template-columns: 1fr 2fr;
+            grid-template-rows: 1fr;
+        }
+
+        .letters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            height: 100%;
+        }
+
+        /* LINK STYLING 
+           We make the <a> tag the "box" so the entire area is clickable 
+        */
+        .box-link {
+            text-decoration: none;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: var(--border-thickness) solid black;
+            font-size: 5rem;
+            transition: background 0.2s ease, color 0.2s ease;
+            cursor: crosshair;
+            position: relative;
+        }
+
+        /* VERTICAL MARQUEE HEADER */
+        .header {
+            background: white;
+            overflow: hidden;
+            border: var(--border-thickness) solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            transform: rotate(-90deg); 
+            font-size: 5rem;
+            text-transform: uppercase;
+            animation: vertical-marquee 12s linear infinite;
+        }
+
+        @keyframes vertical-marquee {
+            0% { transform: rotate(-90deg) translateX(50%); }
+            100% { transform: rotate(-90deg) translateX(-50%); }
+        }
+
+        /* INVERT HOVER EFFECT */
+        .box-link:hover {
+            background-color: black !important;
+            z-index: 2;
+        }
+        
+        .a:hover { color: var(--color-a); }
+        .b:hover { color: var(--color-b); }
+        .c:hover { color: var(--color-c); }
+        .d:hover { color: var(--color-d); }
+        .e:hover { color: var(--color-e); }
+        .f:hover { color: var(--color-f); }
+
+        /* Base Colors */
+        .a { background-color: var(--color-a); }
+        .b { background-color: var(--color-b); }
+        .c { background-color: var(--color-c); }
+        .d { background-color: var(--color-d); }
+        .e { background-color: var(--color-e); }
+        .f { background-color: var(--color-f); }
+
+        /* Mobile Fix */
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; grid-template-rows: 120px 1fr; }
+            .marquee-content { transform: rotate(0); animation: marquee 10s linear infinite; font-size: 3rem; }
+            @keyframes marquee {
+                0% { transform: translateX(50%); }
+                100% { transform: translateX(-50%); }
+            }
+            .box-link { font-size: 3rem; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World!</h1>
+
+    <div class="container">
+        <header class="header">
+            <div class="marquee-content">
+                pablo volenski — pablo volenski — pablo volenski —
+            </div>
+        </header>
+
+        <div class="letters-grid">
+            <a href="a.html" class="box-link a">A</a>
+            <a href="b.html" class="box-link b">B</a>
+            <a href="c.html" class="box-link c">C</a>
+            <a href="d.html" class="box-link d">D</a>
+            <a href="e.html" class="box-link e">E</a>
+            <a href="f.html" class="box-link f">F</a>
+        </div>
+    </div>
+
 </body>
 </html>
