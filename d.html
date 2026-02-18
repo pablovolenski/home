@@ -3,253 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smooth Sticky Board</title>
+    <title>Smooth Board V7</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root {
-            --bg: #e5e7eb;
-            --accent: #2563eb;
-        }
-
+        :root { --accent: #2563eb; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--bg); font-family: system-ui, sans-serif;
-            overflow: auto; 
+            background: #f3f4f6; overflow: hidden; /* Prevent body bounce */
         }
 
         #canvas {
-            width: 4000px; height: 4000px;
+            width: 3000px; height: 3000px;
             position: relative;
-            background-image: radial-gradient(#9ca3af 0.5px, transparent 0.5px);
+            touch-action: none; /* Block browser scroll on the whole board */
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
         .note {
-            position: absolute;
-            width: 220px; height: 180px;
-            background: #fff9c4;
-            border-radius: 12px;
+            position: absolute; width: 220px; height: 180px;
+            background: #fff9c4; border-radius: 12px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             display: flex; flex-direction: column;
-            touch-action: none; /* Critical for Interact.js */
-            border: 1px solid rgba(0,0,0,0.05);
-            z-index: 1;
+            touch-action: none; /* Block browser scroll on the note */
+            z-index: 1; border: 1px solid rgba(0,0,0,0.05);
+            user-select: none;
         }
 
-        /* Drag Handle - The "Bar" at the top */
         .drag-handle {
-            height: 35px; width: 100%;
-            cursor: move;
-            border-radius: 12px 12px 0 0;
-            display: flex; align-items: center; padding-left: 10px;
+            height: 40px; width: 100%; cursor: move;
+            border-radius: 12px 12px 0 0; background: rgba(0,0,0,0.02);
         }
 
         .note textarea {
             flex-grow: 1; border: none; background: transparent;
-            padding: 10px 15px 15px; outline: none; resize: none;
-            font-size: 16px; line-height: 1.4; color: #333;
+            padding: 10px; outline: none; resize: none; font-size: 16px;
         }
 
-        /* Menu UI */
         .menu-trigger {
             position: absolute; top: 0; right: 0;
-            width: 40px; height: 35px;
+            width: 45px; height: 40px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; color: #666;
+            font-size: 24px; cursor: pointer; z-index: 10;
         }
 
+        /* Responsive Menu */
         .note-menu {
-            display: none; position: absolute; top: 40px; right: 8px;
-            background: white; border-radius: 8px;
+            display: none; position: absolute; top: 45px; right: 10px;
+            background: white; border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            z-index: 100; min-width: 160px; border: 1px solid #ddd;
+            z-index: 100; min-width: 180px; border: 1px solid #ddd;
         }
 
-        .menu-item {
-            padding: 12px 15px; font-size: 14px; border-bottom: 1px solid #eee;
-            cursor: pointer;
-        }
-        .menu-item:last-child { border-bottom: none; }
-        .menu-item:active { background: #f3f4f6; }
+        .menu-item { padding: 15px; font-size: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .color-row { display: flex; justify-content: space-around; padding: 12px; background: #f9fafb; border-radius: 12px 12px 0 0; }
+        .dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; }
 
-        .color-row { display: flex; justify-content: space-around; padding: 10px; background: #f9fafb; }
-        .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; }
-
-        /* Custom Resize Handle */
-        .resizer-ui {
-            position: absolute; right: 5px; bottom: 5px;
-            width: 15px; height: 15px;
-            border-right: 3px solid var(--accent);
-            border-bottom: 3px solid var(--accent);
-            opacity: 0.3; pointer-events: none;
-        }
-
-        .controls {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%); z-index: 1000;
-        }
-
-        .add-btn {
-            padding: 16px 32px; border-radius: 50px; border: none;
-            background: #111; color: white; font-weight: bold;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer;
-        }
+        .controls { position: fixed; bottom: 30px; right: 30px; z-index: 1000; }
+        .add-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #111; color: white; font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <button class="add-btn" onclick="createNewNote()">+ Add Note</button>
-    </div>
-
+    <div class="controls"><button class="add-btn" onclick="createNewNote()">+</button></div>
     <div id="canvas"></div>
 
     <script>
-        let notes = JSON.parse(localStorage.getItem('sticky_lib_v1') || '[]');
+        let notes = JSON.parse(localStorage.getItem('sticky_smooth_v7') || '[]');
         const colors = ['#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf', '#f1f1f1'];
 
         function init() {
-            if(notes.length === 0) {
-                createNewNote();
-            } else {
-                notes.forEach(renderNote);
-            }
+            if(notes.length === 0) createNewNote();
+            else notes.forEach(renderNote);
         }
 
         function renderNote(note) {
             const div = document.createElement('div');
             div.className = 'note';
             div.id = `note-${note.id}`;
-            
-            // Apply saved position using transform (better performance)
             div.style.transform = `translate(${note.x}px, ${note.y}px)`;
-            div.setAttribute('data-x', note.x);
-            div.setAttribute('data-y', note.y);
-            
             div.style.width = (note.w || 220) + 'px';
             div.style.height = (note.h || 180) + 'px';
             div.style.backgroundColor = note.color || colors[0];
+            
+            // Critical for position tracking
+            div.setAttribute('data-x', note.x);
+            div.setAttribute('data-y', note.y);
 
             div.innerHTML = `
                 <div class="drag-handle"></div>
                 <div class="menu-trigger">⋮</div>
                 <div class="note-menu">
                     <div class="color-row">
-                        ${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(${note.id}, '${c}')"></div>`).join('')}
+                        ${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(event, ${note.id}, '${c}')"></div>`).join('')}
                     </div>
-                    <div class="menu-item" onclick="downloadNote(${note.id})">Download PNG</div>
-                    <div class="menu-item" style="color:red" onclick="deleteNote(${note.id})">Delete</div>
+                    <div class="menu-item" onclick="downloadNote(event, ${note.id})">Download Image</div>
+                    <div class="menu-item" style="color:red" onclick="deleteNote(event, ${note.id})">Delete</div>
                 </div>
-                <textarea spellcheck="false" placeholder="Type here...">${note.content}</textarea>
-                <div class="resizer-ui"></div>
+                <textarea spellcheck="false" placeholder="Type...">${note.content}</textarea>
             `;
 
             document.getElementById('canvas').appendChild(div);
-            
-            // Set up Interact.js
-            setupNoteInteractions(div, note.id);
-            
-            // Handle content saving
-            div.querySelector('textarea').oninput = (e) => updateNoteData(note.id, { content: e.target.value });
-            
-            // Menu Toggle
+            setupInteract(div, note.id);
+
+            // Logic for Menu and Input
             div.querySelector('.menu-trigger').onclick = (e) => {
                 e.stopPropagation();
-                const menu = div.querySelector('.note-menu');
-                const isVisible = menu.style.display === 'block';
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
-                menu.style.display = isVisible ? 'none' : 'block';
+                div.querySelector('.note-menu').style.display = 'block';
             };
+            div.querySelector('textarea').oninput = (e) => updateNoteData(note.id, { content: e.target.value });
         }
 
-        function setupNoteInteractions(el, id) {
-            interact(el)
-                .draggable({
-                    allowFrom: '.drag-handle',
-                    inertia: true,
-                    listeners: {
-                        move(event) {
-                            const target = event.target;
-                            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                            target.style.transform = `translate(${x}px, ${y}px)`;
-                            target.setAttribute('data-x', x);
-                            target.setAttribute('data-y', y);
-                        },
-                        end(event) {
-                            updateNoteData(id, { 
-                                x: parseFloat(event.target.getAttribute('data-x')), 
-                                y: parseFloat(event.target.getAttribute('data-y')) 
-                            });
-                        }
+        function setupInteract(el, id) {
+            interact(el).draggable({
+                allowFrom: '.drag-handle',
+                listeners: {
+                    start(event) {
+                        // "Nuclear" fix: Tell the browser to stop whatever it's doing
+                        event.interaction.pointerEvents = 'none';
+                        el.style.zIndex = 1000;
+                    },
+                    move(event) {
+                        const x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
+                        const y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
+                        el.style.transform = `translate(${x}px, ${y}px)`;
+                        el.setAttribute('data-x', x);
+                        el.setAttribute('data-y', y);
+                    },
+                    end(event) {
+                        el.style.zIndex = 1;
+                        updateNoteData(id, { x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y')) });
                     }
-                })
-                .resizable({
-                    edges: { right: true, bottom: true },
-                    listeners: {
-                        move(event) {
-                            let { x, y } = event.target.dataset;
-                            x = parseFloat(x) || 0;
-                            y = parseFloat(y) || 0;
-
-                            Object.assign(event.target.style, {
-                                width: `${event.rect.width}px`,
-                                height: `${event.rect.height}px`
-                            });
-
-                            updateNoteData(id, { w: event.rect.width, h: event.rect.height });
-                        }
+                }
+            }).resizable({
+                edges: { right: true, bottom: true },
+                listeners: {
+                    move(event) {
+                        Object.assign(event.target.style, {
+                            width: `${event.rect.width}px`,
+                            height: `${event.rect.height}px`
+                        });
+                        updateNoteData(id, { w: event.rect.width, h: event.rect.height });
                     }
-                });
+                }
+            });
         }
 
-        // --- Functions ---
-
+        // --- Core Helpers ---
         function createNewNote() {
-            const lastNote = notes[notes.length - 1];
-            const newX = lastNote ? lastNote.x + 30 : 20;
-            const newY = lastNote ? lastNote.y + 30 : 20;
-            const note = { id: Date.now(), content: "", x: newX, y: newY, w: 220, h: 180, color: colors[0] };
-            notes.push(note);
-            save();
-            renderNote(note);
+            const last = notes[notes.length - 1];
+            const note = { id: Date.now(), content: "", x: (last?.x || 10)+20, y: (last?.y || 10)+20, w: 220, h: 180, color: colors[0] };
+            notes.push(note); save(); renderNote(note);
         }
 
-        window.changeColor = (id, color) => {
-            const el = document.getElementById(`note-${id}`);
-            el.style.backgroundColor = color;
+        window.changeColor = (e, id, color) => {
+            e.stopPropagation();
+            document.getElementById(`note-${id}`).style.backgroundColor = color;
             updateNoteData(id, { color: color });
         };
 
-        window.downloadNote = (id) => {
+        window.downloadNote = (e, id) => {
+            e.stopPropagation();
             const el = document.getElementById(`note-${id}`);
-            const menu = el.querySelector('.note-menu');
-            const trigger = el.querySelector('.menu-trigger');
-            const resizer = el.querySelector('.resizer-ui');
-
-            menu.style.display = 'none';
-            trigger.style.display = 'none';
-            resizer.style.display = 'none';
-
-            html2canvas(el, { backgroundColor: null, scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `sticky-${id}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                trigger.style.display = 'flex';
-                resizer.style.display = 'block';
+            el.querySelector('.note-menu').style.display = 'none';
+            html2canvas(el, { backgroundColor: null }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = `note-${id}.png`; a.href = canvas.toDataURL(); a.click();
             });
         };
 
-        window.deleteNote = (id) => {
-            if(confirm("Delete this note?")) {
+        window.deleteNote = (e, id) => {
+            e.stopPropagation();
+            if(confirm("Delete?")) {
                 notes = notes.filter(n => n.id !== id);
-                document.getElementById(`note-${id}`).remove();
-                save();
+                document.getElementById(`note-${id}`).remove(); save();
             }
         };
 
@@ -259,13 +190,10 @@
             save();
         }
 
-        function save() { localStorage.setItem('sticky_lib_v1', JSON.stringify(notes)); }
+        function save() { localStorage.setItem('sticky_smooth_v7', JSON.stringify(notes)); }
 
-        // Global click to close menus
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
-        });
-
+        document.addEventListener('click', () => document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none'));
+        
         init();
     </script>
 </body>
