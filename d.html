@@ -3,84 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Board V11</title>
+    <title>Pro Board V12</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --accent: #2563eb; --bg: #f3f4f6; }
+        :root { --accent: #2563eb; --danger: #ef4444; --bg: #f3f4f6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); font-family: sans-serif; overflow: auto; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); font-family: sans-serif; overflow: hidden; }
 
         #canvas {
-            width: 4000px; height: 4000px; position: relative;
+            width: 5000px; height: 5000px; position: relative;
             touch-action: pan-x pan-y pinch-zoom; 
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
-        /* FAB UI */
+        /* --- UI Controls --- */
         .fab-container { position: fixed; top: 20px; left: 20px; z-index: 2000; }
         .fab-main { 
             width: 50px; height: 50px; background: #111; color: white; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; font-size: 30px; 
-            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .fab-options { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
         .fab-option {
-            width: 130px; padding: 10px; background: white; border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; font-size: 14px; font-weight: bold;
-            border: 1px solid #ddd;
+            width: 140px; padding: 12px; background: white; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; font-size: 14px; font-weight: bold;
+            display: flex; align-items: center; gap: 10px; border: 1px solid #eee;
         }
 
-        /* Card Container */
+        /* --- Card Container --- */
         .card {
-            position: absolute; min-width: 180px; min-height: 120px;
-            background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; touch-action: none; 
-            z-index: 1; border: 1px solid rgba(0,0,0,0.05);
+            position: absolute; min-width: 150px; min-height: 100px;
+            background: white; border-radius: 12px; box-shadow: 0 8px 20px -5px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column; 
+            touch-action: none; /* Prevents scroll while dragging card */
+            border: 1px solid rgba(0,0,0,0.05);
+            user-select: none;
         }
 
-        .drag-handle { height: 35px; width: 100%; cursor: move; background: rgba(0,0,0,0.04); border-radius: 12px 12px 0 0; }
-        .note-content { flex-grow: 1; border: none; background: transparent; padding: 15px; outline: none; resize: none; font-size: 16px; }
+        /* Drag Handle (Top Bar) */
+        .card-header { height: 35px; width: 100%; cursor: move; border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0; background: #fafafa; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+        .drag-icon { color: #ccc; font-size: 12px; letter-spacing: 2px; }
+        
+        /* Content Areas */
+        .note-content { flex-grow: 1; border: none; background: transparent; padding: 15px; outline: none; resize: none; font-size: 16px; width: 100%; }
 
-        /* Table Edge Controls - Fixed Alignment */
-        .table-wrapper { 
-            flex-grow: 1; padding: 25px; /* Space for the buttons */
-            position: relative; overflow: visible; display: flex;
+        /* --- The Table Grid System --- */
+        .table-layout {
+            display: grid;
+            grid-template-columns: 25px 1fr 25px; /* Left control, Table, Right control */
+            grid-template-rows: 25px 1fr 25px;    /* Top control, Table, Bottom control */
+            width: 100%; height: 100%;
+            padding: 5px;
+            gap: 2px;
         }
-        table { border-collapse: collapse; width: 100%; height: 100%; table-layout: fixed; }
-        td { border: 1px solid #ccc; padding: 0; min-width: 50px; }
-        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; padding: 8px; text-align: center; }
 
-        .edge-btn {
-            position: absolute; width: 22px; height: 22px; 
-            background: var(--accent); color: white; border-radius: 50%;
+        /* Table Cells */
+        .grid-center { grid-column: 2; grid-row: 2; overflow: auto; border: 1px solid #eee; }
+        table { border-collapse: collapse; width: 100%; height: 100%; }
+        td { border: 1px solid #ddd; min-width: 40px; height: 30px; position: relative; }
+        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; text-align: center; font-size: 14px; padding: 0; margin: 0; }
+
+        /* Small Icons Styling */
+        .t-btn {
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px; cursor: pointer; z-index: 100; font-weight: bold;
+            font-size: 18px; font-weight: bold; cursor: pointer; color: white;
+            border-radius: 4px; width: 100%; height: 100%;
         }
-        .del-btn { background: #ef4444; }
+        .t-add { background: var(--accent); opacity: 0.8; }
+        .t-del { background: var(--danger); opacity: 0.8; }
+        .t-btn:active { opacity: 1; transform: scale(0.95); }
 
-        /* Positioning the buttons relative to the table edges */
-        .add-col { right: 2px; top: 50%; transform: translateY(-50%); }
-        .add-row { bottom: 2px; left: 50%; transform: translateX(-50%); }
-        .del-col { right: 2px; top: 0; }
-        .del-row { left: 0; bottom: 2px; }
+        /* Icon Positioning in Grid */
+        .btn-col-add { grid-column: 3; grid-row: 2; align-self: center; height: 40px; border-radius: 0 12px 12px 0; }
+        .btn-col-del { grid-column: 2; grid-row: 1; justify-self: right; width: 40px; border-radius: 12px 12px 0 0; }
+        .btn-row-add { grid-column: 2; grid-row: 3; justify-self: center; width: 40px; border-radius: 0 0 12px 12px; }
+        .btn-row-del { grid-column: 1; grid-row: 2; align-self: top; height: 40px; border-radius: 12px 0 0 12px; }
 
-        /* Menu */
-        .menu-trigger { position: absolute; top: 0; right: 0; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; font-size: 20px; }
-        .note-menu { 
-            display: none; position: absolute; top: 35px; right: 10px; background: white; 
-            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; min-width: 180px; border: 1px solid #ddd; 
+        /* --- Resizing Handle --- */
+        .resize-handle {
+            position: absolute; right: 0; bottom: 0;
+            width: 35px; height: 35px;
+            cursor: nwse-resize; z-index: 50;
+            touch-action: none;
+            display: flex; align-items: flex-end; justify-content: flex-end;
+            padding: 6px;
         }
-        .color-row { display: flex; justify-content: space-around; padding: 10px; background: #f9fafb; border-bottom: 1px solid #eee; border-radius: 12px 12px 0 0; }
-        .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; cursor: pointer; }
-        .menu-item { padding: 12px; font-size: 14px; cursor: pointer; border-bottom: 1px solid #eee; }
-
-        /* The Resize Handle Icon */
         .resize-icon {
-            position: absolute; right: 5px; bottom: 5px; width: 10px; height: 10px;
-            border-right: 2px solid #999; border-bottom: 2px solid #999; pointer-events: none;
+            width: 12px; height: 12px;
+            border-right: 3px solid #999; border-bottom: 3px solid #999;
         }
+
+        /* --- Menus --- */
+        .menu-trigger { cursor: pointer; color: #999; font-size: 20px; padding: 0 5px; }
+        .note-menu { 
+            display: none; position: absolute; top: 40px; right: 10px; background: white; 
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: 1px solid #eee;
+            width: 160px; overflow: hidden;
+        }
+        .color-row { display: flex; justify-content: space-evenly; padding: 10px; background: #f8f8f8; }
+        .dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; cursor: pointer; }
+        .menu-item { padding: 12px; font-size: 14px; border-top: 1px solid #eee; cursor: pointer; }
+        .menu-item:active { background: #f0f0f0; }
+
     </style>
 </head>
 <body>
@@ -96,7 +122,7 @@
     <div id="canvas"></div>
 
     <script>
-        let cards = JSON.parse(localStorage.getItem('sticky_v11') || '[]');
+        let cards = JSON.parse(localStorage.getItem('sticky_v12') || '[]');
         const colors = ['#ffffff', '#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf'];
 
         function init() { cards.forEach(renderCard); }
@@ -110,43 +136,49 @@
             const div = document.createElement('div');
             div.className = 'card';
             div.id = `card-${data.id}`;
-            div.style.width = (data.w || 250) + 'px';
-            div.style.height = (data.h || 200) + 'px';
+            div.style.width = (data.w || 220) + 'px';
+            div.style.height = (data.h || 180) + 'px';
             div.style.transform = `translate(${data.x}px, ${data.y}px)`;
             div.style.backgroundColor = data.color || (data.type === 'note' ? '#fff9c4' : '#ffffff');
-            
             div.setAttribute('data-x', data.x);
             div.setAttribute('data-y', data.y);
 
+            // --- Generate Inner HTML ---
             let contentHtml = '';
             if (data.type === 'note') {
                 contentHtml = `<textarea class="note-content" oninput="updateCard(${data.id}, {content: this.value})">${data.content || ''}</textarea>`;
             } else {
                 contentHtml = `
-                    <div class="table-wrapper">
-                        <div class="edge-btn add-col" onclick="addCol(${data.id})">+</div>
-                        <div class="edge-btn add-row" onclick="addRow(${data.id})">+</div>
-                        <div class="edge-btn del-btn del-col" onclick="delCol(${data.id})">−</div>
-                        <div class="edge-btn del-btn del-row" onclick="delRow(${data.id})">−</div>
-                        <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
+                    <div class="table-layout">
+                        <div class="t-btn t-del btn-col-del" onclick="delCol(${data.id})">−</div>
+                        <div class="t-btn t-del btn-row-del" onclick="delRow(${data.id})">−</div>
+                        <div class="t-btn t-add btn-col-add" onclick="addCol(${data.id})">+</div>
+                        <div class="t-btn t-add btn-row-add" onclick="addRow(${data.id})">+</div>
+                        
+                        <div class="grid-center">
+                            <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
+                        </div>
                     </div>`;
             }
 
             div.innerHTML = `
-                <div class="drag-handle"></div>
-                <div class="menu-trigger">⋮</div>
+                <div class="card-header">
+                    <span class="drag-icon">::::</span>
+                    <div class="menu-trigger">⋮</div>
+                </div>
                 <div class="note-menu">
                     <div class="color-row">${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(event, ${data.id}, '${c}')"></div>`).join('')}</div>
                     <div class="menu-item" onclick="downloadCard(${data.id})">Download PNG</div>
                     <div class="menu-item" style="color:red" onclick="deleteCard(${data.id})">Delete</div>
                 </div>
                 ${contentHtml}
-                <div class="resize-icon"></div>
+                <div class="resize-handle"><div class="resize-icon"></div></div>
             `;
 
             document.getElementById('canvas').appendChild(div);
             setupInteract(div, data.id);
 
+            // Toggle Menu
             div.querySelector('.menu-trigger').onclick = (e) => {
                 e.stopPropagation();
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
@@ -154,10 +186,12 @@
             };
         }
 
+        // --- INTERACT.JS LOGIC ---
         function setupInteract(el, id) {
             interact(el)
             .draggable({
-                allowFrom: '.drag-handle',
+                allowFrom: '.card-header', // Only drag from top bar
+                ignoreFrom: '.menu-trigger',
                 listeners: {
                     move(event) {
                         const target = event.target;
@@ -173,9 +207,11 @@
                 }
             })
             .resizable({
-                edges: { right: true, bottom: true },
+                edges: { right: true, bottom: true }, // Logic edges
+                allowFrom: '.resize-handle', // Actual touch target
                 listeners: {
                     move(event) {
+                        let { x, y } = event.target.dataset;
                         Object.assign(event.target.style, {
                             width: `${event.rect.width}px`,
                             height: `${event.rect.height}px`
@@ -184,11 +220,14 @@
                     end(event) {
                         updateCard(id, { w: event.rect.width, h: event.rect.height });
                     }
-                }
+                },
+                modifiers: [
+                    interact.modifiers.restrictSize({ min: { width: 160, height: 120 } })
+                ]
             });
         }
 
-        // --- Table Management ---
+        // --- TABLE LOGIC ---
         function generateTableHTML(rows, cols) {
             let html = '';
             for(let i=0; i<rows; i++) {
@@ -202,21 +241,21 @@
         window.addCol = (id) => {
             const table = document.getElementById(`table-${id}`);
             Array.from(table.rows).forEach(row => row.insertCell().innerHTML = '<input type="text">');
-            updateCard(id, { content: table.innerHTML });
+            saveTable(id);
         };
 
         window.addRow = (id) => {
             const table = document.getElementById(`table-${id}`);
             const newRow = table.insertRow();
             for(let i=0; i<table.rows[0].cells.length; i++) newRow.insertCell().innerHTML = '<input type="text">';
-            updateCard(id, { content: table.innerHTML });
+            saveTable(id);
         };
 
         window.delCol = (id) => {
             const table = document.getElementById(`table-${id}`);
             if(table.rows[0].cells.length > 1) {
                 Array.from(table.rows).forEach(row => row.deleteCell(-1));
-                updateCard(id, { content: table.innerHTML });
+                saveTable(id);
             }
         };
 
@@ -224,23 +263,29 @@
             const table = document.getElementById(`table-${id}`);
             if(table.rows.length > 1) {
                 table.deleteRow(-1);
-                updateCard(id, { content: table.innerHTML });
+                saveTable(id);
             }
         };
 
-        // --- Card Actions ---
-        window.changeColor = (e, id, color) => {
-            e.stopPropagation();
-            const card = document.getElementById(`card-${id}`);
-            card.style.backgroundColor = color;
-            updateCard(id, { color });
-        };
+        function saveTable(id) {
+            const table = document.getElementById(`table-${id}`);
+            updateCard(id, { content: table.innerHTML });
+        }
 
+        // --- CORE FUNCTIONS ---
         function addCard(type) {
             const id = Date.now();
-            const data = { id, type, x: window.scrollX + 50, y: window.scrollY + 50, w: 250, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
-            cards.push(data); save(); renderCard(data);
-            toggleFab();
+            // Spawns near center of screen approx
+            const startX = Math.abs(window.scrollX) + 50;
+            const startY = Math.abs(window.scrollY) + 80;
+            
+            const data = { 
+                id, type, 
+                x: startX, y: startY, 
+                w: 240, h: 200, 
+                content: type === 'table' ? generateTableHTML(3, 2) : '' 
+            };
+            cards.push(data); save(); renderCard(data); toggleFab();
         }
 
         function updateCard(id, newData) {
@@ -248,11 +293,23 @@
             if(card) { Object.assign(card, newData); save(); }
         }
 
+        window.changeColor = (e, id, color) => {
+            e.stopPropagation();
+            document.getElementById(`card-${id}`).style.backgroundColor = color;
+            updateCard(id, { color });
+        };
+
         window.downloadCard = (id) => {
             const el = document.getElementById(`card-${id}`);
-            el.querySelector('.note-menu').style.display = 'none';
-            html2canvas(el, { backgroundColor: null }).then(canvas => {
+            // Hide UI
+            el.querySelectorAll('.note-menu, .resize-handle, .t-btn, .card-header').forEach(i => i.style.visibility = 'hidden');
+            el.style.border = 'none'; el.style.boxShadow = 'none';
+
+            html2canvas(el, { backgroundColor: null, scale: 2 }).then(canvas => {
                 const a = document.createElement('a'); a.download = `card-${id}.png`; a.href = canvas.toDataURL(); a.click();
+                // Restore UI
+                el.querySelectorAll('.note-menu, .resize-handle, .t-btn, .card-header').forEach(i => i.style.visibility = 'visible');
+                el.style.border = ''; el.style.boxShadow = '';
             });
         };
 
@@ -261,18 +318,15 @@
             document.getElementById(`card-${id}`).remove(); save();
         };
 
-        function save() { localStorage.setItem('sticky_v11', JSON.stringify(cards)); }
+        function save() { localStorage.setItem('sticky_v12', JSON.stringify(cards)); }
         
-        document.addEventListener('click', (e) => {
-            if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
+        // Auto-save typing in table
+        document.addEventListener('input', (e) => {
+            if(e.target.closest('table')) saveTable(parseInt(e.target.closest('.card').id.split('-')[1]));
         });
 
-        document.addEventListener('input', (e) => {
-            if(e.target.closest('table')) {
-                const table = e.target.closest('table');
-                const id = table.id.split('-')[1];
-                updateCard(parseInt(id), { content: table.innerHTML });
-            }
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
         });
         
         init();
