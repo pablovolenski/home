@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Pro Board V16</title>
+    <title>Pro Board V18</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -32,10 +32,11 @@
         }
         .fab-options { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
         .fab-option {
-            width: 130px; padding: 10px; background: white; border-radius: 8px;
+            width: 140px; padding: 10px; background: white; border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; font-size: 13px; font-weight: 600;
             display: flex; align-items: center; gap: 10px; border: 1px solid #eee;
         }
+        .sys-option { background: #333; color: white; border: none; }
 
         /* --- Card --- */
         .card {
@@ -63,7 +64,7 @@
             padding: 12px; outline: none; resize: none; font-size: 15px; 
         }
 
-        /* --- Compact Table Tools --- */
+        /* --- Table Tools --- */
         .table-tools {
             flex-shrink: 0; display: flex; align-items: center; justify-content: center;
             gap: 12px; padding: 4px 6px;
@@ -73,7 +74,6 @@
         .tool-group { display: flex; align-items: center; gap: 3px; }
         .tool-label { margin-right: 2px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         
-        /* The Mini Buttons */
         .tool-btn { 
             cursor: pointer; width: 22px; height: 22px; 
             display: flex; align-items: center; justify-content: center;
@@ -81,7 +81,6 @@
             font-size: 14px; line-height: 1; color: #444; transition: 0.2s;
         }
         .tool-btn:hover { background: rgba(0,0,0,0.1); color: #000; }
-        .tool-btn:active { transform: scale(0.95); }
 
         .table-inner { flex-grow: 1; position: relative; overflow: auto; display: flex; }
         
@@ -123,21 +122,22 @@
         <div class="fab-options" id="fabOptions">
             <div class="fab-option" onclick="addCard('note')">📝 Note</div>
             <div class="fab-option" onclick="addCard('table')">📊 Table</div>
+            <div style="height:5px;"></div>
+            <div class="fab-option sys-option" onclick="downloadBoard()">💾 Save Board</div>
+            <div class="fab-option sys-option" onclick="document.getElementById('fileInput').click()">📂 Load Board</div>
+            <div class="fab-option sys-option" style="background:#e11d48;" onclick="clearBoard()">🗑️ Clear All</div>
         </div>
     </div>
+    <input type="file" id="fileInput" style="display:none" onchange="loadBoard(this)">
 
     <div id="canvas"></div>
 
     <script>
-        let cards = JSON.parse(localStorage.getItem('sticky_v16') || '[]');
+        let cards = JSON.parse(localStorage.getItem('sticky_v18') || '[]');
         const colors = ['#ffffff', '#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf'];
 
         function init() { cards.forEach(renderCard); }
-
-        function toggleFab() {
-            const opt = document.getElementById('fabOptions');
-            opt.style.display = opt.style.display === 'flex' ? 'none' : 'flex';
-        }
+        function toggleFab() { document.getElementById('fabOptions').style.display = document.getElementById('fabOptions').style.display === 'flex' ? 'none' : 'flex'; }
 
         function renderCard(data) {
             const div = document.createElement('div');
@@ -157,15 +157,11 @@
                     <div class="card-body">
                         <div class="table-tools">
                             <div class="tool-group">
-                                <span class="tool-label">Row</span>
-                                <span class="tool-btn" onclick="addRow(${data.id})">+</span>
-                                <span class="tool-btn" onclick="delRow(${data.id})">−</span>
+                                <span class="tool-label">Row</span><span class="tool-btn" onclick="addRow(${data.id})">+</span><span class="tool-btn" onclick="delRow(${data.id})">−</span>
                             </div>
                             <div style="width:1px; height:15px; background:#ddd; margin:0 4px;"></div>
                             <div class="tool-group">
-                                <span class="tool-label">Col</span>
-                                <span class="tool-btn" onclick="addCol(${data.id})">+</span>
-                                <span class="tool-btn" onclick="delCol(${data.id})">−</span>
+                                <span class="tool-label">Col</span><span class="tool-btn" onclick="addCol(${data.id})">+</span><span class="tool-btn" onclick="delCol(${data.id})">−</span>
                             </div>
                         </div>
                         <div class="table-inner">
@@ -175,10 +171,7 @@
             }
 
             div.innerHTML = `
-                <div class="card-header">
-                    <span class="drag-icon">::::</span>
-                    <div class="menu-trigger">⋮</div>
-                </div>
+                <div class="card-header"><span class="drag-icon">::::</span><div class="menu-trigger">⋮</div></div>
                 <div class="note-menu">
                     <div class="color-row">${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(event, ${data.id}, '${c}')"></div>`).join('')}</div>
                     <div class="menu-item" onclick="downloadCard(${data.id})">Download Image</div>
@@ -191,43 +184,32 @@
             document.getElementById('canvas').appendChild(div);
             setupInteract(div, data.id);
 
-            div.querySelector('.menu-trigger').onclick = (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
-                div.querySelector('.note-menu').style.display = 'block';
-            };
+            // Close menu logic
+            div.querySelector('.menu-trigger').onclick = (e) => { e.stopPropagation(); document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none'); div.querySelector('.note-menu').style.display = 'block'; };
         }
 
         function setupInteract(el, id) {
             interact(el)
             .draggable({
-                allowFrom: '.card-header',
-                ignoreFrom: '.menu-trigger',
+                allowFrom: '.card-header', ignoreFrom: '.menu-trigger',
                 listeners: {
-                    move(event) {
-                        const t = event.target;
-                        const x = (parseFloat(t.getAttribute('data-x')) || 0) + event.dx;
-                        const y = (parseFloat(t.getAttribute('data-y')) || 0) + event.dy;
-                        t.style.transform = `translate(${x}px, ${y}px)`;
-                        t.setAttribute('data-x', x); t.setAttribute('data-y', y);
+                    move(e) {
+                        const t = e.target, x = (parseFloat(t.getAttribute('data-x'))||0) + e.dx, y = (parseFloat(t.getAttribute('data-y'))||0) + e.dy;
+                        t.style.transform = `translate(${x}px, ${y}px)`; t.setAttribute('data-x', x); t.setAttribute('data-y', y);
                     },
                     end(e) { updateCard(id, { x: parseFloat(e.target.getAttribute('data-x')), y: parseFloat(e.target.getAttribute('data-y')) }); }
                 }
             })
             .resizable({
-                edges: { right: true, bottom: true },
-                allowFrom: '.resize-handle',
+                edges: { right: true, bottom: true }, allowFrom: '.resize-handle',
                 listeners: {
-                    move(event) {
-                        Object.assign(event.target.style, { width: `${event.rect.width}px`, height: `${event.rect.height}px` });
-                    },
-                    end(event) { updateCard(id, { w: event.rect.width, h: event.rect.height }); }
-                },
-                modifiers: [ interact.modifiers.restrictSize({ min: { width: 140, height: 100 } }) ]
+                    move(e) { Object.assign(e.target.style, { width: `${e.rect.width}px`, height: `${e.rect.height}px` }); },
+                    end(e) { updateCard(id, { w: e.rect.width, h: e.rect.height }); }
+                }, modifiers: [ interact.modifiers.restrictSize({ min: { width: 140, height: 100 } }) ]
             });
         }
 
-        // --- Logic ---
+        // --- Core Logic ---
         function generateTableHTML(rows, cols) {
             let html = '';
             for(let i=0; i<rows; i++) {
@@ -237,39 +219,54 @@
             }
             return html;
         }
-        function saveTable(id) { updateCard(id, { content: document.getElementById(`table-${id}`).innerHTML }); }
+
+        // --- CRITICAL FIX: Save Input Values into HTML Attributes ---
+        function saveTable(id) {
+            const table = document.getElementById(`table-${id}`);
+            // Iterate over all inputs and "burn" their values into the DOM attribute
+            const inputs = table.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.setAttribute('value', input.value);
+            });
+            updateCard(id, { content: table.innerHTML });
+        }
 
         window.addCol = (id) => { const t = document.getElementById(`table-${id}`); Array.from(t.rows).forEach(r => r.insertCell().innerHTML = '<input type="text">'); saveTable(id); };
         window.addRow = (id) => { const t = document.getElementById(`table-${id}`); const r = t.insertRow(); for(let i=0; i<t.rows[0].cells.length; i++) r.insertCell().innerHTML = '<input type="text">'; saveTable(id); };
         window.delCol = (id) => { const t = document.getElementById(`table-${id}`); if(t.rows[0].cells.length > 1) { Array.from(t.rows).forEach(r => r.deleteCell(-1)); saveTable(id); } };
         window.delRow = (id) => { const t = document.getElementById(`table-${id}`); if(t.rows.length > 1) { t.deleteRow(-1); saveTable(id); } };
-
-        window.changeColor = (e, id, c) => { e.stopPropagation(); document.getElementById(`card-${id}`).style.backgroundColor = c; updateCard(id, { color: c }); };
         
+        window.changeColor = (e, id, c) => { e.stopPropagation(); document.getElementById(`card-${id}`).style.backgroundColor = c; updateCard(id, { color: c }); };
         function addCard(type) {
-            const id = Date.now();
-            const data = { id, type, x: window.scrollX + 50, y: window.scrollY + 80, w: 200, h: 160, content: type === 'table' ? generateTableHTML(3, 2) : '' };
+            const id = Date.now(), x = window.scrollX + 50, y = window.scrollY + 80;
+            const data = { id, type, x, y, w: 200, h: 160, content: type === 'table' ? generateTableHTML(3, 2) : '' };
             cards.push(data); save(); renderCard(data); toggleFab();
         }
+        function updateCard(id, data) { const c = cards.find(x => x.id === id); if(c) { Object.assign(c, data); save(); } }
+        function save() { localStorage.setItem('sticky_v18', JSON.stringify(cards)); }
 
-        function updateCard(id, data) {
-            const c = cards.find(x => x.id === id);
-            if(c) { Object.assign(c, data); save(); }
-        }
-
+        // --- Backup ---
+        window.downloadBoard = () => {
+            const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cards)); a.download = "board.json"; a.click();
+        };
+        window.loadBoard = (inp) => {
+            const f = inp.files[0], r = new FileReader();
+            if(!f) return;
+            r.onload = (e) => { try { cards = JSON.parse(e.target.result); save(); location.reload(); } catch(err) { alert("Error"); } };
+            r.readAsText(f);
+        };
+        window.clearBoard = () => { if(confirm("Clear all?")) { cards = []; save(); location.reload(); } };
         window.downloadCard = (id) => {
             const el = document.getElementById(`card-${id}`);
             el.querySelectorAll('.note-menu, .resize-handle, .card-header, .table-tools').forEach(i => i.style.display = 'none');
             el.style.boxShadow = 'none'; el.style.border = 'none';
-            html2canvas(el, { backgroundColor: null, scale: 2 }).then(canvas => {
-                const a = document.createElement('a'); a.download = `card-${id}.png`; a.href = canvas.toDataURL(); a.click();
+            html2canvas(el, { backgroundColor: null, scale: 2 }).then(c => {
+                const a = document.createElement('a'); a.download = `card-${id}.png`; a.href = c.toDataURL(); a.click();
                 el.querySelectorAll('.note-menu, .resize-handle, .card-header, .table-tools').forEach(i => i.style.display = '');
                 el.style.boxShadow = ''; el.style.border = '';
             });
         };
-
         window.deleteCard = (id) => { cards = cards.filter(c => c.id !== id); document.getElementById(`card-${id}`).remove(); save(); };
-        function save() { localStorage.setItem('sticky_v16', JSON.stringify(cards)); }
 
         document.addEventListener('input', (e) => { if(e.target.closest('table')) saveTable(parseInt(e.target.closest('.card').id.split('-')[1])); });
         document.addEventListener('click', (e) => { if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none'); });
