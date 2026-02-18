@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Board V10</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro Board V11</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --accent: #2563eb; --bg: #f3f4f6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); font-family: sans-serif; overflow: auto; }
 
         #canvas {
             width: 4000px; height: 4000px; position: relative;
@@ -18,60 +18,69 @@
             background-size: 30px 30px;
         }
 
-        /* Unified Floating Action Button */
+        /* FAB UI */
         .fab-container { position: fixed; top: 20px; left: 20px; z-index: 2000; }
         .fab-main { 
             width: 50px; height: 50px; background: #111; color: white; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; font-size: 30px; 
-            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .fab-options { 
-            display: none; flex-direction: column; gap: 10px; margin-top: 10px; 
-        }
+        .fab-options { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
         .fab-option {
-            width: 120px; padding: 10px; background: white; border-radius: 8px;
+            width: 130px; padding: 10px; background: white; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; font-size: 14px; font-weight: bold;
-            display: flex; align-items: center; gap: 8px; border: 1px solid #ddd;
+            border: 1px solid #ddd;
         }
 
-        /* Card Styles */
+        /* Card Container */
         .card {
-            position: absolute; min-width: 200px; min-height: 150px;
+            position: absolute; min-width: 180px; min-height: 120px;
             background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; z-index: 1; border: 1px solid rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; touch-action: none; 
+            z-index: 1; border: 1px solid rgba(0,0,0,0.05);
         }
-        .drag-handle { height: 35px; width: 100%; cursor: move; background: rgba(0,0,0,0.03); border-radius: 12px 12px 0 0; }
+
+        .drag-handle { height: 35px; width: 100%; cursor: move; background: rgba(0,0,0,0.04); border-radius: 12px 12px 0 0; }
         .note-content { flex-grow: 1; border: none; background: transparent; padding: 15px; outline: none; resize: none; font-size: 16px; }
 
-        /* Table Edge Controls */
-        .table-wrapper { flex-grow: 1; padding: 10px; position: relative; overflow: visible; }
-        table { border-collapse: collapse; width: 100%; }
-        td { border: 1px solid #ddd; padding: 0; position: relative; min-width: 60px; height: 35px; }
-        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; padding: 5px; text-align: center; }
+        /* Table Edge Controls - Fixed Alignment */
+        .table-wrapper { 
+            flex-grow: 1; padding: 25px; /* Space for the buttons */
+            position: relative; overflow: visible; display: flex;
+        }
+        table { border-collapse: collapse; width: 100%; height: 100%; table-layout: fixed; }
+        td { border: 1px solid #ccc; padding: 0; min-width: 50px; }
+        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; padding: 8px; text-align: center; }
 
         .edge-btn {
-            position: absolute; background: var(--accent); color: white; border-radius: 50%;
-            width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-            font-size: 14px; cursor: pointer; z-index: 5; opacity: 0; transition: 0.2s;
+            position: absolute; width: 22px; height: 22px; 
+            background: var(--accent); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; cursor: pointer; z-index: 100; font-weight: bold;
         }
-        .table-wrapper:hover .edge-btn { opacity: 0.8; }
-        .edge-btn:hover { opacity: 1 !important; transform: scale(1.2); }
-        
-        .add-col { top: 50%; right: -25px; transform: translateY(-50%); }
-        .add-row { bottom: -25px; left: 50%; transform: translateX(-50%); }
-        .del-col { top: -25px; right: 0; background: #ef4444; }
-        .del-row { left: -25px; bottom: 0; background: #ef4444; }
+        .del-btn { background: #ef4444; }
 
-        /* Color & Menu */
+        /* Positioning the buttons relative to the table edges */
+        .add-col { right: 2px; top: 50%; transform: translateY(-50%); }
+        .add-row { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .del-col { right: 2px; top: 0; }
+        .del-row { left: 0; bottom: 2px; }
+
+        /* Menu */
         .menu-trigger { position: absolute; top: 0; right: 0; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; font-size: 20px; }
         .note-menu { 
             display: none; position: absolute; top: 35px; right: 10px; background: white; 
-            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; min-width: 180px; border: 1px solid #ddd; 
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; min-width: 180px; border: 1px solid #ddd; 
         }
         .color-row { display: flex; justify-content: space-around; padding: 10px; background: #f9fafb; border-bottom: 1px solid #eee; border-radius: 12px 12px 0 0; }
         .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; cursor: pointer; }
         .menu-item { padding: 12px; font-size: 14px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .menu-item:last-child { border-bottom: none; }
+
+        /* The Resize Handle Icon */
+        .resize-icon {
+            position: absolute; right: 5px; bottom: 5px; width: 10px; height: 10px;
+            border-right: 2px solid #999; border-bottom: 2px solid #999; pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -79,15 +88,15 @@
     <div class="fab-container">
         <div class="fab-main" onclick="toggleFab()">+</div>
         <div class="fab-options" id="fabOptions">
-            <div class="fab-option" onclick="addCard('note')">📝 New Note</div>
-            <div class="fab-option" onclick="addCard('table')">📊 New Table</div>
+            <div class="fab-option" onclick="addCard('note')">📝 Note</div>
+            <div class="fab-option" onclick="addCard('table')">📊 Table</div>
         </div>
     </div>
 
     <div id="canvas"></div>
 
     <script>
-        let cards = JSON.parse(localStorage.getItem('sticky_v10') || '[]');
+        let cards = JSON.parse(localStorage.getItem('sticky_v11') || '[]');
         const colors = ['#ffffff', '#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf'];
 
         function init() { cards.forEach(renderCard); }
@@ -101,10 +110,11 @@
             const div = document.createElement('div');
             div.className = 'card';
             div.id = `card-${data.id}`;
-            div.style.transform = `translate(${data.x}px, ${data.y}px)`;
             div.style.width = (data.w || 250) + 'px';
             div.style.height = (data.h || 200) + 'px';
+            div.style.transform = `translate(${data.x}px, ${data.y}px)`;
             div.style.backgroundColor = data.color || (data.type === 'note' ? '#fff9c4' : '#ffffff');
+            
             div.setAttribute('data-x', data.x);
             div.setAttribute('data-y', data.y);
 
@@ -116,8 +126,8 @@
                     <div class="table-wrapper">
                         <div class="edge-btn add-col" onclick="addCol(${data.id})">+</div>
                         <div class="edge-btn add-row" onclick="addRow(${data.id})">+</div>
-                        <div class="edge-btn del-col" onclick="delCol(${data.id})">−</div>
-                        <div class="edge-btn del-row" onclick="delRow(${data.id})">−</div>
+                        <div class="edge-btn del-btn del-col" onclick="delCol(${data.id})">−</div>
+                        <div class="edge-btn del-btn del-row" onclick="delRow(${data.id})">−</div>
                         <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
                     </div>`;
             }
@@ -126,13 +136,12 @@
                 <div class="drag-handle"></div>
                 <div class="menu-trigger">⋮</div>
                 <div class="note-menu">
-                    <div class="color-row">
-                        ${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(event, ${data.id}, '${c}')"></div>`).join('')}
-                    </div>
-                    <div class="menu-item" onclick="downloadCard(${data.id})">Download Image</div>
+                    <div class="color-row">${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(event, ${data.id}, '${c}')"></div>`).join('')}</div>
+                    <div class="menu-item" onclick="downloadCard(${data.id})">Download PNG</div>
                     <div class="menu-item" style="color:red" onclick="deleteCard(${data.id})">Delete</div>
                 </div>
                 ${contentHtml}
+                <div class="resize-icon"></div>
             `;
 
             document.getElementById('canvas').appendChild(div);
@@ -143,35 +152,43 @@
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
                 div.querySelector('.note-menu').style.display = 'block';
             };
-
-            if(data.type === 'table') {
-                div.addEventListener('input', (e) => {
-                    if(e.target.tagName === 'INPUT') updateCard(data.id, {content: div.querySelector('table').innerHTML});
-                });
-            }
         }
 
         function setupInteract(el, id) {
-            interact(el).draggable({
+            interact(el)
+            .draggable({
                 allowFrom: '.drag-handle',
                 listeners: {
                     move(event) {
-                        const x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
-                        const y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
-                        el.style.transform = `translate(${x}px, ${y}px)`;
-                        el.setAttribute('data-x', x); el.setAttribute('data-y', y);
+                        const target = event.target;
+                        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                        target.style.transform = `translate(${x}px, ${y}px)`;
+                        target.setAttribute('data-x', x);
+                        target.setAttribute('data-y', y);
                     },
-                    end() { updateCard(id, { x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y')) }); }
+                    end(event) {
+                        updateCard(id, { x: parseFloat(event.target.getAttribute('data-x')), y: parseFloat(event.target.getAttribute('data-y')) });
+                    }
                 }
-            }).resizable({
+            })
+            .resizable({
                 edges: { right: true, bottom: true },
                 listeners: {
-                    move(event) { Object.assign(event.target.style, { width: `${event.rect.width}px`, height: `${event.rect.height}px` }); },
-                    end(event) { updateCard(id, { w: event.rect.width, h: event.rect.height }); }
+                    move(event) {
+                        Object.assign(event.target.style, {
+                            width: `${event.rect.width}px`,
+                            height: `${event.rect.height}px`
+                        });
+                    },
+                    end(event) {
+                        updateCard(id, { w: event.rect.width, h: event.rect.height });
+                    }
                 }
             });
         }
 
+        // --- Table Management ---
         function generateTableHTML(rows, cols) {
             let html = '';
             for(let i=0; i<rows; i++) {
@@ -182,32 +199,36 @@
             return html;
         }
 
+        window.addCol = (id) => {
+            const table = document.getElementById(`table-${id}`);
+            Array.from(table.rows).forEach(row => row.insertCell().innerHTML = '<input type="text">');
+            updateCard(id, { content: table.innerHTML });
+        };
+
         window.addRow = (id) => {
             const table = document.getElementById(`table-${id}`);
             const newRow = table.insertRow();
             for(let i=0; i<table.rows[0].cells.length; i++) newRow.insertCell().innerHTML = '<input type="text">';
-            updateCard(id, {content: table.innerHTML});
-        };
-
-        window.addCol = (id) => {
-            const table = document.getElementById(`table-${id}`);
-            for(let i=0; i<table.rows.length; i++) table.rows[i].insertCell().innerHTML = '<input type="text">';
-            updateCard(id, {content: table.innerHTML});
-        };
-
-        window.delRow = (id) => {
-            const table = document.getElementById(`table-${id}`);
-            if(table.rows.length > 1) { table.deleteRow(-1); updateCard(id, {content: table.innerHTML}); }
+            updateCard(id, { content: table.innerHTML });
         };
 
         window.delCol = (id) => {
             const table = document.getElementById(`table-${id}`);
             if(table.rows[0].cells.length > 1) {
-                for(let i=0; i<table.rows.length; i++) table.rows[i].deleteCell(-1);
-                updateCard(id, {content: table.innerHTML});
+                Array.from(table.rows).forEach(row => row.deleteCell(-1));
+                updateCard(id, { content: table.innerHTML });
             }
         };
 
+        window.delRow = (id) => {
+            const table = document.getElementById(`table-${id}`);
+            if(table.rows.length > 1) {
+                table.deleteRow(-1);
+                updateCard(id, { content: table.innerHTML });
+            }
+        };
+
+        // --- Card Actions ---
         window.changeColor = (e, id, color) => {
             e.stopPropagation();
             const card = document.getElementById(`card-${id}`);
@@ -217,7 +238,7 @@
 
         function addCard(type) {
             const id = Date.now();
-            const data = { id, type, x: window.scrollX + 100, y: window.scrollY + 100, w: 250, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
+            const data = { id, type, x: window.scrollX + 50, y: window.scrollY + 50, w: 250, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
             cards.push(data); save(); renderCard(data);
             toggleFab();
         }
@@ -229,10 +250,9 @@
 
         window.downloadCard = (id) => {
             const el = document.getElementById(`card-${id}`);
-            el.querySelectorAll('.note-menu, .edge-btn').forEach(i => i.style.display = 'none');
+            el.querySelector('.note-menu').style.display = 'none';
             html2canvas(el, { backgroundColor: null }).then(canvas => {
                 const a = document.createElement('a'); a.download = `card-${id}.png`; a.href = canvas.toDataURL(); a.click();
-                el.querySelectorAll('.edge-btn').forEach(i => i.style.display = 'flex');
             });
         };
 
@@ -241,9 +261,18 @@
             document.getElementById(`card-${id}`).remove(); save();
         };
 
-        function save() { localStorage.setItem('sticky_v10', JSON.stringify(cards)); }
+        function save() { localStorage.setItem('sticky_v11', JSON.stringify(cards)); }
+        
         document.addEventListener('click', (e) => {
             if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
+        });
+
+        document.addEventListener('input', (e) => {
+            if(e.target.closest('table')) {
+                const table = e.target.closest('table');
+                const id = table.id.split('-')[1];
+                updateCard(parseInt(id), { content: table.innerHTML });
+            }
         });
         
         init();
