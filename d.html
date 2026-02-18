@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draft Board</title>
+    <style>
+        :root {
+            --bg: #f4f4f9;
+            --note-bg: #fff9c4;
+            --accent: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+        }
+
+        #board {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .note {
+            background: var(--note-bg);
+            width: 200px;
+            height: 200px;
+            padding: 15px;
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            background: transparent;
+            border: none;
+            resize: none;
+            flex-grow: 1;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 0.8rem;
+            box-shadow: none;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="board"></div>
+
+    <div class="controls">
+        <button onclick="addNote()">+ Add Note</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+
+        // Load notes on startup
+        document.addEventListener('DOMContentLoaded', getNotes);
+
+        function createNoteElement(id, content) {
+            const el = document.createElement('div');
+            el.classList.add('note');
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = content;
+            textarea.placeholder = "Write something...";
+            
+            const delBtn = document.createElement('button');
+            delBtn.innerHTML = "✕";
+            delBtn.classList.add('delete-btn');
+
+            el.appendChild(textarea);
+            el.appendChild(delBtn);
+
+            // Auto-save on typing
+            textarea.addEventListener('input', () => {
+                updateNote(id, textarea.value);
+            });
+
+            // Delete event
+            delBtn.addEventListener('click', () => {
+                const check = confirm("Delete this note?");
+                if(check) {
+                    deleteNote(id, el);
+                }
+            });
+
+            return el;
+        }
+
+        function addNote() {
+            const notes = Array.from(JSON.parse(localStorage.getItem("sticky-notes") || "[]"));
+            const noteObj = { id: Math.floor(Math.random() * 100000), content: "" };
+            
+            const noteEl = createNoteElement(noteObj.id, noteObj.content);
+            board.appendChild(noteEl);
+
+            notes.push(noteObj);
+            saveNotes(notes);
+        }
+
+        function updateNote(id, newContent) {
+            const notes = JSON.parse(localStorage.getItem("sticky-notes") || "[]");
+            const target = notes.filter(n => n.id == id)[0];
+            target.content = newContent;
+            saveNotes(notes);
+        }
+
+        function deleteNote(id, element) {
+            const notes = JSON.parse(localStorage.getItem("sticky-notes") || "[]").filter(n => n.id != id);
+            saveNotes(notes);
+            board.removeChild(element);
+        }
+
+        function saveNotes(notes) {
+            localStorage.setItem("sticky-notes", JSON.stringify(notes));
+        }
+
+        function getNotes() {
+            const notes = JSON.parse(localStorage.getItem("sticky-notes") || "[]");
+            notes.forEach(note => {
+                const noteEl = createNoteElement(note.id, note.content);
+                board.appendChild(noteEl);
+            });
+        }
+    </script>
+</body>
+</html>
