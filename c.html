@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mondrian Interactive UI</title>
+    <style>
+        :root {
+            --border-thickness: 8px;
+            --mondrian-red: #e02f25;
+            --mondrian-blue: #005194;
+            --mondrian-yellow: #fac901;
+            --mondrian-white: #f2f5f1;
+            --mondrian-black: #211f1e;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #eee;
+            font-family: 'Helvetica', sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Grid Container */
+        .container {
+            display: grid;
+            width: 95vw;
+            height: 90vh;
+            background-color: var(--mondrian-black);
+            gap: var(--border-thickness);
+            border: var(--border-thickness) solid var(--mondrian-black);
+            grid-template-columns: 1fr 2fr 1fr 0.5fr;
+            grid-template-rows: 1fr 2fr 0.5fr 1fr;
+        }
+
+        /* Base Block Styling */
+        .block {
+            background-color: var(--mondrian-white);
+            cursor: pointer;
+            transition: opacity 0.2s;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .block:hover {
+            opacity: 0.8;
+        }
+
+        /* Specific Blocks based on the Painting */
+        .red-main {
+            grid-column: 1 / span 2;
+            grid-row: 1 / span 2;
+            background-color: var(--mondrian-red);
+            color: white;
+            cursor: default;
+            font-size: 1.5rem;
+        }
+
+        .yellow-top {
+            grid-column: 3 / span 2;
+            grid-row: 1;
+            background-color: var(--mondrian-yellow);
+        }
+
+        .blue-bottom {
+            grid-column: 3 / span 2;
+            grid-row: 4;
+            background-color: var(--mondrian-blue);
+        }
+
+        .black-block {
+            background-color: var(--mondrian-black);
+            grid-column: 1;
+            grid-row: 3;
+            color: white;
+        }
+
+        /* Mobile Viewport Overrides */
+        @media (max-width: 600px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: repeat(6, 1fr);
+                height: auto;
+                min-height: 100vh;
+            }
+            .red-main {
+                grid-column: 1 / span 2;
+                grid-row: 1 / span 2;
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="block red-main" id="display-area">
+        Select a block to see content
+    </div>
+
+    <div class="block yellow-top" onclick="updateContent('Yellow Block', 'This represents the bright, top-right energy.')">1</div>
+    <div class="block" onclick="updateContent('White Block A', 'Clean lines and minimal space.')">2</div>
+    <div class="block" onclick="updateContent('White Block B', 'Balance is key to De Stijl.')">3</div>
+    <div class="block black-block" onclick="updateContent('The Dark Side', 'The black lines define the structure.')">4</div>
+    <div class="block" onclick="updateContent('White Block C', 'Proportional harmony.')">5</div>
+    <div class="block blue-bottom" onclick="updateContent('Blue Block', 'A solid foundation at the bottom.')">6</div>
+    <div class="block" onclick="updateContent('Small Red', 'A splash of color on the edge.')" style="background-color: var(--mondrian-red);">7</div>
+</div>
+
+<script>
+    function updateContent(title, description) {
+        const display = document.getElementById('display-area');
+        display.innerHTML = `
+            <div>
+                <h2>${title}</h2>
+                <p>${description}</p>
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>
