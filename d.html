@@ -2,111 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Sticky Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile-First Board</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-            --bg-color: #f0f2f5;
-            --accent: #3b82f6;
-            --handle-size: 20px;
+            --bg-color: #f8f9fa;
+            --accent: #007bff;
+            --note-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; /* Prevent body bounce */
             background-color: var(--bg-color);
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         #canvas {
-            width: 5000px; height: 5000px;
-            position: relative;
+            width: 3000px; height: 3000px; /* Scaled down for mobile performance */
+            position: absolute; top: 0; left: 0;
             background-image: radial-gradient(#d1d5db 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-size: 30px 30px;
+            touch-action: none; /* Crucial for custom drag logic */
         }
 
         .note {
             position: absolute;
-            background: #fff9c4; /* Default yellow */
-            min-width: 150px; min-height: 120px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            min-width: 160px; min-height: 140px;
+            background: #fff9c4;
+            box-shadow: var(--note-shadow);
+            border-radius: 12px;
             display: flex; flex-direction: column;
-            cursor: move;
-            border-radius: 4px;
             border: 1px solid rgba(0,0,0,0.05);
-            padding: 0;
+            z-index: 1;
         }
 
         .note textarea {
-            flex-grow: 1;
-            padding: 25px 15px 15px 15px;
-            border: none;
-            background: transparent;
-            resize: none;
-            outline: none;
-            font-size: 16px;
-            cursor: text;
+            flex-grow: 1; padding: 20px; border: none;
+            background: transparent; resize: none; outline: none;
+            font-size: 16px; line-height: 1.5; color: #333;
         }
 
-        /* Top Menu Trigger */
+        /* Responsive Mobile Menu */
         .menu-trigger {
-            position: absolute; top: 5px; right: 5px;
-            width: 24px; height: 24px;
-            cursor: pointer; text-align: center;
-            line-height: 20px; font-weight: bold;
-            color: rgba(0,0,0,0.3);
-            z-index: 10;
+            position: absolute; top: 8px; right: 8px;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; color: #666;
+            z-index: 5;
         }
 
-        .menu-trigger:hover { color: #000; }
-
-        /* Dropdown Menu */
         .note-menu {
-            display: none;
-            position: absolute; top: 25px; right: 5px;
-            background: white; border-radius: 4px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 20; border: 1px solid #ddd;
-            width: 120px;
+            display: none; position: absolute; top: 45px; right: 8px;
+            background: white; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            z-index: 100; min-width: 160px; border: 1px solid #eee;
+            overflow: hidden;
         }
 
-        .note-menu div {
-            padding: 8px 12px; font-size: 12px; cursor: pointer;
+        .menu-item {
+            padding: 14px 16px; font-size: 14px; color: #333;
+            border-bottom: 1px solid #f5f5f5; cursor: pointer;
         }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: #f0f0f0; }
 
-        .note-menu div:hover { background: #f0f0f0; }
+        .color-row { display: flex; justify-content: space-between; padding: 12px; background: #fafafa; }
+        .dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ddd; }
 
-        /* Color Options Submenu */
-        .color-picker { display: flex; gap: 5px; padding: 8px !important; }
-        .dot { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
-
+        /* Bigger Resize Handle for Fingers */
         .resizer {
-            width: var(--handle-size); height: var(--handle-size);
-            background: var(--accent); position: absolute;
-            right: 0; bottom: 0; cursor: nwse-resize;
-            border-radius: 4px 0 4px 0; clip-path: polygon(100% 0, 100% 100%, 0 100%);
+            width: 30px; height: 30px;
+            position: absolute; right: 0; bottom: 0;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, #007bff 50%);
+            border-bottom-right-radius: 12px;
         }
 
-        .controls { position: fixed; top: 20px; left: 20px; z-index: 1000; }
-        .add-btn { padding: 12px 24px; border-radius: 12px; border: none; background: var(--accent); color: white; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .controls {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%); z-index: 1000;
+        }
+
+        .add-btn {
+            padding: 16px 32px; border-radius: 30px; border: none;
+            background: #333; color: white; font-weight: bold;
+            font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
 
     <div class="controls">
-        <button class="add-btn" onclick="addNote()">+ New Sticky</button>
+        <button class="add-btn" onclick="addNote()">+ Add Note</button>
     </div>
 
     <div id="canvas"></div>
 
     <script>
-        let notes = JSON.parse(localStorage.getItem('sticky_v4') || '[]');
+        let notes = JSON.parse(localStorage.getItem('sticky_v5') || '[]');
         const colors = ['#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf', '#f1f1f1'];
+        const canvas = document.getElementById('canvas');
 
         function init() {
             notes.forEach(renderNote);
-            window.scrollTo(2300, 2300);
+            if (notes.length === 0) {
+                window.scrollTo(0, 0); // Start at top left if new
+            }
         }
 
         function renderNote(note) {
@@ -115,102 +120,145 @@
             div.id = `note-${note.id}`;
             div.style.left = note.x + 'px';
             div.style.top = note.y + 'px';
-            div.style.width = (note.w || 220) + 'px';
+            div.style.width = (note.w || 200) + 'px';
             div.style.height = (note.h || 180) + 'px';
             div.style.backgroundColor = note.color || colors[0];
 
             div.innerHTML = `
                 <div class="menu-trigger">⋮</div>
                 <div class="note-menu">
-                    <div class="color-picker">
-                        ${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(${note.id}, '${c}')"></div>`).join('')}
+                    <div class="color-row">
+                        ${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(event, ${note.id}, '${c}')"></div>`).join('')}
                     </div>
-                    <div onclick="downloadNote(${note.id})">Download PNG</div>
-                    <div style="color:red" onclick="deleteNote(${note.id})">Delete</div>
+                    <div class="menu-item" onclick="downloadNote(event, ${note.id})">Download Image</div>
+                    <div class="menu-item" style="color:red" onclick="deleteNote(event, ${note.id})">Delete Note</div>
                 </div>
-                <textarea spellcheck="false" placeholder="Type here...">${note.content}</textarea>
+                <textarea spellcheck="false" placeholder="Write...">${note.content}</textarea>
                 <div class="resizer"></div>
             `;
 
-            const menuTrigger = div.querySelector('.menu-trigger');
-            const menu = div.querySelector('.note-menu');
+            setupInteractions(div, note);
+            canvas.appendChild(div);
+        }
+
+        function setupInteractions(div, note) {
             const textarea = div.querySelector('textarea');
             const resizer = div.querySelector('.resizer');
+            const trigger = div.querySelector('.menu-trigger');
+            const menu = div.querySelector('.note-menu');
 
-            // Toggle Menu
-            menuTrigger.onclick = (e) => {
+            // --- Menu Logic ---
+            trigger.onclick = (e) => {
                 e.stopPropagation();
                 const isVisible = menu.style.display === 'block';
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
                 menu.style.display = isVisible ? 'none' : 'block';
             };
 
-            // Dragging Logic
-            div.onmousedown = (e) => {
-                if (e.target.tagName === 'TEXTAREA' || e.target.closest('.note-menu') || e.target === menuTrigger || e.target === resizer) return;
-                let startX = e.clientX, startY = e.clientY, origX = div.offsetLeft, origY = div.offsetTop;
-                const onMove = (m) => {
-                    div.style.left = (origX + m.clientX - startX) + 'px';
-                    div.style.top = (origY + m.clientY - startY) + 'px';
+            // --- Universal Drag Logic (Mouse & Touch) ---
+            const startDrag = (e) => {
+                if (e.target === textarea || e.target.closest('.note-menu') || e.target === resizer || e.target === trigger) return;
+                
+                div.style.zIndex = 1000;
+                let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                
+                let startX = clientX - div.offsetLeft;
+                let startY = clientY - div.offsetTop;
+
+                const move = (me) => {
+                    let moveX = me.type.includes('touch') ? me.touches[0].clientX : me.clientX;
+                    let moveY = me.type.includes('touch') ? me.touches[0].clientY : me.clientY;
+                    div.style.left = (moveX - startX) + 'px';
+                    div.style.top = (moveY - startY) + 'px';
                 };
-                const onUp = () => {
-                    updateNoteData(note.id, { x: div.offsetLeft, y: div.offsetTop });
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
+
+                const stop = () => {
+                    div.style.zIndex = 1;
+                    updateNoteData(note.id, { x: parseInt(div.style.left), y: parseInt(div.style.top) });
+                    window.removeEventListener('mousemove', move);
+                    window.removeEventListener('mouseup', stop);
+                    window.removeEventListener('touchmove', move);
+                    window.removeEventListener('touchend', stop);
                 };
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
+
+                window.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', stop);
+                window.addEventListener('touchmove', move, { passive: false });
+                window.addEventListener('touchend', stop);
             };
 
-            // Resizing Logic
-            resizer.onmousedown = (e) => {
-                e.preventDefault(); e.stopPropagation();
-                let startW = div.offsetWidth, startH = div.offsetHeight, startX = e.clientX, startY = e.clientY;
-                const onMove = (m) => {
-                    div.style.width = (startW + m.clientX - startX) + 'px';
-                    div.style.height = (startH + m.clientY - startY) + 'px';
+            div.addEventListener('mousedown', startDrag);
+            div.addEventListener('touchstart', startDrag, { passive: false });
+
+            // --- Resize Logic ---
+            const startResize = (e) => {
+                e.stopPropagation(); e.preventDefault();
+                let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                let startW = div.offsetWidth;
+                let startH = div.offsetHeight;
+                let startX = clientX;
+                let startY = clientY;
+
+                const moveR = (me) => {
+                    let moveX = me.type.includes('touch') ? me.touches[0].clientX : me.clientX;
+                    let moveY = me.type.includes('touch') ? me.touches[0].clientY : me.clientY;
+                    div.style.width = (startW + moveX - startX) + 'px';
+                    div.style.height = (startH + moveY - startY) + 'px';
                 };
-                const onUp = () => {
+
+                const stopR = () => {
                     updateNoteData(note.id, { w: div.offsetWidth, h: div.offsetHeight });
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
+                    window.removeEventListener('mousemove', moveR);
+                    window.removeEventListener('touchmove', moveR);
                 };
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
+
+                window.addEventListener('mousemove', moveR);
+                window.addEventListener('touchmove', moveR);
+                window.addEventListener('mouseup', stopR, {once:true});
+                window.addEventListener('touchend', stopR, {once:true});
             };
+
+            resizer.addEventListener('mousedown', startResize);
+            resizer.addEventListener('touchstart', startResize);
 
             textarea.oninput = (e) => updateNoteData(note.id, { content: e.target.value });
-            document.getElementById('canvas').appendChild(div);
         }
 
-        // --- FUNCTIONS ---
+        // --- Utility Functions ---
 
-        window.changeColor = (id, color) => {
+        window.changeColor = (e, id, color) => {
+            e.stopPropagation();
             const el = document.getElementById(`note-${id}`);
             el.style.backgroundColor = color;
             updateNoteData(id, { color: color });
         };
 
-        window.downloadNote = (id) => {
+        window.downloadNote = (e, id) => {
+            e.stopPropagation();
             const el = document.getElementById(`note-${id}`);
             const menu = el.querySelector('.note-menu');
             const trigger = el.querySelector('.menu-trigger');
-            
-            // Hide menu elements for the "photo"
+            const resizer = el.querySelector('.resizer');
+
             menu.style.display = 'none';
             trigger.style.visibility = 'hidden';
+            resizer.style.visibility = 'hidden';
 
-            html2canvas(el).then(canvas => {
+            html2canvas(el, { backgroundColor: null, scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `note-${id}.png`;
-                link.href = canvas.toDataURL();
+                link.href = canvas.toDataURL("image/png");
                 link.click();
                 trigger.style.visibility = 'visible';
+                resizer.style.visibility = 'visible';
             });
         };
 
-        window.deleteNote = (id) => {
-            if(confirm("Delete this note?")) {
+        window.deleteNote = (e, id) => {
+            e.stopPropagation();
+            if(confirm("Delete?")) {
                 notes = notes.filter(n => n.id !== id);
                 document.getElementById(`note-${id}`).remove();
                 save();
@@ -218,7 +266,12 @@
         };
 
         function addNote() {
-            const note = { id: Date.now(), content: "", x: window.scrollX + 250, y: window.scrollY + 250, w: 220, h: 180, color: colors[0] };
+            // Placement: find the last note or start at 20,20
+            const lastNote = notes[notes.length - 1];
+            const newX = lastNote ? lastNote.x + 30 : 20;
+            const newY = lastNote ? lastNote.y + 30 : 20;
+
+            const note = { id: Date.now(), content: "", x: newX, y: newY, w: 220, h: 180, color: colors[0] };
             notes.push(note);
             save();
             renderNote(note);
@@ -230,9 +283,9 @@
             save();
         }
 
-        function save() { localStorage.setItem('sticky_v4', JSON.stringify(notes)); }
+        function save() { localStorage.setItem('sticky_v5', JSON.stringify(notes)); }
 
-        // Close menus when clicking background
+        // Global click to close menus
         window.onclick = () => document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
 
         init();
