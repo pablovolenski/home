@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Pro Board V15</title>
+    <title>Pro Board V16</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -12,7 +12,7 @@
         
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--bg); font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg); font-family: -apple-system, system-ui, sans-serif;
             overflow: auto; 
         }
 
@@ -26,35 +26,33 @@
         /* --- FAB --- */
         .fab-container { position: fixed; top: 20px; left: 20px; z-index: 2000; }
         .fab-main { 
-            width: 50px; height: 50px; background: #222; color: white; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; font-size: 28px; 
+            width: 45px; height: 45px; background: #222; color: white; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; font-size: 24px; 
             cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         .fab-options { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
         .fab-option {
-            width: 140px; padding: 12px; background: white; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; font-size: 14px; font-weight: 600;
+            width: 130px; padding: 10px; background: white; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; font-size: 13px; font-weight: 600;
             display: flex; align-items: center; gap: 10px; border: 1px solid #eee;
         }
 
         /* --- Card --- */
         .card {
-            position: absolute; min-width: 180px; min-height: 150px;
+            position: absolute; min-width: 160px; min-height: 120px;
             background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             display: flex; flex-direction: column; 
             touch-action: none; z-index: 1; border: 1px solid rgba(0,0,0,0.05);
         }
 
         .card-header { 
-            height: 32px; width: 100%; cursor: move; flex-shrink: 0;
+            height: 28px; width: 100%; cursor: move; flex-shrink: 0;
             background: var(--header-bg); border-radius: 12px 12px 0 0; 
-            display: flex; justify-content: space-between; align-items: center; padding: 0 10px; 
+            display: flex; justify-content: space-between; align-items: center; padding: 0 8px; 
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .drag-icon { color: rgba(0,0,0,0.2); font-size: 14px; letter-spacing: 2px; }
+        .drag-icon { color: rgba(0,0,0,0.2); font-size: 12px; letter-spacing: 2px; }
 
-        /* --- Content Layout --- */
-        /* This ensures content grows to fill the resized card */
         .card-body {
             flex-grow: 1; display: flex; flex-direction: column;
             overflow: hidden; position: relative; height: 100%;
@@ -62,62 +60,59 @@
 
         .note-content { 
             width: 100%; height: 100%; border: none; background: transparent; 
-            padding: 15px; outline: none; resize: none; font-size: 16px; 
+            padding: 12px; outline: none; resize: none; font-size: 15px; 
         }
 
-        /* --- Table Layout (Flexbox + Height 100%) --- */
+        /* --- Compact Table Tools --- */
         .table-tools {
-            flex-shrink: 0; display: flex; gap: 10px; padding: 6px 10px;
-            background: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(0,0,0,0.05);
-            font-size: 11px; color: #555; font-weight: 600; justify-content: center;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            gap: 12px; padding: 4px 6px;
+            background: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 10px; color: #666; font-weight: 600;
         }
-        .tool-group { display: flex; align-items: center; gap: 4px; }
+        .tool-group { display: flex; align-items: center; gap: 3px; }
+        .tool-label { margin-right: 2px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+        
+        /* The Mini Buttons */
         .tool-btn { 
-            cursor: pointer; padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); 
+            cursor: pointer; width: 22px; height: 22px; 
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; background: rgba(0,0,0,0.05); 
+            font-size: 14px; line-height: 1; color: #444; transition: 0.2s;
         }
         .tool-btn:hover { background: rgba(0,0,0,0.1); color: #000; }
+        .tool-btn:active { transform: scale(0.95); }
 
         .table-inner { flex-grow: 1; position: relative; overflow: auto; display: flex; }
         
-        table { 
-            width: 100%; height: 100%; /* Critical: Forces table to fill the div */
-            border-collapse: collapse; table-layout: fixed; 
-        }
-        
-        td { 
-            border: 1px solid rgba(0,0,0,0.15); 
-            height: 1px; /* Critical Hack: Forces cells to distribute height evenly */
-            padding: 0; position: relative;
-        }
-        
+        table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { border: 1px solid rgba(0,0,0,0.15); height: 1px; padding: 0; position: relative; }
         td input { 
-            width: 100%; height: 100%; /* Input fills the cell completely */
-            border: none; outline: none; background: transparent; 
-            text-align: center; font-size: 15px; color: #333;
-            display: block; padding: 5px;
+            width: 100%; height: 100%; border: none; outline: none; background: transparent; 
+            text-align: center; font-size: 14px; color: #333; display: block; padding: 2px;
         }
 
         /* --- Resize Handle --- */
         .resize-handle {
             position: absolute; right: 0; bottom: 0;
-            width: 40px; height: 40px; cursor: nwse-resize; z-index: 50;
-            display: flex; align-items: flex-end; justify-content: flex-end; padding: 6px;
+            width: 35px; height: 35px; cursor: nwse-resize; z-index: 50;
+            display: flex; align-items: flex-end; justify-content: flex-end; padding: 5px;
         }
         .resize-icon {
-            width: 12px; height: 12px;
+            width: 10px; height: 10px;
             border-right: 2px solid rgba(0,0,0,0.3); border-bottom: 2px solid rgba(0,0,0,0.3);
         }
 
         /* --- Menu --- */
         .menu-trigger { cursor: pointer; color: rgba(0,0,0,0.3); font-size: 18px; padding: 0 5px; }
         .note-menu { 
-            display: none; position: absolute; top: 35px; right: 5px; background: white; 
+            display: none; position: absolute; top: 30px; right: 5px; background: white; 
             border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 100; border: 1px solid #eee;
-            width: 150px;
+            width: 140px;
         }
         .color-row { display: flex; justify-content: space-evenly; padding: 8px; background: #fafafa; }
-        .dot { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; }
-        .menu-item { padding: 12px; font-size: 13px; border-top: 1px solid #f4f4f4; cursor: pointer; color: #444; }
+        .dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; }
+        .menu-item { padding: 10px; font-size: 12px; border-top: 1px solid #f4f4f4; cursor: pointer; color: #444; }
 
     </style>
 </head>
@@ -134,7 +129,7 @@
     <div id="canvas"></div>
 
     <script>
-        let cards = JSON.parse(localStorage.getItem('sticky_v15') || '[]');
+        let cards = JSON.parse(localStorage.getItem('sticky_v16') || '[]');
         const colors = ['#ffffff', '#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf'];
 
         function init() { cards.forEach(renderCard); }
@@ -148,8 +143,8 @@
             const div = document.createElement('div');
             div.className = 'card';
             div.id = `card-${data.id}`;
-            div.style.width = (data.w || 220) + 'px';
-            div.style.height = (data.h || 180) + 'px';
+            div.style.width = (data.w || 200) + 'px';
+            div.style.height = (data.h || 160) + 'px';
             div.style.transform = `translate(${data.x}px, ${data.y}px)`;
             div.style.backgroundColor = data.color || (data.type === 'note' ? '#fff9c4' : '#ffffff');
             div.setAttribute('data-x', data.x); div.setAttribute('data-y', data.y);
@@ -161,9 +156,17 @@
                 contentHtml = `
                     <div class="card-body">
                         <div class="table-tools">
-                            <div class="tool-group"><span class="tool-btn" onclick="addRow(${data.id})">+ Row</span><span class="tool-btn" onclick="delRow(${data.id})">−</span></div>
-                            <div style="width:10px;"></div>
-                            <div class="tool-group"><span class="tool-btn" onclick="addCol(${data.id})">+ Col</span><span class="tool-btn" onclick="delCol(${data.id})">−</span></div>
+                            <div class="tool-group">
+                                <span class="tool-label">Row</span>
+                                <span class="tool-btn" onclick="addRow(${data.id})">+</span>
+                                <span class="tool-btn" onclick="delRow(${data.id})">−</span>
+                            </div>
+                            <div style="width:1px; height:15px; background:#ddd; margin:0 4px;"></div>
+                            <div class="tool-group">
+                                <span class="tool-label">Col</span>
+                                <span class="tool-btn" onclick="addCol(${data.id})">+</span>
+                                <span class="tool-btn" onclick="delCol(${data.id})">−</span>
+                            </div>
                         </div>
                         <div class="table-inner">
                             <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
@@ -220,7 +223,7 @@
                     },
                     end(event) { updateCard(id, { w: event.rect.width, h: event.rect.height }); }
                 },
-                modifiers: [ interact.modifiers.restrictSize({ min: { width: 160, height: 120 } }) ]
+                modifiers: [ interact.modifiers.restrictSize({ min: { width: 140, height: 100 } }) ]
             });
         }
 
@@ -245,7 +248,7 @@
         
         function addCard(type) {
             const id = Date.now();
-            const data = { id, type, x: window.scrollX + 50, y: window.scrollY + 80, w: 220, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
+            const data = { id, type, x: window.scrollX + 50, y: window.scrollY + 80, w: 200, h: 160, content: type === 'table' ? generateTableHTML(3, 2) : '' };
             cards.push(data); save(); renderCard(data); toggleFab();
         }
 
@@ -256,17 +259,17 @@
 
         window.downloadCard = (id) => {
             const el = document.getElementById(`card-${id}`);
-            el.querySelectorAll('.note-menu, .resize-handle, .card-header, .table-tools').forEach(i => i.style.visibility = 'hidden');
+            el.querySelectorAll('.note-menu, .resize-handle, .card-header, .table-tools').forEach(i => i.style.display = 'none');
             el.style.boxShadow = 'none'; el.style.border = 'none';
             html2canvas(el, { backgroundColor: null, scale: 2 }).then(canvas => {
                 const a = document.createElement('a'); a.download = `card-${id}.png`; a.href = canvas.toDataURL(); a.click();
-                el.querySelectorAll('.note-menu, .resize-handle, .card-header, .table-tools').forEach(i => i.style.visibility = 'visible');
+                el.querySelectorAll('.note-menu, .resize-handle, .card-header, .table-tools').forEach(i => i.style.display = '');
                 el.style.boxShadow = ''; el.style.border = '';
             });
         };
 
         window.deleteCard = (id) => { cards = cards.filter(c => c.id !== id); document.getElementById(`card-${id}`).remove(); save(); };
-        function save() { localStorage.setItem('sticky_v15', JSON.stringify(cards)); }
+        function save() { localStorage.setItem('sticky_v16', JSON.stringify(cards)); }
 
         document.addEventListener('input', (e) => { if(e.target.closest('table')) saveTable(parseInt(e.target.closest('.card').id.split('-')[1])); });
         document.addEventListener('click', (e) => { if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none'); });
