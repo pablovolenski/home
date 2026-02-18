@@ -3,158 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Draft Board</title>
+    <title>Infinite Board</title>
     <style>
         :root {
-            --bg: #f4f4f9;
-            --note-bg: #fff9c4;
-            --accent: #333;
+            --bg-color: #e5e5f7;
+            --dot-color: #cbcbcb;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 20px;
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; /* Prevents browser scroll */
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--dot-color) 1px, transparent 0);
+            background-size: 30px 30px; /* Blueprint/Grid look */
+            font-family: 'sans-serif';
         }
 
-        #board {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+        #canvas {
+            width: 5000px; height: 5000px; /* Large workspace */
+            position: relative;
         }
 
         .note {
-            background: var(--note-bg);
-            width: 200px;
-            height: 200px;
-            padding: 15px;
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.1);
-            position: relative;
-            display: flex;
-            flex-direction: column;
+            position: absolute;
+            background: #fff9c4;
+            width: 200px; height: 150px;
+            padding: 10px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column;
+            cursor: grab;
+            resize: both; /* Native browser resizing */
+            overflow: auto;
+            min-width: 100px; min-height: 80px;
         }
 
-        textarea {
-            background: transparent;
-            border: none;
-            resize: none;
-            flex-grow: 1;
-            font-size: 1rem;
-            outline: none;
+        .note:active { cursor: grabbing; }
+
+        .note textarea {
+            flex-grow: 1; border: none; background: transparent;
+            resize: none; outline: none; font-size: 14px;
         }
 
         .controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
+            position: fixed; bottom: 20px; left: 20px;
+            display: flex; gap: 10px; z-index: 100;
         }
 
         button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            padding: 10px 20px; border-radius: 8px; border: none;
+            background: #333; color: white; cursor: pointer;
+            font-weight: bold;
         }
 
         .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: none;
-            border: none;
-            color: #888;
-            cursor: pointer;
-            font-size: 0.8rem;
-            box-shadow: none;
-            padding: 2px 5px;
+            position: absolute; top: 2px; right: 5px;
+            font-size: 12px; color: #999; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div id="board"></div>
-
     <div class="controls">
-        <button onclick="addNote()">+ Add Note</button>
+        <button onclick="addNote()">+ New Note</button>
+        <small>Drag notes by the edges. Resize from bottom-right.</small>
     </div>
 
+    <div id="canvas"></div>
+
     <script>
-        const board = document.getElementById('board');
+        const canvas = document.getElementById('canvas');
+        let notes = JSON.parse(localStorage.getItem('sticky_v2') || '[]');
 
-        // Load notes on startup
-        document.addEventListener('DOMContentLoaded', getNotes);
+        function init() {
+            notes.forEach(renderNote);
+            // Center the view initially
+            window.scrollTo(2200, 2200);
+        }
 
-        function createNoteElement(id, content) {
-            const el = document.createElement('div');
-            el.classList.add('note');
-            
-            const textarea = document.createElement('textarea');
-            textarea.value = content;
-            textarea.placeholder = "Write something...";
-            
-            const delBtn = document.createElement('button');
-            delBtn.innerHTML = "✕";
-            delBtn.classList.add('delete-btn');
+        function renderNote(note) {
+            const div = document.createElement('div');
+            div.className = 'note';
+            div.style.left = note.x + 'px';
+            div.style.top = note.y + 'px';
+            div.style.width = (note.w || 200) + 'px';
+            div.style.height = (note.h || 150) + 'px';
 
-            el.appendChild(textarea);
-            el.appendChild(delBtn);
+            div.innerHTML = `
+                <span class="delete-btn" onclick="deleteNote(${note.id}, this.parentElement)">✕</span>
+                <textarea oninput="updateContent(${note.id}, this.value)">${note.content}</textarea>
+            `;
 
-            // Auto-save on typing
-            textarea.addEventListener('input', () => {
-                updateNote(id, textarea.value);
-            });
+            // Dragging Logic
+            div.onmousedown = function(e) {
+                if (e.target.tagName === 'TEXTAREA' || e.target.className === 'delete-btn') return;
+                
+                let shiftX = e.clientX - div.getBoundingClientRect().left;
+                let shiftY = e.clientY - div.getBoundingClientRect().top;
 
-            // Delete event
-            delBtn.addEventListener('click', () => {
-                const check = confirm("Delete this note?");
-                if(check) {
-                    deleteNote(id, el);
+                function moveAt(pageX, pageY) {
+                    let newX = pageX - shiftX + window.scrollX;
+                    let newY = pageY - shiftY + window.scrollY;
+                    div.style.left = newX + 'px';
+                    div.style.top = newY + 'px';
+                    updatePos(note.id, newX, newY);
+                }
+
+                function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
+                document.addEventListener('mousemove', onMouseMove);
+                
+                document.onmouseup = function() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.onmouseup = null;
+                };
+            };
+
+            // Resize Observer to save dimensions
+            const ro = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    updateSize(note.id, entry.contentRect.width, entry.contentRect.height);
                 }
             });
+            ro.observe(div);
 
-            return el;
+            canvas.appendChild(div);
         }
 
         function addNote() {
-            const notes = Array.from(JSON.parse(localStorage.getItem("sticky-notes") || "[]"));
-            const noteObj = { id: Math.floor(Math.random() * 100000), content: "" };
-            
-            const noteEl = createNoteElement(noteObj.id, noteObj.content);
-            board.appendChild(noteEl);
-
-            notes.push(noteObj);
-            saveNotes(notes);
+            const newNote = {
+                id: Date.now(),
+                content: "",
+                x: window.scrollX + 100,
+                y: window.scrollY + 100,
+                w: 200, h: 150
+            };
+            notes.push(newNote);
+            save();
+            renderNote(newNote);
         }
 
-        function updateNote(id, newContent) {
-            const notes = JSON.parse(localStorage.getItem("sticky-notes") || "[]");
-            const target = notes.filter(n => n.id == id)[0];
-            target.content = newContent;
-            saveNotes(notes);
+        function updateContent(id, text) {
+            notes.find(n => n.id === id).content = text;
+            save();
         }
 
-        function deleteNote(id, element) {
-            const notes = JSON.parse(localStorage.getItem("sticky-notes") || "[]").filter(n => n.id != id);
-            saveNotes(notes);
-            board.removeChild(element);
+        function updatePos(id, x, y) {
+            const n = notes.find(n => n.id === id);
+            n.x = x; n.y = y;
+            save();
         }
 
-        function saveNotes(notes) {
-            localStorage.setItem("sticky-notes", JSON.stringify(notes));
+        function updateSize(id, w, h) {
+            const n = notes.find(n => n.id === id);
+            if(n) { n.w = w; n.h = h; save(); }
         }
 
-        function getNotes() {
-            const notes = JSON.parse(localStorage.getItem("sticky-notes") || "[]");
-            notes.forEach(note => {
-                const noteEl = createNoteElement(note.id, note.content);
-                board.appendChild(noteEl);
-            });
+        function deleteNote(id, el) {
+            notes = notes.filter(n => n.id !== id);
+            save();
+            el.remove();
         }
+
+        function save() { localStorage.setItem('sticky_v2', JSON.stringify(notes)); }
+
+        init();
     </script>
 </body>
 </html>
