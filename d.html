@@ -1,523 +1,172 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sticky Board</title>
-  <style>
-    :root{
-      --bg:#0b0c10;
-      --grid:rgba(255,255,255,.06);
-      --note:#f7f1a3;
-      --note2:#d8f3dc;
-      --ink:#151515;
-      --shadow:rgba(0,0,0,.35);
-      --ui:rgba(255,255,255,.08);
-      --ui2:rgba(255,255,255,.14);
-    }
-    html,body{height:100%; margin:0; background:var(--bg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
-    /* App shell */
-    #app{
-      height:100%;
-      overflow:hidden;
-      position:relative;
-      user-select:none;
-      touch-action:none; /* we'll handle pan/zoom/drag */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Board</title>
+    <style>
+        :root {
+            --bg-color: #e5e5f7;
+            --dot-color: #cbcbcb;
+        }
 
-    /* Minimal top-left UI */
-    #hud{
-      position:absolute;
-      top:12px; left:12px;
-      display:flex; gap:8px;
-      z-index:10;
-      align-items:center;
-      background:rgba(0,0,0,.22);
-      border:1px solid var(--ui);
-      backdrop-filter: blur(8px);
-      border-radius:12px;
-      padding:8px;
-    }
-    #hud button{
-      background:transparent;
-      color:rgba(255,255,255,.9);
-      border:1px solid var(--ui2);
-      border-radius:10px;
-      padding:8px 10px;
-      cursor:pointer;
-      font-size:13px;
-      line-height:1;
-    }
-    #hud button:hover{ border-color: rgba(255,255,255,.35); }
-    #hud .hint{
-      color:rgba(255,255,255,.65);
-      font-size:12px;
-      padding:0 6px;
-      white-space:nowrap;
-    }
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; /* Prevents browser scroll */
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--dot-color) 1px, transparent 0);
+            background-size: 30px 30px; /* Blueprint/Grid look */
+            font-family: 'sans-serif';
+        }
 
-    /* Board background */
-    #viewport{
-      position:absolute; inset:0;
-      cursor:grab;
-    }
-    #viewport:active{ cursor:grabbing; }
+        #canvas {
+            width: 5000px; height: 5000px; /* Large workspace */
+            position: relative;
+        }
 
-    /* Subtle grid */
-    #viewport{
-      background:
-        radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 0) 0 0/32px 32px;
-    }
+        .note {
+            position: absolute;
+            background: #fff9c4;
+            width: 200px; height: 150px;
+            padding: 10px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column;
+            cursor: grab;
+            resize: both; /* Native browser resizing */
+            overflow: auto;
+            min-width: 100px; min-height: 80px;
+        }
 
-    /* Content that gets transformed */
-    #content{
-      position:absolute;
-      left:0; top:0;
-      transform-origin:0 0;
-      will-change: transform;
-    }
+        .note:active { cursor: grabbing; }
 
-    /* Note */
-    .note{
-      position:absolute;
-      background:var(--note);
-      color:var(--ink);
-      border-radius:14px;
-      box-shadow: 0 14px 30px var(--shadow);
-      border:1px solid rgba(0,0,0,.10);
-      overflow:hidden;
-    }
-    .note[data-color="2"]{ background:var(--note2); }
+        .note textarea {
+            flex-grow: 1; border: none; background: transparent;
+            resize: none; outline: none; font-size: 14px;
+        }
 
-    .note-header{
-      height:34px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:0 10px;
-      background:rgba(255,255,255,.18);
-      border-bottom:1px solid rgba(0,0,0,.08);
-      cursor:grab;
-      user-select:none;
-    }
-    .note-header:active{ cursor:grabbing; }
+        .controls {
+            position: fixed; bottom: 20px; left: 20px;
+            display: flex; gap: 10px; z-index: 100;
+        }
 
-    .note-actions{
-      display:flex; gap:6px;
-      opacity:.85;
-    }
-    .chip{
-      width:18px;height:18px;border-radius:8px;
-      display:grid;place-items:center;
-      border:1px solid rgba(0,0,0,.15);
-      background:rgba(255,255,255,.35);
-      font-size:12px;
-      cursor:pointer;
-      line-height:1;
-    }
-    .chip:hover{ filter:brightness(1.05); }
+        button {
+            padding: 10px 20px; border-radius: 8px; border: none;
+            background: #333; color: white; cursor: pointer;
+            font-weight: bold;
+        }
 
-    .note-body{
-      padding:10px;
-      height: calc(100% - 34px);
-      box-sizing:border-box;
-    }
-    .note-body textarea{
-      width:100%;
-      height:100%;
-      border:none;
-      outline:none;
-      resize:none;
-      background:transparent;
-      color:var(--ink);
-      font-size:14px;
-      line-height:1.35;
-      font-family:inherit;
-      user-select:text;
-    }
-
-    /* Resize handle */
-    .resizer{
-      position:absolute;
-      width:14px; height:14px;
-      right:8px; bottom:8px;
-      border-radius:6px;
-      background:rgba(0,0,0,.16);
-      border:1px solid rgba(0,0,0,.20);
-      cursor:nwse-resize;
-    }
-
-    /* Selection highlight */
-    .note.selected{
-      outline:2px solid rgba(255,255,255,.22);
-      outline-offset:2px;
-    }
-  </style>
+        .delete-btn {
+            position: absolute; top: 2px; right: 5px;
+            font-size: 12px; color: #999; cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <div id="app">
-    <div id="hud">
-      <button id="newBtn">+ Note</button>
-      <button id="resetBtn">Reset view</button>
-      <button id="clearBtn" title="Deletes all notes (local only)">Clear</button>
-      <div class="hint">Pan: drag background • Zoom: wheel/trackpad • New: double-click</div>
+
+    <div class="controls">
+        <button onclick="addNote()">+ New Note</button>
+        <small>Drag notes by the edges. Resize from bottom-right.</small>
     </div>
 
-    <div id="viewport">
-      <div id="content"></div>
-    </div>
-  </div>
+    <div id="canvas"></div>
 
-<script>
-(() => {
-  const viewport = document.getElementById('viewport');
-  const content  = document.getElementById('content');
+    <script>
+        const canvas = document.getElementById('canvas');
+        let notes = JSON.parse(localStorage.getItem('sticky_v2') || '[]');
 
-  const newBtn   = document.getElementById('newBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const clearBtn = document.getElementById('clearBtn');
+        function init() {
+            notes.forEach(renderNote);
+            // Center the view initially
+            window.scrollTo(2200, 2200);
+        }
 
-  // ----- View transform (pan + zoom)
-  const view = {
-    x: 80,  // screen px
-    y: 80,
-    s: 1,   // scale
-  };
+        function renderNote(note) {
+            const div = document.createElement('div');
+            div.className = 'note';
+            div.style.left = note.x + 'px';
+            div.style.top = note.y + 'px';
+            div.style.width = (note.w || 200) + 'px';
+            div.style.height = (note.h || 150) + 'px';
 
-  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+            div.innerHTML = `
+                <span class="delete-btn" onclick="deleteNote(${note.id}, this.parentElement)">✕</span>
+                <textarea oninput="updateContent(${note.id}, this.value)">${note.content}</textarea>
+            `;
 
-  function applyView(){
-    content.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
-  }
+            // Dragging Logic
+            div.onmousedown = function(e) {
+                if (e.target.tagName === 'TEXTAREA' || e.target.className === 'delete-btn') return;
+                
+                let shiftX = e.clientX - div.getBoundingClientRect().left;
+                let shiftY = e.clientY - div.getBoundingClientRect().top;
 
-  function screenToWorld(clientX, clientY){
-    const rect = viewport.getBoundingClientRect();
-    const sx = clientX - rect.left;
-    const sy = clientY - rect.top;
-    return {
-      x: (sx - view.x) / view.s,
-      y: (sy - view.y) / view.s
-    };
-  }
+                function moveAt(pageX, pageY) {
+                    let newX = pageX - shiftX + window.scrollX;
+                    let newY = pageY - shiftY + window.scrollY;
+                    div.style.left = newX + 'px';
+                    div.style.top = newY + 'px';
+                    updatePos(note.id, newX, newY);
+                }
 
-  function worldToScreen(wx, wy){
-    return {
-      x: wx * view.s + view.x,
-      y: wy * view.s + view.y
-    };
-  }
+                function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
+                document.addEventListener('mousemove', onMouseMove);
+                
+                document.onmouseup = function() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.onmouseup = null;
+                };
+            };
 
-  // Zoom at cursor
-  viewport.addEventListener('wheel', (e) => {
-    e.preventDefault();
+            // Resize Observer to save dimensions
+            const ro = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    updateSize(note.id, entry.contentRect.width, entry.contentRect.height);
+                }
+            });
+            ro.observe(div);
 
-    const rect = viewport.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+            canvas.appendChild(div);
+        }
 
-    const prevS = view.s;
-    const delta = -e.deltaY;
-    const zoomFactor = Math.exp(delta * 0.0012); // smooth
-    view.s = clamp(view.s * zoomFactor, 0.2, 3.0);
+        function addNote() {
+            const newNote = {
+                id: Date.now(),
+                content: "",
+                x: window.scrollX + 100,
+                y: window.scrollY + 100,
+                w: 200, h: 150
+            };
+            notes.push(newNote);
+            save();
+            renderNote(newNote);
+        }
 
-    // Keep point under mouse stable
-    const wx = (mx - view.x) / prevS;
-    const wy = (my - view.y) / prevS;
-    view.x = mx - wx * view.s;
-    view.y = my - wy * view.s;
+        function updateContent(id, text) {
+            notes.find(n => n.id === id).content = text;
+            save();
+        }
 
-    applyView();
-  }, { passive:false });
+        function updatePos(id, x, y) {
+            const n = notes.find(n => n.id === id);
+            n.x = x; n.y = y;
+            save();
+        }
 
-  // Pan by dragging background
-  let panning = false;
-  let panStart = {x:0,y:0,vx:0,vy:0};
+        function updateSize(id, w, h) {
+            const n = notes.find(n => n.id === id);
+            if(n) { n.w = w; n.h = h; save(); }
+        }
 
-  viewport.addEventListener('pointerdown', (e) => {
-    // Only pan if clicking background (not a note/textarea/controls)
-    if (e.target !== viewport) return;
-    panning = true;
-    viewport.setPointerCapture(e.pointerId);
-    panStart = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
-  });
+        function deleteNote(id, el) {
+            notes = notes.filter(n => n.id !== id);
+            save();
+            el.remove();
+        }
 
-  viewport.addEventListener('pointermove', (e) => {
-    if (!panning) return;
-    const dx = e.clientX - panStart.x;
-    const dy = e.clientY - panStart.y;
-    view.x = panStart.vx + dx;
-    view.y = panStart.vy + dy;
-    applyView();
-  });
+        function save() { localStorage.setItem('sticky_v2', JSON.stringify(notes)); }
 
-  viewport.addEventListener('pointerup', () => { panning = false; });
-  viewport.addEventListener('pointercancel', () => { panning = false; });
-
-  resetBtn.addEventListener('click', () => {
-    view.x = 80; view.y = 80; view.s = 1;
-    applyView();
-  });
-
-  // ----- Notes model + persistence
-  const LS_KEY = 'sticky_board_v1';
-
-  /** @type {Map<string, any>} */
-  const notes = new Map();
-
-  function save(){
-    const arr = [...notes.values()].map(n => ({
-      id:n.id, x:n.x, y:n.y, w:n.w, h:n.h, text:n.text, color:n.color, z:n.z
-    }));
-    localStorage.setItem(LS_KEY, JSON.stringify({ view, notes: arr }));
-  }
-
-  function load(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw) return;
-      const data = JSON.parse(raw);
-      if (data.view){
-        view.x = data.view.x ?? view.x;
-        view.y = data.view.y ?? view.y;
-        view.s = data.view.s ?? view.s;
-      }
-      applyView();
-      if (Array.isArray(data.notes)){
-        data.notes.forEach(n => createNote(n, {skipSave:true}));
-        normalizeZ();
-      }
-    }catch(err){
-      console.warn('Load failed', err);
-    }
-  }
-
-  function normalizeZ(){
-    // Ensure consistent stacking order
-    const ordered = [...notes.values()].sort((a,b)=>a.z-b.z);
-    ordered.forEach((n,i)=>{ n.z = i+1; n.el.style.zIndex = n.z; });
-    save();
-  }
-
-  function nextId(){
-    return Math.random().toString(16).slice(2) + Date.now().toString(16);
-  }
-
-  function bringToFront(note){
-    const maxZ = Math.max(0, ...[...notes.values()].map(n=>n.z||0));
-    note.z = maxZ + 1;
-    note.el.style.zIndex = note.z;
-    selectNote(note.id);
-    save();
-  }
-
-  let selectedId = null;
-  function selectNote(id){
-    selectedId = id;
-    notes.forEach(n => n.el.classList.toggle('selected', n.id === id));
-  }
-
-  function createNote(seed = {}, opts = {}){
-    const note = {
-      id: seed.id || nextId(),
-      x:  seed.x ?? 200,
-      y:  seed.y ?? 120,
-      w:  seed.w ?? 260,
-      h:  seed.h ?? 200,
-      text: seed.text ?? '',
-      color: seed.color ?? (Math.random() < 0.22 ? 2 : 1),
-      z: seed.z ?? (notes.size + 1),
-      el: null
-    };
-
-    const el = document.createElement('div');
-    el.className = 'note';
-    el.dataset.id = note.id;
-    el.dataset.color = String(note.color);
-    el.style.zIndex = note.z;
-
-    el.innerHTML = `
-      <div class="note-header">
-        <div style="font-size:12px;opacity:.75;">Note</div>
-        <div class="note-actions">
-          <div class="chip" data-action="color" title="Toggle color">◻</div>
-          <div class="chip" data-action="delete" title="Delete">×</div>
-        </div>
-      </div>
-      <div class="note-body">
-        <textarea spellcheck="false" placeholder="Type…"></textarea>
-      </div>
-      <div class="resizer" title="Resize"></div>
-    `;
-
-    const ta = el.querySelector('textarea');
-    ta.value = note.text;
-
-    // Position + size in WORLD coords (not affected by zoom math)
-    function render(){
-      el.style.left = note.x + 'px';
-      el.style.top  = note.y + 'px';
-      el.style.width  = note.w + 'px';
-      el.style.height = note.h + 'px';
-    }
-    render();
-
-    // Focus/bring front on interaction
-    el.addEventListener('pointerdown', () => bringToFront(note));
-
-    // Actions
-    el.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      notes.delete(note.id);
-      el.remove();
-      if (selectedId === note.id) selectedId = null;
-      save();
-    });
-
-    el.querySelector('[data-action="color"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      note.color = note.color === 1 ? 2 : 1;
-      el.dataset.color = String(note.color);
-      save();
-    });
-
-    // Text persistence
-    ta.addEventListener('input', () => {
-      note.text = ta.value;
-      save();
-    });
-
-    // Dragging (from header)
-    const header = el.querySelector('.note-header');
-    let dragging = false;
-    let dragStart = {x:0,y:0,nx:0,ny:0};
-
-    header.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      dragging = true;
-      header.setPointerCapture(e.pointerId);
-      const w = screenToWorld(e.clientX, e.clientY);
-      dragStart = { x: w.x, y: w.y, nx: note.x, ny: note.y };
-      bringToFront(note);
-      selectNote(note.id);
-    });
-
-    header.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const w = screenToWorld(e.clientX, e.clientY);
-      note.x = dragStart.nx + (w.x - dragStart.x);
-      note.y = dragStart.ny + (w.y - dragStart.y);
-      render();
-    });
-
-    header.addEventListener('pointerup', () => {
-      if (!dragging) return;
-      dragging = false;
-      save();
-    });
-    header.addEventListener('pointercancel', () => { dragging = false; });
-
-    // Resizing (corner handle)
-    const resizer = el.querySelector('.resizer');
-    let resizing = false;
-    let resizeStart = {x:0,y:0,w:0,h:0};
-
-    resizer.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      resizing = true;
-      resizer.setPointerCapture(e.pointerId);
-      const wpos = screenToWorld(e.clientX, e.clientY);
-      resizeStart = { x: wpos.x, y: wpos.y, w: note.w, h: note.h };
-      bringToFront(note);
-      selectNote(note.id);
-    });
-
-    resizer.addEventListener('pointermove', (e) => {
-      if (!resizing) return;
-      const wpos = screenToWorld(e.clientX, e.clientY);
-      const dw = (wpos.x - resizeStart.x);
-      const dh = (wpos.y - resizeStart.y);
-      note.w = Math.max(160, resizeStart.w + dw);
-      note.h = Math.max(120, resizeStart.h + dh);
-      render();
-    });
-
-    resizer.addEventListener('pointerup', () => {
-      if (!resizing) return;
-      resizing = false;
-      save();
-    });
-    resizer.addEventListener('pointercancel', () => { resizing = false; });
-
-    // Select when clicked (but allow typing)
-    el.addEventListener('mousedown', () => selectNote(note.id));
-
-    // Attach
-    note.el = el;
-    notes.set(note.id, note);
-    content.appendChild(el);
-
-    if (!opts.skipSave) save();
-    return note;
-  }
-
-  // Create note button
-  newBtn.addEventListener('click', () => {
-    const center = screenToWorld(
-      viewport.getBoundingClientRect().left + viewport.clientWidth/2,
-      viewport.getBoundingClientRect().top + viewport.clientHeight/2
-    );
-    const n = createNote({ x: center.x - 130, y: center.y - 100 });
-    bringToFront(n);
-    n.el.querySelector('textarea').focus();
-  });
-
-  // Double-click background to create note at cursor
-  viewport.addEventListener('dblclick', (e) => {
-    if (e.target !== viewport) return;
-    const w = screenToWorld(e.clientX, e.clientY);
-    const n = createNote({ x: w.x - 130, y: w.y - 90 });
-    bringToFront(n);
-    n.el.querySelector('textarea').focus();
-  });
-
-  // Clear all
-  clearBtn.addEventListener('click', () => {
-    if (!confirm('Delete all notes in this browser?')) return;
-    notes.forEach(n => n.el.remove());
-    notes.clear();
-    localStorage.removeItem(LS_KEY);
-    selectedId = null;
-  });
-
-  // Delete selected with Backspace/Delete (when not typing)
-  window.addEventListener('keydown', (e) => {
-    const active = document.activeElement;
-    const typing = active && active.tagName === 'TEXTAREA';
-    if (typing) return;
-
-    if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId){
-      const n = notes.get(selectedId);
-      if (n){
-        notes.delete(n.id);
-        n.el.remove();
-        selectedId = null;
-        save();
-      }
-    }
-  });
-
-  // Start
-  applyView();
-  load();
-
-  // If first run, create a starter note
-  if (notes.size === 0){
-    const n = createNote({ x: 220, y: 160, text: 'Double-click to add notes.\nDrag header to move.\nCorner to resize.\nWheel to zoom.' });
-    bringToFront(n);
-    save();
-  }
-})();
-</script>
+        init();
+    </script>
 </body>
 </html>
