@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smooth Board V7</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticky Board V7.1</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -12,13 +12,15 @@
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #f3f4f6; overflow: hidden; /* Prevent body bounce */
+            background: #f3f4f6; 
+            /* Removed overflow:hidden to allow the browser to handle the large canvas */
         }
 
         #canvas {
             width: 3000px; height: 3000px;
             position: relative;
-            touch-action: none; /* Block browser scroll on the whole board */
+            /* Changed: Allow panning/zooming on the background, but NOT on the notes */
+            touch-action: pan-x pan-y pinch-zoom; 
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 30px 30px;
         }
@@ -28,7 +30,8 @@
             background: #fff9c4; border-radius: 12px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             display: flex; flex-direction: column;
-            touch-action: none; /* Block browser scroll on the note */
+            /* Notes remain 'none' so dragging doesn't scroll the page */
+            touch-action: none; 
             z-index: 1; border: 1px solid rgba(0,0,0,0.05);
             user-select: none;
         }
@@ -50,7 +53,6 @@
             font-size: 24px; cursor: pointer; z-index: 10;
         }
 
-        /* Responsive Menu */
         .note-menu {
             display: none; position: absolute; top: 45px; right: 10px;
             background: white; border-radius: 12px;
@@ -63,7 +65,7 @@
         .dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; }
 
         .controls { position: fixed; bottom: 30px; right: 30px; z-index: 1000; }
-        .add-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #111; color: white; font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .add-btn { width: 60px; height: 60px; border-radius: 50%; border: none; background: #111; color: white; font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer;}
     </style>
 </head>
 <body>
@@ -72,7 +74,7 @@
     <div id="canvas"></div>
 
     <script>
-        let notes = JSON.parse(localStorage.getItem('sticky_smooth_v7') || '[]');
+        let notes = JSON.parse(localStorage.getItem('sticky_smooth_v7_1') || '[]');
         const colors = ['#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf', '#f1f1f1'];
 
         function init() {
@@ -89,7 +91,6 @@
             div.style.height = (note.h || 180) + 'px';
             div.style.backgroundColor = note.color || colors[0];
             
-            // Critical for position tracking
             div.setAttribute('data-x', note.x);
             div.setAttribute('data-y', note.y);
 
@@ -109,7 +110,6 @@
             document.getElementById('canvas').appendChild(div);
             setupInteract(div, note.id);
 
-            // Logic for Menu and Input
             div.querySelector('.menu-trigger').onclick = (e) => {
                 e.stopPropagation();
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
@@ -122,11 +122,6 @@
             interact(el).draggable({
                 allowFrom: '.drag-handle',
                 listeners: {
-                    start(event) {
-                        // "Nuclear" fix: Tell the browser to stop whatever it's doing
-                        event.interaction.pointerEvents = 'none';
-                        el.style.zIndex = 1000;
-                    },
                     move(event) {
                         const x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
                         const y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
@@ -135,7 +130,6 @@
                         el.setAttribute('data-y', y);
                     },
                     end(event) {
-                        el.style.zIndex = 1;
                         updateNoteData(id, { x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y')) });
                     }
                 }
@@ -153,7 +147,6 @@
             });
         }
 
-        // --- Core Helpers ---
         function createNewNote() {
             const last = notes[notes.length - 1];
             const note = { id: Date.now(), content: "", x: (last?.x || 10)+20, y: (last?.y || 10)+20, w: 220, h: 180, color: colors[0] };
@@ -178,10 +171,9 @@
 
         window.deleteNote = (e, id) => {
             e.stopPropagation();
-            if(confirm("Delete?")) {
-                notes = notes.filter(n => n.id !== id);
-                document.getElementById(`note-${id}`).remove(); save();
-            }
+            // Removed confirmation as requested
+            notes = notes.filter(n => n.id !== id);
+            document.getElementById(`note-${id}`).remove(); save();
         };
 
         function updateNoteData(id, data) {
@@ -190,7 +182,7 @@
             save();
         }
 
-        function save() { localStorage.setItem('sticky_smooth_v7', JSON.stringify(notes)); }
+        function save() { localStorage.setItem('sticky_smooth_v7_1', JSON.stringify(notes)); }
 
         document.addEventListener('click', () => document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none'));
         
