@@ -3,168 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Infinite Board</title>
+    <title>Pro Sticky Board</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-            --bg-color: #e5e5f7;
-            --dot-color: #cbcbcb;
+            --bg-color: #f0f2f5;
+            --accent: #3b82f6;
+            --handle-size: 20px;
         }
 
         body, html {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
-            overflow: hidden; /* Prevents browser scroll */
             background-color: var(--bg-color);
-            background-image: radial-gradient(var(--dot-color) 1px, transparent 0);
-            background-size: 30px 30px; /* Blueprint/Grid look */
-            font-family: 'sans-serif';
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
 
         #canvas {
-            width: 5000px; height: 5000px; /* Large workspace */
+            width: 5000px; height: 5000px;
             position: relative;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
         .note {
             position: absolute;
-            background: #fff9c4;
-            width: 200px; height: 150px;
-            padding: 10px;
-            box-shadow: 3px 3px 10px rgba(0,0,0,0.15);
+            background: #fff9c4; /* Default yellow */
+            min-width: 150px; min-height: 120px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             display: flex; flex-direction: column;
-            cursor: grab;
-            resize: both; /* Native browser resizing */
-            overflow: auto;
-            min-width: 100px; min-height: 80px;
+            cursor: move;
+            border-radius: 4px;
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 0;
         }
-
-        .note:active { cursor: grabbing; }
 
         .note textarea {
-            flex-grow: 1; border: none; background: transparent;
-            resize: none; outline: none; font-size: 14px;
+            flex-grow: 1;
+            padding: 25px 15px 15px 15px;
+            border: none;
+            background: transparent;
+            resize: none;
+            outline: none;
+            font-size: 16px;
+            cursor: text;
         }
 
-        .controls {
-            position: fixed; bottom: 20px; left: 20px;
-            display: flex; gap: 10px; z-index: 100;
+        /* Top Menu Trigger */
+        .menu-trigger {
+            position: absolute; top: 5px; right: 5px;
+            width: 24px; height: 24px;
+            cursor: pointer; text-align: center;
+            line-height: 20px; font-weight: bold;
+            color: rgba(0,0,0,0.3);
+            z-index: 10;
         }
 
-        button {
-            padding: 10px 20px; border-radius: 8px; border: none;
-            background: #333; color: white; cursor: pointer;
-            font-weight: bold;
+        .menu-trigger:hover { color: #000; }
+
+        /* Dropdown Menu */
+        .note-menu {
+            display: none;
+            position: absolute; top: 25px; right: 5px;
+            background: white; border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 20; border: 1px solid #ddd;
+            width: 120px;
         }
 
-        .delete-btn {
-            position: absolute; top: 2px; right: 5px;
-            font-size: 12px; color: #999; cursor: pointer;
+        .note-menu div {
+            padding: 8px 12px; font-size: 12px; cursor: pointer;
         }
+
+        .note-menu div:hover { background: #f0f0f0; }
+
+        /* Color Options Submenu */
+        .color-picker { display: flex; gap: 5px; padding: 8px !important; }
+        .dot { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+
+        .resizer {
+            width: var(--handle-size); height: var(--handle-size);
+            background: var(--accent); position: absolute;
+            right: 0; bottom: 0; cursor: nwse-resize;
+            border-radius: 4px 0 4px 0; clip-path: polygon(100% 0, 100% 100%, 0 100%);
+        }
+
+        .controls { position: fixed; top: 20px; left: 20px; z-index: 1000; }
+        .add-btn { padding: 12px 24px; border-radius: 12px; border: none; background: var(--accent); color: white; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
     <div class="controls">
-        <button onclick="addNote()">+ New Note</button>
-        <small>Drag notes by the edges. Resize from bottom-right.</small>
+        <button class="add-btn" onclick="addNote()">+ New Sticky</button>
     </div>
 
     <div id="canvas"></div>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        let notes = JSON.parse(localStorage.getItem('sticky_v2') || '[]');
+        let notes = JSON.parse(localStorage.getItem('sticky_v4') || '[]');
+        const colors = ['#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf', '#f1f1f1'];
 
         function init() {
             notes.forEach(renderNote);
-            // Center the view initially
-            window.scrollTo(2200, 2200);
+            window.scrollTo(2300, 2300);
         }
 
         function renderNote(note) {
             const div = document.createElement('div');
             div.className = 'note';
+            div.id = `note-${note.id}`;
             div.style.left = note.x + 'px';
             div.style.top = note.y + 'px';
-            div.style.width = (note.w || 200) + 'px';
-            div.style.height = (note.h || 150) + 'px';
+            div.style.width = (note.w || 220) + 'px';
+            div.style.height = (note.h || 180) + 'px';
+            div.style.backgroundColor = note.color || colors[0];
 
             div.innerHTML = `
-                <span class="delete-btn" onclick="deleteNote(${note.id}, this.parentElement)">✕</span>
-                <textarea oninput="updateContent(${note.id}, this.value)">${note.content}</textarea>
+                <div class="menu-trigger">⋮</div>
+                <div class="note-menu">
+                    <div class="color-picker">
+                        ${colors.map(c => `<div class="dot" style="background:${c}" onclick="changeColor(${note.id}, '${c}')"></div>`).join('')}
+                    </div>
+                    <div onclick="downloadNote(${note.id})">Download PNG</div>
+                    <div style="color:red" onclick="deleteNote(${note.id})">Delete</div>
+                </div>
+                <textarea spellcheck="false" placeholder="Type here...">${note.content}</textarea>
+                <div class="resizer"></div>
             `;
 
-            // Dragging Logic
-            div.onmousedown = function(e) {
-                if (e.target.tagName === 'TEXTAREA' || e.target.className === 'delete-btn') return;
-                
-                let shiftX = e.clientX - div.getBoundingClientRect().left;
-                let shiftY = e.clientY - div.getBoundingClientRect().top;
+            const menuTrigger = div.querySelector('.menu-trigger');
+            const menu = div.querySelector('.note-menu');
+            const textarea = div.querySelector('textarea');
+            const resizer = div.querySelector('.resizer');
 
-                function moveAt(pageX, pageY) {
-                    let newX = pageX - shiftX + window.scrollX;
-                    let newY = pageY - shiftY + window.scrollY;
-                    div.style.left = newX + 'px';
-                    div.style.top = newY + 'px';
-                    updatePos(note.id, newX, newY);
-                }
-
-                function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
-                document.addEventListener('mousemove', onMouseMove);
-                
-                document.onmouseup = function() {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.onmouseup = null;
-                };
+            // Toggle Menu
+            menuTrigger.onclick = (e) => {
+                e.stopPropagation();
+                const isVisible = menu.style.display === 'block';
+                document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
+                menu.style.display = isVisible ? 'none' : 'block';
             };
 
-            // Resize Observer to save dimensions
-            const ro = new ResizeObserver(entries => {
-                for (let entry of entries) {
-                    updateSize(note.id, entry.contentRect.width, entry.contentRect.height);
-                }
-            });
-            ro.observe(div);
+            // Dragging Logic
+            div.onmousedown = (e) => {
+                if (e.target.tagName === 'TEXTAREA' || e.target.closest('.note-menu') || e.target === menuTrigger || e.target === resizer) return;
+                let startX = e.clientX, startY = e.clientY, origX = div.offsetLeft, origY = div.offsetTop;
+                const onMove = (m) => {
+                    div.style.left = (origX + m.clientX - startX) + 'px';
+                    div.style.top = (origY + m.clientY - startY) + 'px';
+                };
+                const onUp = () => {
+                    updateNoteData(note.id, { x: div.offsetLeft, y: div.offsetTop });
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            };
 
-            canvas.appendChild(div);
+            // Resizing Logic
+            resizer.onmousedown = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                let startW = div.offsetWidth, startH = div.offsetHeight, startX = e.clientX, startY = e.clientY;
+                const onMove = (m) => {
+                    div.style.width = (startW + m.clientX - startX) + 'px';
+                    div.style.height = (startH + m.clientY - startY) + 'px';
+                };
+                const onUp = () => {
+                    updateNoteData(note.id, { w: div.offsetWidth, h: div.offsetHeight });
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            };
+
+            textarea.oninput = (e) => updateNoteData(note.id, { content: e.target.value });
+            document.getElementById('canvas').appendChild(div);
         }
+
+        // --- FUNCTIONS ---
+
+        window.changeColor = (id, color) => {
+            const el = document.getElementById(`note-${id}`);
+            el.style.backgroundColor = color;
+            updateNoteData(id, { color: color });
+        };
+
+        window.downloadNote = (id) => {
+            const el = document.getElementById(`note-${id}`);
+            const menu = el.querySelector('.note-menu');
+            const trigger = el.querySelector('.menu-trigger');
+            
+            // Hide menu elements for the "photo"
+            menu.style.display = 'none';
+            trigger.style.visibility = 'hidden';
+
+            html2canvas(el).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `note-${id}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                trigger.style.visibility = 'visible';
+            });
+        };
+
+        window.deleteNote = (id) => {
+            if(confirm("Delete this note?")) {
+                notes = notes.filter(n => n.id !== id);
+                document.getElementById(`note-${id}`).remove();
+                save();
+            }
+        };
 
         function addNote() {
-            const newNote = {
-                id: Date.now(),
-                content: "",
-                x: window.scrollX + 100,
-                y: window.scrollY + 100,
-                w: 200, h: 150
-            };
-            notes.push(newNote);
+            const note = { id: Date.now(), content: "", x: window.scrollX + 250, y: window.scrollY + 250, w: 220, h: 180, color: colors[0] };
+            notes.push(note);
             save();
-            renderNote(newNote);
+            renderNote(note);
         }
 
-        function updateContent(id, text) {
-            notes.find(n => n.id === id).content = text;
+        function updateNoteData(id, data) {
+            const note = notes.find(n => n.id === id);
+            if(note) Object.assign(note, data);
             save();
         }
 
-        function updatePos(id, x, y) {
-            const n = notes.find(n => n.id === id);
-            n.x = x; n.y = y;
-            save();
-        }
+        function save() { localStorage.setItem('sticky_v4', JSON.stringify(notes)); }
 
-        function updateSize(id, w, h) {
-            const n = notes.find(n => n.id === id);
-            if(n) { n.w = w; n.h = h; save(); }
-        }
-
-        function deleteNote(id, el) {
-            notes = notes.filter(n => n.id !== id);
-            save();
-            el.remove();
-        }
-
-        function save() { localStorage.setItem('sticky_v2', JSON.stringify(notes)); }
+        // Close menus when clicking background
+        window.onclick = () => document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
 
         init();
     </script>
