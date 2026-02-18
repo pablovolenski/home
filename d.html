@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Board V12</title>
+    <title>Pro Board V13</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -34,69 +34,64 @@
 
         /* --- Card Container --- */
         .card {
-            position: absolute; min-width: 150px; min-height: 100px;
+            position: absolute; min-width: 180px; min-height: 140px;
             background: white; border-radius: 12px; box-shadow: 0 8px 20px -5px rgba(0,0,0,0.15);
             display: flex; flex-direction: column; 
-            touch-action: none; /* Prevents scroll while dragging card */
-            border: 1px solid rgba(0,0,0,0.05);
+            touch-action: none; 
+            z-index: 1; border: 1px solid rgba(0,0,0,0.05);
             user-select: none;
         }
 
-        /* Drag Handle (Top Bar) */
-        .card-header { height: 35px; width: 100%; cursor: move; border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0; background: #fafafa; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
-        .drag-icon { color: #ccc; font-size: 12px; letter-spacing: 2px; }
+        /* DYNAMIC HEADER: Uses transparency to darken the card color */
+        .card-header { 
+            height: 35px; width: 100%; cursor: move; 
+            background: rgba(0, 0, 0, 0.06); /* This makes it slightly darker than the card */
+            border-radius: 12px 12px 0 0; 
+            display: flex; justify-content: space-between; align-items: center; padding: 0 10px; 
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .drag-icon { color: rgba(0,0,0,0.3); font-size: 12px; letter-spacing: 2px; }
         
-        /* Content Areas */
         .note-content { flex-grow: 1; border: none; background: transparent; padding: 15px; outline: none; resize: none; font-size: 16px; width: 100%; }
 
-        /* --- The Table Grid System --- */
-        .table-layout {
-            display: grid;
-            grid-template-columns: 25px 1fr 25px; /* Left control, Table, Right control */
-            grid-template-rows: 25px 1fr 25px;    /* Top control, Table, Bottom control */
-            width: 100%; height: 100%;
-            padding: 5px;
-            gap: 2px;
+        /* --- Table Styling --- */
+        .table-container { 
+            flex-grow: 1; position: relative; padding: 25px; /* Padding for buttons */
+            display: flex; justify-content: center; align-items: center;
         }
+        table { border-collapse: collapse; width: 100%; height: 100%; table-layout: fixed; }
+        td { border: 1px solid rgba(0,0,0,0.2); position: relative; }
+        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; text-align: center; font-size: 14px; padding: 4px; }
 
-        /* Table Cells */
-        .grid-center { grid-column: 2; grid-row: 2; overflow: auto; border: 1px solid #eee; }
-        table { border-collapse: collapse; width: 100%; height: 100%; }
-        td { border: 1px solid #ddd; min-width: 40px; height: 30px; position: relative; }
-        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; text-align: center; font-size: 14px; padding: 0; margin: 0; }
-
-        /* Small Icons Styling */
-        .t-btn {
+        /* Minimalist Edge Buttons */
+        .edge-btn {
+            position: absolute; width: 20px; height: 20px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: bold; cursor: pointer; color: white;
-            border-radius: 4px; width: 100%; height: 100%;
+            font-size: 16px; cursor: pointer; color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
         }
-        .t-add { background: var(--accent); opacity: 0.8; }
-        .t-del { background: var(--danger); opacity: 0.8; }
-        .t-btn:active { opacity: 1; transform: scale(0.95); }
+        /* Positions */
+        .btn-add-col { right: 2px; top: 50%; transform: translateY(-50%); background: var(--accent); }
+        .btn-add-row { bottom: 2px; left: 50%; transform: translateX(-50%); background: var(--accent); }
+        .btn-del-col { top: 2px; right: 2px; background: var(--danger); font-size: 12px; } /* Top right corner */
+        .btn-del-row { bottom: 2px; left: 2px; background: var(--danger); font-size: 12px; } /* Bottom left corner */
 
-        /* Icon Positioning in Grid */
-        .btn-col-add { grid-column: 3; grid-row: 2; align-self: center; height: 40px; border-radius: 0 12px 12px 0; }
-        .btn-col-del { grid-column: 2; grid-row: 1; justify-self: right; width: 40px; border-radius: 12px 12px 0 0; }
-        .btn-row-add { grid-column: 2; grid-row: 3; justify-self: center; width: 40px; border-radius: 0 0 12px 12px; }
-        .btn-row-del { grid-column: 1; grid-row: 2; align-self: top; height: 40px; border-radius: 12px 0 0 12px; }
-
-        /* --- Resizing Handle --- */
+        /* --- Resize Handle --- */
         .resize-handle {
             position: absolute; right: 0; bottom: 0;
-            width: 35px; height: 35px;
+            width: 40px; height: 40px; /* Big touch target */
             cursor: nwse-resize; z-index: 50;
-            touch-action: none;
             display: flex; align-items: flex-end; justify-content: flex-end;
-            padding: 6px;
+            padding: 8px;
         }
         .resize-icon {
             width: 12px; height: 12px;
-            border-right: 3px solid #999; border-bottom: 3px solid #999;
+            border-right: 3px solid rgba(0,0,0,0.3); border-bottom: 3px solid rgba(0,0,0,0.3);
         }
 
         /* --- Menus --- */
-        .menu-trigger { cursor: pointer; color: #999; font-size: 20px; padding: 0 5px; }
+        .menu-trigger { cursor: pointer; color: rgba(0,0,0,0.4); font-size: 20px; padding: 0 5px; }
         .note-menu { 
             display: none; position: absolute; top: 40px; right: 10px; background: white; 
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: 1px solid #eee;
@@ -105,8 +100,6 @@
         .color-row { display: flex; justify-content: space-evenly; padding: 10px; background: #f8f8f8; }
         .dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #ccc; cursor: pointer; }
         .menu-item { padding: 12px; font-size: 14px; border-top: 1px solid #eee; cursor: pointer; }
-        .menu-item:active { background: #f0f0f0; }
-
     </style>
 </head>
 <body>
@@ -122,7 +115,7 @@
     <div id="canvas"></div>
 
     <script>
-        let cards = JSON.parse(localStorage.getItem('sticky_v12') || '[]');
+        let cards = JSON.parse(localStorage.getItem('sticky_v13') || '[]');
         const colors = ['#ffffff', '#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf'];
 
         function init() { cards.forEach(renderCard); }
@@ -136,28 +129,25 @@
             const div = document.createElement('div');
             div.className = 'card';
             div.id = `card-${data.id}`;
-            div.style.width = (data.w || 220) + 'px';
-            div.style.height = (data.h || 180) + 'px';
+            div.style.width = (data.w || 240) + 'px';
+            div.style.height = (data.h || 200) + 'px';
             div.style.transform = `translate(${data.x}px, ${data.y}px)`;
+            // Background color applied to main card; header will darken it automatically
             div.style.backgroundColor = data.color || (data.type === 'note' ? '#fff9c4' : '#ffffff');
             div.setAttribute('data-x', data.x);
             div.setAttribute('data-y', data.y);
 
-            // --- Generate Inner HTML ---
             let contentHtml = '';
             if (data.type === 'note') {
                 contentHtml = `<textarea class="note-content" oninput="updateCard(${data.id}, {content: this.value})">${data.content || ''}</textarea>`;
             } else {
                 contentHtml = `
-                    <div class="table-layout">
-                        <div class="t-btn t-del btn-col-del" onclick="delCol(${data.id})">−</div>
-                        <div class="t-btn t-del btn-row-del" onclick="delRow(${data.id})">−</div>
-                        <div class="t-btn t-add btn-col-add" onclick="addCol(${data.id})">+</div>
-                        <div class="t-btn t-add btn-row-add" onclick="addRow(${data.id})">+</div>
-                        
-                        <div class="grid-center">
-                            <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
-                        </div>
+                    <div class="table-container">
+                        <div class="edge-btn btn-del-col" onclick="delCol(${data.id})">−</div>
+                        <div class="edge-btn btn-del-row" onclick="delRow(${data.id})">−</div>
+                        <div class="edge-btn btn-add-col" onclick="addCol(${data.id})">+</div>
+                        <div class="edge-btn btn-add-row" onclick="addRow(${data.id})">+</div>
+                        <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
                     </div>`;
             }
 
@@ -178,7 +168,6 @@
             document.getElementById('canvas').appendChild(div);
             setupInteract(div, data.id);
 
-            // Toggle Menu
             div.querySelector('.menu-trigger').onclick = (e) => {
                 e.stopPropagation();
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
@@ -186,12 +175,11 @@
             };
         }
 
-        // --- INTERACT.JS LOGIC ---
         function setupInteract(el, id) {
             interact(el)
             .draggable({
-                allowFrom: '.card-header', // Only drag from top bar
-                ignoreFrom: '.menu-trigger',
+                allowFrom: '.card-header',
+                ignoreFrom: '.menu-trigger', // Don't drag when clicking menu
                 listeners: {
                     move(event) {
                         const target = event.target;
@@ -207,11 +195,10 @@
                 }
             })
             .resizable({
-                edges: { right: true, bottom: true }, // Logic edges
-                allowFrom: '.resize-handle', // Actual touch target
+                edges: { right: true, bottom: true },
+                allowFrom: '.resize-handle', // Critical: only the bottom-right corner triggers resize
                 listeners: {
                     move(event) {
-                        let { x, y } = event.target.dataset;
                         Object.assign(event.target.style, {
                             width: `${event.rect.width}px`,
                             height: `${event.rect.height}px`
@@ -227,7 +214,6 @@
             });
         }
 
-        // --- TABLE LOGIC ---
         function generateTableHTML(rows, cols) {
             let html = '';
             for(let i=0; i<rows; i++) {
@@ -268,29 +254,7 @@
         };
 
         function saveTable(id) {
-            const table = document.getElementById(`table-${id}`);
-            updateCard(id, { content: table.innerHTML });
-        }
-
-        // --- CORE FUNCTIONS ---
-        function addCard(type) {
-            const id = Date.now();
-            // Spawns near center of screen approx
-            const startX = Math.abs(window.scrollX) + 50;
-            const startY = Math.abs(window.scrollY) + 80;
-            
-            const data = { 
-                id, type, 
-                x: startX, y: startY, 
-                w: 240, h: 200, 
-                content: type === 'table' ? generateTableHTML(3, 2) : '' 
-            };
-            cards.push(data); save(); renderCard(data); toggleFab();
-        }
-
-        function updateCard(id, newData) {
-            const card = cards.find(c => c.id === id);
-            if(card) { Object.assign(card, newData); save(); }
+            updateCard(id, { content: document.getElementById(`table-${id}`).innerHTML });
         }
 
         window.changeColor = (e, id, color) => {
@@ -299,17 +263,28 @@
             updateCard(id, { color });
         };
 
+        function addCard(type) {
+            const id = Date.now();
+            const startX = Math.abs(window.scrollX) + 50;
+            const startY = Math.abs(window.scrollY) + 80;
+            const data = { id, type, x: startX, y: startY, w: 240, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
+            cards.push(data); save(); renderCard(data); toggleFab();
+        }
+
+        function updateCard(id, newData) {
+            const card = cards.find(c => c.id === id);
+            if(card) { Object.assign(card, newData); save(); }
+        }
+
         window.downloadCard = (id) => {
             const el = document.getElementById(`card-${id}`);
-            // Hide UI
-            el.querySelectorAll('.note-menu, .resize-handle, .t-btn, .card-header').forEach(i => i.style.visibility = 'hidden');
-            el.style.border = 'none'; el.style.boxShadow = 'none';
+            el.querySelectorAll('.note-menu, .resize-handle, .edge-btn, .card-header').forEach(i => i.style.visibility = 'hidden');
+            el.style.boxShadow = 'none'; el.style.border = 'none';
 
             html2canvas(el, { backgroundColor: null, scale: 2 }).then(canvas => {
                 const a = document.createElement('a'); a.download = `card-${id}.png`; a.href = canvas.toDataURL(); a.click();
-                // Restore UI
-                el.querySelectorAll('.note-menu, .resize-handle, .t-btn, .card-header').forEach(i => i.style.visibility = 'visible');
-                el.style.border = ''; el.style.boxShadow = '';
+                el.querySelectorAll('.note-menu, .resize-handle, .edge-btn, .card-header').forEach(i => i.style.visibility = 'visible');
+                el.style.boxShadow = ''; el.style.border = '';
             });
         };
 
@@ -318,9 +293,8 @@
             document.getElementById(`card-${id}`).remove(); save();
         };
 
-        function save() { localStorage.setItem('sticky_v12', JSON.stringify(cards)); }
+        function save() { localStorage.setItem('sticky_v13', JSON.stringify(cards)); }
         
-        // Auto-save typing in table
         document.addEventListener('input', (e) => {
             if(e.target.closest('table')) saveTable(parseInt(e.target.closest('.card').id.split('-')[1]));
         });
