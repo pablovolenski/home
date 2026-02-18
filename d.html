@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Pro Board V14</title>
+    <title>Pro Board V15</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --accent: #333; --bg: #f3f4f6; }
+        :root { --bg: #f3f4f6; --header-bg: rgba(0,0,0,0.06); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            /* Allow scrolling on body */
+            background: var(--bg); font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow: auto; 
         }
 
         #canvas {
             width: 4000px; height: 4000px; position: relative;
-            /* Allow panning and zooming on the canvas background */
             touch-action: pan-x pan-y pinch-zoom; 
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
-        /* --- Floating Action Button --- */
+        /* --- FAB --- */
         .fab-container { position: fixed; top: 20px; left: 20px; z-index: 2000; }
         .fab-main { 
             width: 50px; height: 50px; background: #222; color: white; border-radius: 50%; 
@@ -39,79 +37,87 @@
             display: flex; align-items: center; gap: 10px; border: 1px solid #eee;
         }
 
-        /* --- Card Container --- */
+        /* --- Card --- */
         .card {
-            position: absolute; min-width: 180px; min-height: 140px;
+            position: absolute; min-width: 180px; min-height: 150px;
             background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             display: flex; flex-direction: column; 
-            /* Prevent dragging the card from scrolling the page */
-            touch-action: none; 
-            z-index: 1; border: 1px solid rgba(0,0,0,0.05);
+            touch-action: none; z-index: 1; border: 1px solid rgba(0,0,0,0.05);
         }
 
-        /* Header (Darker Overlay) */
         .card-header { 
-            height: 32px; width: 100%; cursor: move; 
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 12px 12px 0 0; 
+            height: 32px; width: 100%; cursor: move; flex-shrink: 0;
+            background: var(--header-bg); border-radius: 12px 12px 0 0; 
             display: flex; justify-content: space-between; align-items: center; padding: 0 10px; 
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         .drag-icon { color: rgba(0,0,0,0.2); font-size: 14px; letter-spacing: 2px; }
-        
-        .note-content { flex-grow: 1; border: none; background: transparent; padding: 15px; outline: none; resize: none; font-size: 16px; width: 100%; }
 
-        /* --- Table Styling --- */
-        .table-wrapper { 
-            display: flex; flex-direction: column; height: 100%; width: 100%;
+        /* --- Content Layout --- */
+        /* This ensures content grows to fill the resized card */
+        .card-body {
+            flex-grow: 1; display: flex; flex-direction: column;
+            overflow: hidden; position: relative; height: 100%;
         }
-        
-        /* Discreet Toolbar */
+
+        .note-content { 
+            width: 100%; height: 100%; border: none; background: transparent; 
+            padding: 15px; outline: none; resize: none; font-size: 16px; 
+        }
+
+        /* --- Table Layout (Flexbox + Height 100%) --- */
         .table-tools {
-            display: flex; gap: 10px; padding: 6px 10px;
-            background: rgba(255,255,255,0.5);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            font-size: 11px; color: #666; font-weight: 600;
-            justify-content: center;
+            flex-shrink: 0; display: flex; gap: 10px; padding: 6px 10px;
+            background: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 11px; color: #555; font-weight: 600; justify-content: center;
         }
         .tool-group { display: flex; align-items: center; gap: 4px; }
         .tool-btn { 
-            cursor: pointer; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.05); 
-            transition: 0.2s;
+            cursor: pointer; padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); 
         }
         .tool-btn:hover { background: rgba(0,0,0,0.1); color: #000; }
-        .tool-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; opacity: 0.7; }
 
-        .table-container { flex-grow: 1; padding: 5px; overflow: auto; }
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-        td { border: 1px solid rgba(0,0,0,0.15); position: relative; height: 30px; }
-        td input { width: 100%; height: 100%; border: none; outline: none; background: transparent; text-align: center; font-size: 14px; padding: 0; color: #333; }
+        .table-inner { flex-grow: 1; position: relative; overflow: auto; display: flex; }
+        
+        table { 
+            width: 100%; height: 100%; /* Critical: Forces table to fill the div */
+            border-collapse: collapse; table-layout: fixed; 
+        }
+        
+        td { 
+            border: 1px solid rgba(0,0,0,0.15); 
+            height: 1px; /* Critical Hack: Forces cells to distribute height evenly */
+            padding: 0; position: relative;
+        }
+        
+        td input { 
+            width: 100%; height: 100%; /* Input fills the cell completely */
+            border: none; outline: none; background: transparent; 
+            text-align: center; font-size: 15px; color: #333;
+            display: block; padding: 5px;
+        }
 
         /* --- Resize Handle --- */
         .resize-handle {
             position: absolute; right: 0; bottom: 0;
-            width: 35px; height: 35px; /* Large touch target */
-            cursor: nwse-resize; z-index: 50;
-            display: flex; align-items: flex-end; justify-content: flex-end;
-            padding: 6px;
+            width: 40px; height: 40px; cursor: nwse-resize; z-index: 50;
+            display: flex; align-items: flex-end; justify-content: flex-end; padding: 6px;
         }
         .resize-icon {
-            width: 10px; height: 10px;
+            width: 12px; height: 12px;
             border-right: 2px solid rgba(0,0,0,0.3); border-bottom: 2px solid rgba(0,0,0,0.3);
         }
 
-        /* --- Menus --- */
+        /* --- Menu --- */
         .menu-trigger { cursor: pointer; color: rgba(0,0,0,0.3); font-size: 18px; padding: 0 5px; }
-        .menu-trigger:hover { color: #000; }
         .note-menu { 
             display: none; position: absolute; top: 35px; right: 5px; background: white; 
             border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 100; border: 1px solid #eee;
-            width: 150px; overflow: hidden;
+            width: 150px;
         }
         .color-row { display: flex; justify-content: space-evenly; padding: 8px; background: #fafafa; }
         .dot { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; }
         .menu-item { padding: 12px; font-size: 13px; border-top: 1px solid #f4f4f4; cursor: pointer; color: #444; }
-        .menu-item:active { background: #f0f0f0; }
 
     </style>
 </head>
@@ -128,7 +134,7 @@
     <div id="canvas"></div>
 
     <script>
-        let cards = JSON.parse(localStorage.getItem('sticky_v14') || '[]');
+        let cards = JSON.parse(localStorage.getItem('sticky_v15') || '[]');
         const colors = ['#ffffff', '#fff9c4', '#ffcfcf', '#cfd8ff', '#d1ffcf'];
 
         function init() { cards.forEach(renderCard); }
@@ -146,31 +152,20 @@
             div.style.height = (data.h || 180) + 'px';
             div.style.transform = `translate(${data.x}px, ${data.y}px)`;
             div.style.backgroundColor = data.color || (data.type === 'note' ? '#fff9c4' : '#ffffff');
-            
-            // Interaction Data
-            div.setAttribute('data-x', data.x);
-            div.setAttribute('data-y', data.y);
+            div.setAttribute('data-x', data.x); div.setAttribute('data-y', data.y);
 
             let contentHtml = '';
             if (data.type === 'note') {
-                contentHtml = `<textarea class="note-content" oninput="updateCard(${data.id}, {content: this.value})">${data.content || ''}</textarea>`;
+                contentHtml = `<div class="card-body"><textarea class="note-content" oninput="updateCard(${data.id}, {content: this.value})">${data.content || ''}</textarea></div>`;
             } else {
                 contentHtml = `
-                    <div class="table-wrapper">
+                    <div class="card-body">
                         <div class="table-tools">
-                            <div class="tool-group">
-                                <span class="tool-label">Row</span>
-                                <span class="tool-btn" onclick="addRow(${data.id})">+</span>
-                                <span class="tool-btn" onclick="delRow(${data.id})">−</span>
-                            </div>
+                            <div class="tool-group"><span class="tool-btn" onclick="addRow(${data.id})">+ Row</span><span class="tool-btn" onclick="delRow(${data.id})">−</span></div>
                             <div style="width:10px;"></div>
-                            <div class="tool-group">
-                                <span class="tool-label">Col</span>
-                                <span class="tool-btn" onclick="addCol(${data.id})">+</span>
-                                <span class="tool-btn" onclick="delCol(${data.id})">−</span>
-                            </div>
+                            <div class="tool-group"><span class="tool-btn" onclick="addCol(${data.id})">+ Col</span><span class="tool-btn" onclick="delCol(${data.id})">−</span></div>
                         </div>
-                        <div class="table-container">
+                        <div class="table-inner">
                             <table id="table-${data.id}">${data.content || generateTableHTML(3, 2)}</table>
                         </div>
                     </div>`;
@@ -193,7 +188,6 @@
             document.getElementById('canvas').appendChild(div);
             setupInteract(div, data.id);
 
-            // Menu Toggle
             div.querySelector('.menu-trigger').onclick = (e) => {
                 e.stopPropagation();
                 document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
@@ -208,16 +202,13 @@
                 ignoreFrom: '.menu-trigger',
                 listeners: {
                     move(event) {
-                        const target = event.target;
-                        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                        target.style.transform = `translate(${x}px, ${y}px)`;
-                        target.setAttribute('data-x', x);
-                        target.setAttribute('data-y', y);
+                        const t = event.target;
+                        const x = (parseFloat(t.getAttribute('data-x')) || 0) + event.dx;
+                        const y = (parseFloat(t.getAttribute('data-y')) || 0) + event.dy;
+                        t.style.transform = `translate(${x}px, ${y}px)`;
+                        t.setAttribute('data-x', x); t.setAttribute('data-y', y);
                     },
-                    end(event) {
-                        updateCard(id, { x: parseFloat(event.target.getAttribute('data-x')), y: parseFloat(event.target.getAttribute('data-y')) });
-                    }
+                    end(e) { updateCard(id, { x: parseFloat(e.target.getAttribute('data-x')), y: parseFloat(e.target.getAttribute('data-y')) }); }
                 }
             })
             .resizable({
@@ -225,22 +216,15 @@
                 allowFrom: '.resize-handle',
                 listeners: {
                     move(event) {
-                        Object.assign(event.target.style, {
-                            width: `${event.rect.width}px`,
-                            height: `${event.rect.height}px`
-                        });
+                        Object.assign(event.target.style, { width: `${event.rect.width}px`, height: `${event.rect.height}px` });
                     },
-                    end(event) {
-                        updateCard(id, { w: event.rect.width, h: event.rect.height });
-                    }
+                    end(event) { updateCard(id, { w: event.rect.width, h: event.rect.height }); }
                 },
-                modifiers: [
-                    interact.modifiers.restrictSize({ min: { width: 160, height: 120 } })
-                ]
+                modifiers: [ interact.modifiers.restrictSize({ min: { width: 160, height: 120 } }) ]
             });
         }
 
-        // --- Table Logic ---
+        // --- Logic ---
         function generateTableHTML(rows, cols) {
             let html = '';
             for(let i=0; i<rows; i++) {
@@ -252,44 +236,22 @@
         }
         function saveTable(id) { updateCard(id, { content: document.getElementById(`table-${id}`).innerHTML }); }
 
-        window.addCol = (id) => {
-            const table = document.getElementById(`table-${id}`);
-            Array.from(table.rows).forEach(row => row.insertCell().innerHTML = '<input type="text">');
-            saveTable(id);
-        };
-        window.addRow = (id) => {
-            const table = document.getElementById(`table-${id}`);
-            const newRow = table.insertRow();
-            for(let i=0; i<table.rows[0].cells.length; i++) newRow.insertCell().innerHTML = '<input type="text">';
-            saveTable(id);
-        };
-        window.delCol = (id) => {
-            const table = document.getElementById(`table-${id}`);
-            if(table.rows[0].cells.length > 1) { Array.from(table.rows).forEach(row => row.deleteCell(-1)); saveTable(id); }
-        };
-        window.delRow = (id) => {
-            const table = document.getElementById(`table-${id}`);
-            if(table.rows.length > 1) { table.deleteRow(-1); saveTable(id); }
-        };
+        window.addCol = (id) => { const t = document.getElementById(`table-${id}`); Array.from(t.rows).forEach(r => r.insertCell().innerHTML = '<input type="text">'); saveTable(id); };
+        window.addRow = (id) => { const t = document.getElementById(`table-${id}`); const r = t.insertRow(); for(let i=0; i<t.rows[0].cells.length; i++) r.insertCell().innerHTML = '<input type="text">'; saveTable(id); };
+        window.delCol = (id) => { const t = document.getElementById(`table-${id}`); if(t.rows[0].cells.length > 1) { Array.from(t.rows).forEach(r => r.deleteCell(-1)); saveTable(id); } };
+        window.delRow = (id) => { const t = document.getElementById(`table-${id}`); if(t.rows.length > 1) { t.deleteRow(-1); saveTable(id); } };
 
-        // --- Global Logic ---
-        window.changeColor = (e, id, color) => {
-            e.stopPropagation();
-            document.getElementById(`card-${id}`).style.backgroundColor = color;
-            updateCard(id, { color });
-        };
+        window.changeColor = (e, id, c) => { e.stopPropagation(); document.getElementById(`card-${id}`).style.backgroundColor = c; updateCard(id, { color: c }); };
         
         function addCard(type) {
             const id = Date.now();
-            const startX = window.scrollX + 50;
-            const startY = window.scrollY + 80;
-            const data = { id, type, x: startX, y: startY, w: 220, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
+            const data = { id, type, x: window.scrollX + 50, y: window.scrollY + 80, w: 220, h: 200, content: type === 'table' ? generateTableHTML(3, 2) : '' };
             cards.push(data); save(); renderCard(data); toggleFab();
         }
 
-        function updateCard(id, newData) {
-            const card = cards.find(c => c.id === id);
-            if(card) { Object.assign(card, newData); save(); }
+        function updateCard(id, data) {
+            const c = cards.find(x => x.id === id);
+            if(c) { Object.assign(c, data); save(); }
         }
 
         window.downloadCard = (id) => {
@@ -303,19 +265,11 @@
             });
         };
 
-        window.deleteCard = (id) => {
-            cards = cards.filter(c => c.id !== id);
-            document.getElementById(`card-${id}`).remove(); save();
-        };
+        window.deleteCard = (id) => { cards = cards.filter(c => c.id !== id); document.getElementById(`card-${id}`).remove(); save(); };
+        function save() { localStorage.setItem('sticky_v15', JSON.stringify(cards)); }
 
-        function save() { localStorage.setItem('sticky_v14', JSON.stringify(cards)); }
-
-        document.addEventListener('input', (e) => {
-            if(e.target.closest('table')) saveTable(parseInt(e.target.closest('.card').id.split('-')[1]));
-        });
-        document.addEventListener('click', (e) => {
-            if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none');
-        });
+        document.addEventListener('input', (e) => { if(e.target.closest('table')) saveTable(parseInt(e.target.closest('.card').id.split('-')[1])); });
+        document.addEventListener('click', (e) => { if(!e.target.closest('.menu-trigger')) document.querySelectorAll('.note-menu').forEach(m => m.style.display = 'none'); });
 
         init();
     </script>
