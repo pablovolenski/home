@@ -2,103 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JS Paint - Retro Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minimalist JS Paint</title>
     <style>
         :root {
-            --win-grey: #c0c0c0;
-            --win-white: #ffffff;
-            --win-dark: #808080;
-            --win-black: #000000;
-            --win-blue: #000080;
+            --ui-grey: #c0c0c0;
+            --shadow: #808080;
+            --light: #ffffff;
         }
 
-        body {
-            background-color: #008080; /* Classic Teal Desktop */
+        body, html {
             margin: 0;
-            padding: 10px;
-            font-family: "MS Sans Serif", Tahoma, sans-serif;
-            display: flex;
-            justify-content: center;
-            height: 95vh;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            background: var(--shadow);
+            font-family: 'Courier New', Courier, monospace;
         }
 
-        /* Window Container */
-        .window {
-            background: var(--win-grey);
-            border: 2px solid;
-            border-color: var(--win-white) var(--win-dark) var(--win-dark) var(--win-white);
+        .app-container {
             display: flex;
             flex-direction: column;
-            width: 100%;
-            max-width: 1000px;
-            box-shadow: 2px 2px 0 var(--win-black);
+            width: 100vw;
+            height: 100vh;
         }
 
-        /* Title Bar */
-        .title-bar {
-            background: var(--win-blue);
-            color: white;
-            padding: 3px 5px;
+        /* Top Toolbar */
+        .toolbar {
+            background: var(--ui-grey);
+            border-bottom: 2px solid var(--shadow);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            font-size: 14px;
+            flex-wrap: wrap;
+            padding: 5px;
+            gap: 5px;
+            z-index: 10;
         }
 
-        /* Menu Bar */
-        .menu-bar {
-            padding: 2px 5px;
-            display: flex;
-            gap: 10px;
-            font-size: 12px;
-            border-bottom: 1px solid var(--win-dark);
-        }
-
-        .main-area {
-            display: flex;
-            flex: 1;
-            padding: 4px;
-            gap: 4px;
-            overflow: hidden;
-        }
-
-        /* Toolbox */
-        .toolbox {
-            width: 50px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-auto-rows: 25px;
-            gap: 2px;
-            background: var(--win-grey);
-        }
-
-        .tool-btn {
-            border: 1px solid;
-            border-color: var(--win-white) var(--win-dark) var(--win-dark) var(--win-white);
-            background: var(--win-grey);
+        .btn {
+            background: var(--ui-grey);
+            border: 2px solid;
+            border-color: var(--light) var(--shadow) var(--shadow) var(--light);
+            padding: 5px 10px;
             cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
         }
 
-        .tool-btn.active {
-            border-color: var(--win-dark) var(--win-white) var(--win-white) var(--win-dark);
-            background: #e0e0e0;
-            outline: 1px dotted black;
+        .btn:active, .btn.active {
+            border-color: var(--shadow) var(--light) var(--light) var(--shadow);
+            background: #d0d0d0;
         }
 
-        /* Canvas Wrapper */
-        .canvas-container {
-            flex: 1;
-            background: var(--win-dark);
-            border: 2px inset var(--win-white);
-            overflow: auto;
+        /* Canvas Area */
+        .canvas-wrapper {
+            flex-grow: 1;
             position: relative;
+            background: var(--shadow);
+            overflow: auto;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -106,182 +68,215 @@
 
         canvas {
             background: white;
+            image-rendering: pixelated;
             cursor: crosshair;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.2);
         }
 
-        /* Color Palette */
-        .bottom-bar {
-            padding: 5px;
-            background: var(--win-grey);
-            border-top: 1px solid var(--win-dark);
+        /* Bottom Palette */
+        .palette-bar {
+            background: var(--ui-grey);
+            border-top: 2px solid var(--shadow);
+            padding: 8px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .current-colors {
-            width: 30px;
-            height: 30px;
-            border: 2px inset white;
-            background: black;
-        }
-
-        .palette {
+        .colors {
             display: grid;
-            grid-template-columns: repeat(14, 15px);
-            grid-template-rows: repeat(2, 15px);
-            gap: 1px;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2px;
         }
 
-        .color-swatch {
-            width: 15px;
-            height: 15px;
+        .swatch {
+            width: 20px;
+            height: 20px;
             border: 1px inset white;
             cursor: pointer;
         }
 
-        /* Responsive adjustments */
+        input[type="file"] { display: none; }
+
+        .floating-text {
+            position: absolute;
+            border: 1px dotted black;
+            background: transparent;
+            min-width: 50px;
+            outline: none;
+            padding: 2px;
+        }
+
         @media (max-width: 600px) {
-            .toolbox { width: 30px; grid-template-columns: 1fr; }
-            .palette { grid-template-columns: repeat(7, 20px); }
+            .btn { padding: 4px 6px; font-size: 10px; }
+            .swatch { width: 15px; height: 15px; }
         }
     </style>
 </head>
 <body>
 
-<div class="window">
-    <div class="title-bar">
-        <span>untitled - Paint</span>
-        <div style="font-size: 10px;">[ _ ] [ □ ] [ X ]</div>
-    </div>
-    
-    <div class="menu-bar">
-        <span>File</span> <span>Edit</span> <span>View</span> <span>Image</span> <span>Help</span>
-    </div>
-
-    <div class="main-area">
-        <div class="toolbox">
-            <button class="tool-btn active" onclick="setTool('brush')" title="Brush">🖌️</button>
-            <button class="tool-btn" onclick="setTool('eraser')" title="Eraser">🧽</button>
-            <button class="tool-btn" onclick="clearCanvas()" title="Clear">🗑️</button>
-            <button class="tool-btn" onclick="saveImage()" title="Save">💾</button>
-        </div>
-
-        <div class="canvas-container" id="container">
-            <canvas id="paintCanvas"></canvas>
-        </div>
+<div class="app-container">
+    <div class="toolbar">
+        <button class="btn active" onclick="setMode('brush')">Pencil</button>
+        <button class="btn" onclick="setMode('rect')">Rect</button>
+        <button class="btn" onclick="setMode('circle')">Circle</button>
+        <button class="btn" onclick="setMode('text')">Text</button>
+        <button class="btn" onclick="fillCanvas()">Fill</button>
+        <button class="btn" onclick="document.getElementById('imgInput').click()">Img</button>
+        <button class="btn" onclick="clearCanvas()">Clear</button>
+        <button class="btn" onclick="save()">Save</button>
+        <input type="file" id="imgInput" accept="image/*">
     </div>
 
-    <div class="bottom-bar">
-        <div class="current-colors" id="activeColor"></div>
-        <div class="palette" id="palette"></div>
-        <input type="range" id="sizeSlider" min="1" max="20" value="5" title="Brush Size">
+    <div class="canvas-wrapper" id="wrapper">
+        <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <div class="palette-bar">
+        <div id="activeIndicator" style="width:20px; height:20px; background:black; border:2px solid white;"></div>
+        <div class="colors" id="palette"></div>
+        <input type="range" id="brushSize" min="1" max="20" value="3">
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('paintCanvas');
+    const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    const container = document.getElementById('container');
-    const activeColorDiv = document.getElementById('activeColor');
-    const sizeSlider = document.getElementById('sizeSlider');
+    const wrapper = document.getElementById('wrapper');
+    const palette = document.getElementById('palette');
+    const activeIndicator = document.getElementById('activeIndicator');
+    const imgInput = document.getElementById('imgInput');
 
     let drawing = false;
-    let tool = 'brush';
-    let currentColor = '#000000';
+    let mode = 'brush';
+    let color = '#000000';
+    let startX, startY;
+    let snapshot;
 
-    // Initialize Canvas Size
-    function initCanvas() {
-        canvas.width = container.clientWidth - 20;
-        canvas.height = container.clientHeight - 20;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        // Set white background initially
+    const colors = [
+        '#000000', '#FFFFFF', '#808080', '#C0C0C0', 
+        '#FF0000', '#800000', '#FFFF00', '#808000', 
+        '#00FF00', '#008000', '#00FFFF', '#008080', 
+        '#0000FF', '#000080', '#FF00FF', '#800080',
+        '#FFA500', '#A52A2A', '#FFC0CB', '#7FFFD4'
+    ];
+
+    function init() {
+        canvas.width = window.innerWidth;
+        canvas.height = wrapper.clientHeight;
         ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.lineCap = 'square';
+        
+        colors.forEach(c => {
+            const s = document.createElement('div');
+            s.className = 'swatch';
+            s.style.background = c;
+            s.onclick = () => { color = c; activeIndicator.style.background = c; };
+            palette.appendChild(s);
+        });
+    }
+
+    function setMode(m) {
+        mode = m;
+        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return [clientX - rect.left, clientY - rect.top];
+    }
+
+    canvas.onmousedown = canvas.ontouchstart = (e) => {
+        drawing = true;
+        [startX, startY] = getCoords(e);
+        snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        if (mode === 'text') {
+            addTextInput(startX, startY);
+            drawing = false;
+        }
+    };
+
+    window.onmousemove = window.ontouchmove = (e) => {
+        if (!drawing) return;
+        const [currX, currY] = getCoords(e);
+        ctx.putImageData(snapshot, 0, 0);
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = document.getElementById('brushSize').value;
+
+        if (mode === 'brush') {
+            ctx.lineTo(currX, currY);
+            ctx.stroke();
+            snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        } else if (mode === 'rect') {
+            ctx.strokeRect(startX, startY, currX - startX, currY - startY);
+        } else if (mode === 'circle') {
+            ctx.beginPath();
+            let r = Math.sqrt(Math.pow(currX - startX, 2) + Math.pow(currY - startY, 2));
+            ctx.arc(startX, startY, r, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+    };
+
+    window.onmouseup = window.ontouchend = () => {
+        drawing = false;
+        ctx.beginPath();
+    };
+
+    function addTextInput(x, y) {
+        const input = document.createElement('div');
+        input.contentEditable = true;
+        input.className = 'floating-text';
+        input.style.left = x + 'px';
+        input.style.top = y + (canvas.offsetTop) + 'px';
+        input.style.color = color;
+        input.style.fontSize = (document.getElementById('brushSize').value * 5) + 'px';
+        wrapper.appendChild(input);
+        input.focus();
+        
+        input.onblur = () => {
+            ctx.fillStyle = color;
+            ctx.font = input.style.fontSize + " Courier New";
+            ctx.fillText(input.innerText, x, y + parseInt(input.style.fontSize));
+            input.remove();
+        };
+    }
+
+    imgInput.onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                // Low quality effect: scale down then up
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(img, 50, 50, 200, 200);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    function fillCanvas() {
+        ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Tools logic
-    function setTool(newTool) {
-        tool = newTool;
-        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-    }
+    function clearCanvas() { ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
 
-    // Drawing Logic
-    function startPosition(e) {
-        drawing = true;
-        draw(e);
-    }
-
-    function finishedPosition() {
-        drawing = false;
-        ctx.beginPath();
-    }
-
-    function draw(e) {
-        if (!drawing) return;
-
-        // Get correct coordinates relative to canvas
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-
-        ctx.lineWidth = sizeSlider.value;
-        ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : currentColor;
-
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    }
-
-    // Color Palette Setup
-    const colors = [
-        '#000000', '#808080', '#800000', '#808000', '#008000', '#008080', '#000080', '#800080', '#808040', '#004040', '#0080FF', '#004080', '#4000FF', '#804000',
-        '#FFFFFF', '#C0C0C0', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FFFF80', '#00FF80', '#80FFFF', '#8080FF', '#FF0080', '#FF8040'
-    ];
-
-    const paletteContainer = document.getElementById('palette');
-    colors.forEach(color => {
-        const swatch = document.createElement('div');
-        swatch.className = 'color-swatch';
-        swatch.style.backgroundColor = color;
-        swatch.onclick = () => {
-            currentColor = color;
-            activeColorDiv.style.backgroundColor = color;
-            if(tool === 'eraser') setTool('brush');
-        };
-        paletteContainer.appendChild(swatch);
-    });
-
-    function clearCanvas() {
-        if(confirm("Clear your masterpiece?")) {
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-
-    function saveImage() {
+    function save() {
         const link = document.createElement('a');
-        link.download = 'my-art.png';
+        link.download = 'art.png';
         link.href = canvas.toDataURL();
         link.click();
     }
 
-    // Event Listeners
-    canvas.addEventListener('mousedown', startPosition);
-    canvas.addEventListener('mouseup', finishedPosition);
-    canvas.addEventListener('mousemove', draw);
-    
-    // Touch support
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPosition(e); });
-    canvas.addEventListener('touchend', finishedPosition);
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-
-    window.addEventListener('resize', initCanvas);
-    initCanvas();
+    window.onresize = init;
+    init();
 </script>
 
 </body>
