@@ -11,7 +11,8 @@
       --surface: #ffffff;
       --text: #27272a;
       --text-muted: #a1a1aa;
-      --primary: #3b82f6;
+      --primary: #16a34a; /* Changed to Green */
+      --primary-hover: #15803d; /* Darker green for hover */
       --danger: #ef4444;
       --border: #e4e4e7;
     }
@@ -46,40 +47,97 @@
       background: var(--surface); 
     }
     
-    .saved-notes { 
+    .top-actions { 
       display: flex; 
-      gap: 8px; 
-      overflow-x: auto; 
-      scrollbar-width: none; 
-      flex-grow: 1; 
-      margin-right: 12px; 
+      gap: 12px; 
+      align-items: center; 
     }
     
-    .saved-notes::-webkit-scrollbar { display: none; }
+    /* Expandable Notes Panel */
+    .notes-panel {
+      display: none; /* Hidden by default */
+      padding: 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .notes-panel.open {
+      display: block;
+    }
+
+    .saved-notes { 
+      display: flex; 
+      flex-wrap: wrap; /* Allows pills to wrap naturally instead of scrolling */
+      gap: 8px; 
+    }
     
     .note-pill { 
       padding: 6px 14px; 
       font-size: 13px; 
-      background: var(--bg); 
+      background: var(--surface); 
       border: 1px solid var(--border); 
-      border-radius: 20px; 
+      border-radius: 0; /* Rectangles */
       cursor: pointer; 
-      white-space: nowrap; 
       color: var(--text); 
       transition: all 0.2s;
     }
     
+    .note-pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
     .note-pill.active { 
       background: var(--primary); 
       color: white; 
       border-color: var(--primary); 
     }
     
-    .top-actions { display: flex; gap: 12px; align-items: center; }
-    
+    /* Standard Buttons */
+    .btn {
+      padding: 8px 16px; 
+      border-radius: 0; /* Rectangles */
+      font-size: 14px; 
+      cursor: pointer; 
+      font-weight: 500; 
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .btn:hover {
+      background: var(--bg);
+    }
+
+    .btn-primary { 
+      background: var(--primary); 
+      color: white; 
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover { 
+      background: var(--primary-hover); 
+      border-color: var(--primary-hover);
+      color: white;
+    }
+
+    #delete-btn {
+      background: transparent;
+      color: var(--danger);
+      border-color: var(--border);
+    }
+
+    #delete-btn:hover {
+      background: #fef2f2;
+      border-color: var(--danger);
+    }
+
+    /* Action Icon Buttons */
     .action-btn { 
       background: none; 
       border: none; 
+      border-radius: 0;
       font-size: 20px; 
       cursor: pointer; 
       color: var(--text-muted); 
@@ -88,6 +146,22 @@
     
     .action-btn:hover { color: var(--primary); }
 
+    /* Download button with discrete white margin */
+    #download-btn {
+      background: var(--bg);
+      border: 3px solid #ffffff; /* The discrete white margin */
+      box-shadow: 0 0 0 1px var(--border); /* A faint outer line to make the white pop */
+      padding: 2px 10px;
+      font-size: 16px;
+      margin-left: 4px;
+    }
+    
+    #download-btn:hover {
+      color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    /* Editor Layout */
     .editor { 
       display: flex; 
       flex-direction: column; 
@@ -128,38 +202,6 @@
       color: var(--text-muted); 
     }
 
-    .bottom-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn {
-      padding: 10px 20px; 
-      border-radius: 8px; 
-      font-size: 14px; 
-      cursor: pointer; 
-      font-weight: 500; 
-      transition: all 0.2s;
-      border: none;
-    }
-    
-    #save-btn { 
-      background: var(--primary); 
-      color: white; 
-    }
-    #save-btn:hover { background: #2563eb; }
-
-    #delete-btn {
-      background: transparent;
-      color: var(--danger);
-      border: 1px solid var(--border);
-    }
-    #delete-btn:hover {
-      background: #fef2f2;
-      border-color: var(--danger);
-    }
-
-    /* Loading state for saving/syncing */
     .loading { opacity: 0.5; pointer-events: none; }
   </style>
 </head>
@@ -167,13 +209,18 @@
 
   <div class="app-container">
     <header class="top-bar">
-      <div class="saved-notes" id="saved-notes">Loading notes...</div>
+      <button id="toggle-notes-btn" class="btn">☰ Notes</button>
       
       <div class="top-actions">
         <button id="new-btn" class="action-btn" title="Create New Note">＋</button>
+        <button id="save-btn" class="btn btn-primary">Save</button>
         <button id="download-btn" class="action-btn" title="Download all notes as JSON">↓</button>
       </div>
     </header>
+
+    <div id="notes-panel" class="notes-panel">
+      <div class="saved-notes" id="saved-notes">Loading notes...</div>
+    </div>
     
     <main class="editor">
       <input type="text" id="note-title" placeholder="Note Title">
@@ -181,24 +228,23 @@
       
       <div class="status-bar">
         <span id="last-saved"></span>
-        <div class="bottom-actions">
-          <button id="delete-btn" class="btn" style="display: none;">Delete</button>
-          <button id="save-btn" class="btn">Save</button>
-        </div>
+        <button id="delete-btn" class="btn" style="display: none;">Delete Note</button>
       </div>
     </main>
   </div>
 
   <script>
     // --- INSERT YOUR JSONBIN CREDENTIALS HERE ---
-    const BIN_ID = '69978e9043b1c97be98c8f3e'; 
-    const API_KEY = '$2a$10$E4z8VdkmPaSv1dUTQJKH6.myc0Ex5Cs1jIQZgZOY9bgIU72cPiefu'; 
+    const BIN_ID = 'YOUR_BIN_ID_HERE'; 
+    const API_KEY = 'YOUR_MASTER_API_KEY_HERE'; 
     // --------------------------------------------
 
     const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     const ui = {
       savedNotes: document.getElementById('saved-notes'),
+      notesPanel: document.getElementById('notes-panel'),
+      toggleNotesBtn: document.getElementById('toggle-notes-btn'),
       titleInput: document.getElementById('note-title'),
       contentInput: document.getElementById('note-content'),
       saveBtn: document.getElementById('save-btn'),
@@ -212,6 +258,11 @@
     let notes = [];
     let currentId = null;
 
+    // Toggle Notes Panel visibility
+    ui.toggleNotesBtn.addEventListener('click', () => {
+      ui.notesPanel.classList.toggle('open');
+    });
+
     async function fetchNotesFromServer() {
       try {
         const response = await fetch(URL, {
@@ -220,7 +271,6 @@
         });
         const data = await response.json();
         
-        // JSONBin wraps the data in a "record" object
         notes = data.record || []; 
         
         renderNotesBar();
@@ -261,7 +311,13 @@
         const pill = document.createElement('button');
         pill.className = `note-pill ${note.id === currentId ? 'active' : ''}`;
         pill.textContent = note.title || 'Untitled';
-        pill.onclick = () => loadNote(note.id);
+        pill.onclick = () => {
+          loadNote(note.id);
+          // Optional: Auto-close the panel after selecting a note on mobile
+          if (window.innerWidth < 600) {
+            ui.notesPanel.classList.remove('open');
+          }
+        };
         ui.savedNotes.appendChild(pill);
       });
       ui.deleteBtn.style.display = currentId ? 'block' : 'none';
@@ -295,7 +351,7 @@
           notes[index].text = text;
           notes[index].lastSavedTime = timeString;
           const [updatedNote] = notes.splice(index, 1);
-          notes.unshift(updatedNote); // Move to front
+          notes.unshift(updatedNote); 
         }
       }
 
@@ -316,7 +372,7 @@
       
       await syncToServer();
       
-      ui.deleteBtn.textContent = "Delete";
+      ui.deleteBtn.textContent = "Delete Note";
       if (notes.length > 0) {
         loadNote(notes[0].id);
       } else {
@@ -338,7 +394,6 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes, null, 2));
       const now = new Date();
       
-      // Clean up the date string so it's safe for filenames
       const timeStr = now.toLocaleString().replace(/[\/:]/g, '-').replace(',', '');
       const fileName = `online Noten von ${timeStr}.json`;
       
@@ -356,7 +411,7 @@
     ui.newBtn.addEventListener('click', createNewNote);
     ui.downloadBtn.addEventListener('click', downloadJSON);
 
-    // Initial Setup: Fetch from Cloud
+    // Initial Setup
     fetchNotesFromServer();
   </script>
 </body>
