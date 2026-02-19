@@ -3,51 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minimalist JS Paint</title>
+    <title>Retro Paint - Minimal</title>
     <style>
         :root {
-            --ui-grey: #c0c0c0;
+            --ui-bg: #c0c0c0;
             --shadow: #808080;
             --light: #ffffff;
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
             overflow: hidden;
             background: var(--shadow);
-            font-family: 'Courier New', Courier, monospace;
+            font-family: sans-serif;
+            display: flex; flex-direction: column;
         }
 
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        /* Top Toolbar */
+        /* Toolbar pinned to top */
         .toolbar {
-            background: var(--ui-grey);
+            background: var(--ui-bg);
             border-bottom: 2px solid var(--shadow);
             display: flex;
+            padding: 4px;
+            gap: 4px;
+            z-index: 100;
             flex-wrap: wrap;
-            padding: 5px;
-            gap: 5px;
-            z-index: 10;
         }
 
         .btn {
-            background: var(--ui-grey);
+            background: var(--ui-bg);
             border: 2px solid;
             border-color: var(--light) var(--shadow) var(--shadow) var(--light);
-            padding: 5px 10px;
+            padding: 6px 12px;
             cursor: pointer;
-            font-size: 12px;
-            text-transform: uppercase;
+            font-size: 11px;
             font-weight: bold;
+            text-transform: uppercase;
         }
 
         .btn:active, .btn.active {
@@ -55,12 +47,11 @@
             background: #d0d0d0;
         }
 
-        /* Canvas Area */
-        .canvas-wrapper {
+        /* Canvas Container */
+        #container {
             flex-grow: 1;
             position: relative;
-            background: var(--shadow);
-            overflow: auto;
+            background: #555;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -70,82 +61,65 @@
             background: white;
             image-rendering: pixelated;
             cursor: crosshair;
-            box-shadow: 5px 5px 0px rgba(0,0,0,0.2);
         }
 
-        /* Bottom Palette */
-        .palette-bar {
-            background: var(--ui-grey);
+        /* Palette pinned to bottom */
+        .palette {
+            background: var(--ui-bg);
             border-top: 2px solid var(--shadow);
-            padding: 8px;
             display: flex;
+            padding: 6px;
+            gap: 8px;
             align-items: center;
-            gap: 10px;
         }
 
-        .colors {
+        .colors-grid {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
+            grid-template-columns: repeat(10, 1fr);
             gap: 2px;
         }
 
         .swatch {
-            width: 20px;
-            height: 20px;
+            width: 18px; height: 18px;
             border: 1px inset white;
             cursor: pointer;
         }
 
-        input[type="file"] { display: none; }
-
-        .floating-text {
-            position: absolute;
-            border: 1px dotted black;
-            background: transparent;
-            min-width: 50px;
-            outline: none;
-            padding: 2px;
-        }
-
-        @media (max-width: 600px) {
-            .btn { padding: 4px 6px; font-size: 10px; }
-            .swatch { width: 15px; height: 15px; }
+        #activeColor {
+            width: 30px; height: 30px;
+            border: 2px inset white;
+            background: black;
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="toolbar">
-        <button class="btn active" onclick="setMode('brush')">Pencil</button>
-        <button class="btn" onclick="setMode('rect')">Rect</button>
-        <button class="btn" onclick="setMode('circle')">Circle</button>
-        <button class="btn" onclick="setMode('text')">Text</button>
-        <button class="btn" onclick="fillCanvas()">Fill</button>
-        <button class="btn" onclick="document.getElementById('imgInput').click()">Img</button>
-        <button class="btn" onclick="clearCanvas()">Clear</button>
-        <button class="btn" onclick="save()">Save</button>
-        <input type="file" id="imgInput" accept="image/*">
-    </div>
+<div class="toolbar">
+    <button class="btn active" onclick="setMode('brush')">Pencil</button>
+    <button class="btn" onclick="setMode('rect')">Rect</button>
+    <button class="btn" onclick="setMode('circle')">Circle</button>
+    <button class="btn" onclick="fillCanvas()">Fill</button>
+    <button class="btn" onclick="clearCanvas()">Clear</button>
+    <button class="btn" onclick="save()">Save</button>
+    <span style="font-size: 10px; margin-left: auto; align-self: center; padding-right: 10px;">Paste (Ctrl+V) enabled</span>
+</div>
 
-    <div class="canvas-wrapper" id="wrapper">
-        <canvas id="mainCanvas"></canvas>
-    </div>
+<div id="container">
+    <canvas id="paintCanvas"></canvas>
+</div>
 
-    <div class="palette-bar">
-        <div id="activeIndicator" style="width:20px; height:20px; background:black; border:2px solid white;"></div>
-        <div class="colors" id="palette"></div>
-        <input type="range" id="brushSize" min="1" max="20" value="3">
-    </div>
+<div class="palette">
+    <div id="activeColor"></div>
+    <div class="colors-grid" id="swatches"></div>
+    <input type="range" id="size" min="1" max="25" value="4">
 </div>
 
 <script>
-    const canvas = document.getElementById('mainCanvas');
+    const canvas = document.getElementById('paintCanvas');
     const ctx = canvas.getContext('2d');
-    const wrapper = document.getElementById('wrapper');
-    const palette = document.getElementById('palette');
-    const activeIndicator = document.getElementById('activeIndicator');
-    const imgInput = document.getElementById('imgInput');
+    const container = document.getElementById('container');
+    const swatches = document.getElementById('swatches');
+    const activeCol = document.getElementById('activeColor');
 
     let drawing = false;
     let mode = 'brush';
@@ -154,28 +128,27 @@
     let snapshot;
 
     const colors = [
-        '#000000', '#FFFFFF', '#808080', '#C0C0C0', 
-        '#FF0000', '#800000', '#FFFF00', '#808000', 
-        '#00FF00', '#008000', '#00FFFF', '#008080', 
-        '#0000FF', '#000080', '#FF00FF', '#800080',
-        '#FFA500', '#A52A2A', '#FFC0CB', '#7FFFD4'
+        '#000000', '#ffffff', '#808080', '#c0c0c0', '#ff0000', '#800000', 
+        '#ffff00', '#808000', '#00ff00', '#008000', '#00ffff', '#008080', 
+        '#0000ff', '#000080', '#ff00ff', '#800080', '#ffa500', '#a52a2a', '#ffc0cb', '#4b0082'
     ];
 
     function init() {
         canvas.width = window.innerWidth;
-        canvas.height = wrapper.clientHeight;
+        canvas.height = container.clientHeight;
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.lineCap = 'square';
-        
-        colors.forEach(c => {
-            const s = document.createElement('div');
-            s.className = 'swatch';
-            s.style.background = c;
-            s.onclick = () => { color = c; activeIndicator.style.background = c; };
-            palette.appendChild(s);
-        });
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
     }
+
+    colors.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'swatch';
+        div.style.background = c;
+        div.onclick = () => { color = c; activeCol.style.background = c; };
+        swatches.appendChild(div);
+    });
 
     function setMode(m) {
         mode = m;
@@ -183,31 +156,25 @@
         event.target.classList.add('active');
     }
 
-    function getCoords(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return [clientX - rect.left, clientY - rect.top];
+    function getXY(e) {
+        const r = canvas.getBoundingClientRect();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        return [cx - r.left, cy - r.top];
     }
 
     canvas.onmousedown = canvas.ontouchstart = (e) => {
         drawing = true;
-        [startX, startY] = getCoords(e);
+        [startX, startY] = getXY(e);
         snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        
-        if (mode === 'text') {
-            addTextInput(startX, startY);
-            drawing = false;
-        }
     };
 
     window.onmousemove = window.ontouchmove = (e) => {
         if (!drawing) return;
-        const [currX, currY] = getCoords(e);
+        const [currX, currY] = getXY(e);
         ctx.putImageData(snapshot, 0, 0);
         ctx.strokeStyle = color;
-        ctx.fillStyle = color;
-        ctx.lineWidth = document.getElementById('brushSize').value;
+        ctx.lineWidth = document.getElementById('size').value;
 
         if (mode === 'brush') {
             ctx.lineTo(currX, currY);
@@ -216,9 +183,9 @@
         } else if (mode === 'rect') {
             ctx.strokeRect(startX, startY, currX - startX, currY - startY);
         } else if (mode === 'circle') {
+            const rad = Math.sqrt((currX - startX)**2 + (currY - startY)**2);
             ctx.beginPath();
-            let r = Math.sqrt(Math.pow(currX - startX, 2) + Math.pow(currY - startY, 2));
-            ctx.arc(startX, startY, r, 0, 2 * Math.PI);
+            ctx.arc(startX, startY, rad, 0, Math.PI * 2);
             ctx.stroke();
         }
     };
@@ -228,49 +195,35 @@
         ctx.beginPath();
     };
 
-    function addTextInput(x, y) {
-        const input = document.createElement('div');
-        input.contentEditable = true;
-        input.className = 'floating-text';
-        input.style.left = x + 'px';
-        input.style.top = y + (canvas.offsetTop) + 'px';
-        input.style.color = color;
-        input.style.fontSize = (document.getElementById('brushSize').value * 5) + 'px';
-        wrapper.appendChild(input);
-        input.focus();
-        
-        input.onblur = () => {
-            ctx.fillStyle = color;
-            ctx.font = input.style.fontSize + " Courier New";
-            ctx.fillText(input.innerText, x, y + parseInt(input.style.fontSize));
-            input.remove();
-        };
-    }
-
-    imgInput.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                // Low quality effect: scale down then up
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(img, 50, 50, 200, 200);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    };
+    // INVISIBLE PASTE FUNCTIONALITY
+    window.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                const img = new Image();
+                img.onload = () => {
+                    ctx.imageSmoothingEnabled = false; // Keep it retro/crunchy
+                    ctx.drawImage(img, 20, 20); 
+                };
+                img.src = URL.createObjectURL(blob);
+            }
+        }
+    });
 
     function fillCanvas() {
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    function clearCanvas() { ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    function clearCanvas() {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     function save() {
         const link = document.createElement('a');
-        link.download = 'art.png';
+        link.download = 'pixel-art.png';
         link.href = canvas.toDataURL();
         link.click();
     }
