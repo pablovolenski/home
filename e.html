@@ -271,8 +271,8 @@
   <div class="app-container">
     <header class="top-bar">
       <div class="tabs">
-        <button id="tab-list-btn" class="tab-btn active">Files</button>
-        <button id="tab-editor-btn" class="tab-btn">Editor</button>
+        <button id="tab-list-btn" class="tab-btn">Files</button>
+        <button id="tab-editor-btn" class="tab-btn active">Editor</button>
       </div>
       
       <div class="top-actions">
@@ -282,7 +282,7 @@
       </div>
     </header>
 
-    <main id="view-list" class="view-container active">
+    <main id="view-list" class="view-container">
       <table>
         <thead>
           <tr>
@@ -298,7 +298,7 @@
       <div id="empty-state" class="empty-state" style="display: none;">No files saved yet.</div>
     </main>
     
-    <main id="view-editor" class="view-container">
+    <main id="view-editor" class="view-container active">
       <div class="editor-header-row">
         <input type="text" id="note-title" placeholder="Note Title">
         
@@ -391,7 +391,7 @@
 
     function setEditorMode(mode) {
       isCodeMode = mode === 'code';
-      ui.toggleModeCheckbox.checked = isCodeMode; // Sync the visual toggle state
+      ui.toggleModeCheckbox.checked = isCodeMode; 
       
       if (isCodeMode) {
         ui.plainTextArea.style.display = 'none';
@@ -415,6 +415,13 @@
         const data = await response.json();
         notes = data.record || []; 
         renderTable();
+        
+        // Auto-load the first note or open a blank one into the editor
+        if (notes.length > 0 && !currentId) {
+          loadNote(notes[0].id);
+        } else if (notes.length === 0) {
+          createNewNote();
+        }
       } catch (error) {
         console.error("Error loading notes:", error);
         alert("Error loading from cloud. Check your keys.");
@@ -527,7 +534,6 @@
       
       if (currentId === id) {
         createNewNote();
-        switchTab('list'); 
       } else {
         renderTable();
       }
