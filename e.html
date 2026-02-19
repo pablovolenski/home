@@ -376,12 +376,22 @@
         ui.viewEditor.classList.remove('active');
         ui.tabListBtn.classList.add('active');
         ui.tabEditorBtn.classList.remove('active');
+        
+        // Hide Save and Download buttons in List view
+        ui.saveBtn.style.display = 'none';
+        ui.downloadBtn.style.display = 'none';
+
         renderTable(); 
       } else {
         ui.viewList.classList.remove('active');
         ui.viewEditor.classList.add('active');
         ui.tabListBtn.classList.remove('active');
         ui.tabEditorBtn.classList.add('active');
+        
+        // Show Save and Download buttons in Editor view
+        ui.saveBtn.style.display = 'flex';
+        ui.downloadBtn.style.display = 'flex';
+
         setTimeout(() => editorInstance.refresh(), 10);
       }
     }
