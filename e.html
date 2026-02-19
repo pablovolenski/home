@@ -15,7 +15,8 @@
       --text: #27272a;
       --text-muted: #a1a1aa;
       --primary: #16a34a; /* Green */
-      --primary-hover: #15803d; /* Darker green */
+      --primary-hover: #15803d; 
+      --primary-light: #f0fdf4; /* Very light green for highlight */
       --danger: #ef4444;
       --border: #e4e4e7;
     }
@@ -41,28 +42,92 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
     }
 
-    /* Top Bar & Tabs */
+    /* Top Bar & True Tabs */
     .top-bar { 
       display: flex; 
       justify-content: space-between; 
-      align-items: center; 
-      padding: 12px 16px; 
+      align-items: flex-end; /* Aligns tabs to the bottom edge */
+      padding: 0 16px; 
       border-bottom: 1px solid var(--border); 
       background: var(--surface); 
+      height: 56px;
     }
 
     .tabs {
       display: flex;
-      gap: 8px;
+      height: 100%;
+    }
+    
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent; /* Hidden by default */
+      padding: 0 20px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text);
+      background: #fafafa;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary); /* Active tab indicator */
     }
     
     .top-actions { 
       display: flex; 
-      gap: 12px; 
+      gap: 16px; 
       align-items: center; 
+      padding-bottom: 12px; /* Keeps icons vertically centered */
     }
 
-    /* Standard Buttons (Rectangles) */
+    /* Action Icon Buttons */
+    .action-btn { 
+      background: none; 
+      border: none; 
+      font-size: 20px; 
+      cursor: pointer; 
+      color: var(--text-muted); 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s; 
+    }
+    .action-btn:hover { color: var(--text); }
+
+    /* Highlighted Save Icon */
+    #save-btn {
+      color: var(--primary);
+      background: var(--primary-light);
+      font-size: 22px;
+      padding: 4px 8px;
+      border-radius: 6px; /* Soft highlight shape */
+      border: 1px solid #bbf7d0; /* Very faint green border */
+    }
+    #save-btn:hover { 
+      background: #dcfce7;
+      color: var(--primary-hover); 
+    }
+
+    /* Download button with discrete white margin */
+    #download-btn {
+      background: var(--surface);
+      border: 3px solid #ffffff; 
+      box-shadow: 0 0 0 1px var(--border); 
+      padding: 2px 10px;
+      font-size: 16px;
+    }
+    #download-btn:hover { color: var(--text); box-shadow: 0 0 0 1px var(--text); }
+
+    /* Standard Rectangle Buttons (Inside Views) */
     .btn {
       padding: 8px 16px; 
       border-radius: 0; 
@@ -74,38 +139,9 @@
       background: var(--surface);
       color: var(--text);
     }
-
     .btn:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
-    .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-    
-    .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
-    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: white; }
-
     .btn-danger { color: var(--danger); border-color: var(--border); }
     .btn-danger:hover { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
-
-    /* Action Icon Buttons */
-    .action-btn { 
-      background: none; 
-      border: none; 
-      border-radius: 0;
-      font-size: 20px; 
-      cursor: pointer; 
-      color: var(--text-muted); 
-      transition: color 0.2s; 
-    }
-    .action-btn:hover { color: var(--primary); }
-
-    /* Download button with discrete white margin */
-    #download-btn {
-      background: var(--bg);
-      border: 3px solid #ffffff; 
-      box-shadow: 0 0 0 1px var(--border); 
-      padding: 2px 10px;
-      font-size: 16px;
-      margin-left: 4px;
-    }
-    #download-btn:hover { color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
 
     /* View Containers */
     .view-container {
@@ -118,15 +154,8 @@
     .view-container.active { display: flex; }
 
     /* Table Styles */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid var(--border);
-    }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border); }
     th { font-weight: 600; color: var(--text-muted); }
     tr:hover { background: #fafafa; }
     .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
@@ -189,13 +218,13 @@
   <div class="app-container">
     <header class="top-bar">
       <div class="tabs">
-        <button id="tab-list-btn" class="btn active">Files List</button>
-        <button id="tab-editor-btn" class="btn">Editor</button>
+        <button id="tab-list-btn" class="tab-btn active">Files</button>
+        <button id="tab-editor-btn" class="tab-btn">Editor</button>
       </div>
       
       <div class="top-actions">
         <button id="new-btn" class="action-btn" title="Create New Note">＋</button>
-        <button id="save-btn" class="btn btn-primary">Save</button>
+        <button id="save-btn" class="action-btn" title="Save Note">💾</button>
         <button id="download-btn" class="action-btn" title="Download all notes as JSON">↓</button>
       </div>
     </header>
@@ -241,10 +270,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 
   <script>
-    // --- INSERT YOUR JSONBIN CREDENTIALS HERE ---
-    const BIN_ID = 'YOUR_BIN_ID_HERE'; 
-    const API_KEY = 'YOUR_MASTER_API_KEY_HERE'; 
-    // --------------------------------------------
+    // Embedded Credentials
+    const BIN_ID = '69978e9043b1c97be98c8f3e'; 
+    const API_KEY = '$2a$10$E4z8VdkmPaSv1dUTQJKH6.myc0Ex5Cs1jIQZgZOY9bgIU72cPiefu'; 
 
     const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
@@ -269,33 +297,31 @@
 
     let notes = [];
     let currentId = null;
-    let isCodeMode = false; // Tracks if current editor is in Code mode
-    let editorInstance = null; // Holds the CodeMirror instance
+    let isCodeMode = false; 
+    let editorInstance = null; 
 
-    // Initialize CodeMirror
     function initCodeEditor() {
       editorInstance = CodeMirror.fromTextArea(ui.codeTextArea, {
         lineNumbers: true,
-        mode: "htmlmixed", // General purpose highlighting
+        mode: "htmlmixed", 
         theme: "default",
         lineWrapping: true
       });
     }
     initCodeEditor();
 
-    // Tab Navigation Logic
     function switchTab(tab) {
       if (tab === 'list') {
         ui.viewList.classList.add('active');
         ui.viewEditor.classList.remove('active');
         ui.tabListBtn.classList.add('active');
         ui.tabEditorBtn.classList.remove('active');
+        renderTable(); 
       } else {
         ui.viewList.classList.remove('active');
         ui.viewEditor.classList.add('active');
         ui.tabListBtn.classList.remove('active');
         ui.tabEditorBtn.classList.add('active');
-        // CodeMirror needs a refresh when unhidden to render correctly
         setTimeout(() => editorInstance.refresh(), 10);
       }
     }
@@ -303,7 +329,6 @@
     ui.tabListBtn.addEventListener('click', () => switchTab('list'));
     ui.tabEditorBtn.addEventListener('click', () => switchTab('editor'));
 
-    // Toggle Text / Code Mode
     function setEditorMode(mode) {
       isCodeMode = mode === 'code';
       if (isCodeMode) {
@@ -324,7 +349,6 @@
       setEditorMode(isCodeMode ? 'text' : 'code');
     });
 
-    // Cloud Data Functions
     async function fetchNotesFromServer() {
       try {
         const response = await fetch(URL, { method: 'GET', headers: { 'X-Master-Key': API_KEY } });
@@ -353,7 +377,6 @@
       }
     }
 
-    // Render Table View
     function renderTable() {
       ui.tbody.innerHTML = '';
       if (notes.length === 0) {
@@ -397,7 +420,6 @@
         ui.titleInput.value = note.title;
         ui.lastSavedStr.textContent = `Last saved: ${note.lastSavedTime}`;
         
-        // Load content into both editors, then set the correct mode
         ui.plainTextArea.value = note.text;
         editorInstance.setValue(note.text);
         setEditorMode(note.isCode ? 'code' : 'text');
@@ -407,9 +429,10 @@
     }
 
     async function saveNote() {
-      ui.saveBtn.textContent = "Saving...";
+      const originalIcon = ui.saveBtn.textContent;
+      ui.saveBtn.textContent = "⏳"; // Visual feedback while saving
+      
       const title = ui.titleInput.value.trim() || "Untitled";
-      // Grab text from whichever editor is currently active
       const text = isCodeMode ? editorInstance.getValue() : ui.plainTextArea.value;
       const now = new Date();
       const timeString = now.toLocaleString();
@@ -431,8 +454,9 @@
 
       await syncToServer();
       ui.lastSavedStr.textContent = `Saved: ${timeString}`;
-      ui.saveBtn.textContent = "Save";
-      renderTable();
+      
+      // Restore save icon
+      ui.saveBtn.textContent = originalIcon;
     }
 
     async function deleteNote(id) {
@@ -442,7 +466,6 @@
       notes = notes.filter(n => n.id !== id);
       await syncToServer();
       
-      // If the deleted note was open in the editor, clear it
       if (currentId === id) {
         createNewNote();
         switchTab('list'); 
@@ -457,7 +480,7 @@
       ui.plainTextArea.value = '';
       editorInstance.setValue('');
       ui.lastSavedStr.textContent = '';
-      setEditorMode('text'); // Default to text for new notes
+      setEditorMode('text'); 
       switchTab('editor');
       ui.titleInput.focus();
     }
