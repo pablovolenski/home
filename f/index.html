@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CollabCanvas - Create Room</title>
+    <style>
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 80%; margin: 10px 0; font-size: 1.1rem; text-align: center; }
+        button { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>CollabCanvas</h1>
+        <p>Enter the result to create a collaborative board:</p>
+        <h2 id="captcha-text"></h2>
+        <input type="number" id="captcha-input" placeholder="Result?">
+        <br>
+        <button id="create-btn" onclick="createRoom()" disabled>Create Workspace</button>
+    </div>
+
+    <script>
+        const a = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * 10) + 1;
+        const sum = a + b;
+        document.getElementById('captcha-text').innerText = `${a} + ${b} = ?`;
+
+        document.getElementById('captcha-input').oninput = function(e) {
+            document.getElementById('create-btn').disabled = (parseInt(e.target.value) !== sum);
+        };
+
+        function createRoom() {
+            const roomId = Math.random().toString(36).substring(2, 9);
+            window.location.href = `board.html?id=${roomId}`;
+        }
+    </script>
+</body>
+</html>
