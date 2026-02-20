@@ -9,42 +9,54 @@
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #e5e7eb; }
+        :root { --primary: #2563eb; --bg: #ffffff; --dot: #e5e7eb; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); touch-action: none; font-family: sans-serif; }
         #viewport { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
-        #tafel-container { width: 5000px; height: 5000px; position: absolute; top: 0; left: 0; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; transform-origin: 0 0; }
+        
+        /* White Dotted Background */
+        #tafel-container { 
+            width: 5000px; height: 5000px; position: absolute; top: 0; left: 0; 
+            background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px); 
+            background-size: 30px 30px; transform-origin: 0 0; 
+        }
+        
         #paint-layer { position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none; }
         #paint-layer.active { pointer-events: auto; cursor: crosshair; }
         
-        /* Top Bar */
+        /* UI Bars */
         .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 32px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; z-index: 2000; border-bottom: 1px solid #ddd; }
         .board-title { font-size: 11px; font-weight: bold; border: none; outline: none; width: 80px; }
-        .url-share-group { display: flex; align-items: center; gap: 4px; background: #f1f1f1; padding: 2px 6px; border-radius: 10px; }
+        .url-share-group { display: flex; align-items: center; gap: 4px; background: #f8f9fa; padding: 2px 6px; border-radius: 10px; border: 1px solid #eee; }
         .url-short { font-size: 9px; color: #777; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .share-icon { cursor: pointer; font-size: 10px; }
         .top-btns { display: flex; gap: 4px; }
         .top-btns button { font-size: 9px; padding: 1px 4px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 3px; }
 
-        /* Toolbar */
-        .toolbar { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: white; padding: 4px; border-radius: 20px; display: flex; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2000; border: 1px solid #ddd; }
+        .toolbar { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: white; padding: 4px; border-radius: 20px; display: flex; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2000; border: 1px solid #ddd; align-items: center; }
         .tool-btn { border: none; background: transparent; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
         .tool-btn.active { background: var(--primary); color: white; }
 
-        /* Card Controls */
+        /* Unified Card Styles */
         .card { position: absolute; border-radius: 3px; z-index: 10; border: 1px solid rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
         .handle { height: 16px; background: rgba(0,0,0,0.04); cursor: move; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
-        .mini-color-btn { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); cursor: pointer; position: relative; }
-        .color-popover { display: none; position: absolute; top: 12px; left: 0; background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px; gap: 4px; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* Color Controls */
+        .mini-color-btn { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); cursor: pointer; position: relative; }
+        .color-popover { display: none; position: absolute; top: 14px; left: 0; background: white; border: 1px solid #ddd; padding: 4px; border-radius: 4px; gap: 4px; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .mini-color-btn:focus .color-popover, .mini-color-btn:active .color-popover { display: flex; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+        .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
         .del-btn { color: #888; cursor: pointer; font-size: 12px; font-weight: bold; }
         
+        /* Objects */
         .card-content { padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; }
         textarea { width: 100%; border: none; outline: none; resize: none; font-size: 12px; background: transparent; padding: 2px; flex-grow: 1; line-height: 1.1; box-sizing: border-box; }
+        .line-obj { border: none; box-shadow: none; overflow: visible; background: transparent !important; }
+        .line-inner { width: 100%; height: 2px; background: black; transform-origin: left center; }
+        
         table { border-collapse: collapse; width: 100%; table-layout: fixed; }
         td { border: 1px solid rgba(0,0,0,0.05); height: 1.2em; }
         td input { width: 100%; border: none; outline: none; background: transparent; font-size: 11px; padding: 0 2px; height: 1.2em; display: block; }
-        .table-tools { display: flex; gap: 4px; font-size: 8px; color: var(--primary); padding: 1px 2px; background: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .table-tools { display: flex; gap: 4px; font-size: 8px; color: var(--primary); padding: 1px 2px; border-bottom: 1px solid rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -67,13 +79,16 @@
         <button class="tool-btn active" id="btn-select" onclick="setTool('select')">🖱️</button>
         <button class="tool-btn" onclick="spawn('note')">📝</button>
         <button class="tool-btn" onclick="spawn('table')">📊</button>
+        <button class="tool-btn" onclick="spawn('text')">T</button>
+        <button class="tool-btn" onclick="spawn('line')">📏</button>
         <div style="width:1px; height:12px; background:#eee;"></div>
         <button class="tool-btn" id="btn-pencil" onclick="setTool('pencil')">✏️</button>
-        <div class="mini-color-btn" tabindex="0" style="background:#000">
+        <div class="mini-color-btn" tabindex="0" id="pencil-color-preview" style="background:#000; width:12px; height:12px;">
             <div class="color-popover">
-                <div class="dot" style="background:#000" onclick="pColor='#000'; document.querySelector('.mini-color-btn').style.background='#000'"></div>
-                <div class="dot" style="background:#ef4444" onclick="pColor='#ef4444'; document.querySelector('.mini-color-btn').style.background='#ef4444'"></div>
-                <div class="dot" style="background:#22c55e" onclick="pColor='#22c55e'; document.querySelector('.mini-color-btn').style.background='#22c55e'"></div>
+                <div class="dot" style="background:#000" onclick="setPencilColor('#000')"></div>
+                <div class="dot" style="background:#ef4444" onclick="setPencilColor('#ef4444')"></div>
+                <div class="dot" style="background:#22c55e" onclick="setPencilColor('#22c55e')"></div>
+                <div class="dot" style="background:#2563eb" onclick="setPencilColor('#2563eb')"></div>
             </div>
         </div>
         <button class="tool-btn" onclick="clearAll()" style="color:red">🗑️</button>
@@ -89,10 +104,12 @@
         const roomRef = db.ref('rooms/' + roomId);
         const drawRef = db.ref('drawings/' + roomId);
         const metaRef = db.ref('metadata/' + roomId);
+        
         const container = document.getElementById('tafel-container');
         const canvas = document.getElementById('paint-layer');
         const ctx = canvas.getContext('2d');
         ctx.lineWidth = 2; ctx.lineCap = 'round';
+        
         let scale = 1, posX = -2200, posY = -2200, currentTool = 'select', isDrawing = false, lx, ly, pColor = "#000";
 
         document.getElementById('url-text').innerText = window.location.href.split('?')[0].split('/').pop() + '...';
@@ -104,6 +121,8 @@
         .draggable({ listeners: { move(e) { if (currentTool === 'pan') { posX += e.dx; posY += e.dy; updateTransform(); } } } });
 
         function setTool(t) { currentTool = t; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); document.getElementById('btn-'+t)?.classList.add('active'); canvas.classList.toggle('active', t === 'pencil'); }
+        function setPencilColor(c) { pColor = c; document.getElementById('pencil-color-preview').style.background = c; }
+        
         const getPos = (e) => { const r = container.getBoundingClientRect(); const cx = e.clientX || (e.touches ? e.touches[0].clientX : 0); const cy = e.clientY || (e.touches ? e.touches[0].clientY : 0); return { x: (cx - r.left) / scale, y: (cy - r.top) / scale }; };
         canvas.onmousedown = (e) => { if(currentTool !== 'pencil') return; isDrawing = true; const p = getPos(e); lx = p.x; ly = p.y; ctx.beginPath(); ctx.moveTo(lx, ly); };
         canvas.onmousemove = (e) => { if(!isDrawing) return; const p = getPos(e); ctx.strokeStyle = pColor; ctx.lineTo(p.x, p.y); ctx.stroke(); drawRef.push({x1: lx, y1: ly, x2: p.x, y2: p.y, c: pColor}); lx = p.x; ly = p.y; };
@@ -113,44 +132,55 @@
         function updateBoardTitle(t) { metaRef.update({title: t}); }
         metaRef.on('value', s => { if(s.val()?.title) { document.getElementById('board-title-input').value = s.val().title; document.getElementById('board-title-tag').innerText = s.val().title; } });
 
-        function spawn(type) { roomRef.push().set({ type, x: (Math.abs(posX) + 250) / scale, y: (Math.abs(posY) + 250) / scale, w: 180, h: 80, color: '#fff9c4', content: type==='note'?'':{rows:2,cols:2,data:{}} }); }
+        function spawn(type) {
+            let data = { type, x: (Math.abs(posX) + 250) / scale, y: (Math.abs(posY) + 250) / scale, w: 180, h: 80, color: '#ffffff' };
+            if(type === 'note') data.color = '#fff9c4';
+            if(type === 'table') data.content = {rows:2, cols:2, data:{}};
+            if(type === 'text') { data.w = 120; data.h = 40; data.color = 'transparent'; data.content = ""; }
+            if(type === 'line') { data.w = 150; data.h = 10; data.color = '#000'; }
+            roomRef.push().set(data);
+        }
+
         roomRef.on('child_added', (s) => {
-            const el = document.createElement('div'); el.id = s.key; el.className = 'card';
-            el.innerHTML = `<div class="handle"><div class="mini-color-btn" tabindex="0" style="background:${s.val().color}"><div class="color-popover"><div class="dot" style="background:#fff9c4" onclick="updateCardColor('${s.key}','#fff9c4')"></div><div class="dot" style="background:#e0f2fe" onclick="updateCardColor('${s.key}','#e0f2fe')"></div><div class="dot" style="background:#dcfce7" onclick="updateCardColor('${s.key}','#dcfce7')"></div></div></div><span class="del-btn" onclick="roomRef.child('${s.key}').remove()">×</span></div><div class="card-content" id="c-${s.key}"></div>`;
+            const el = document.createElement('div'); el.id = s.key; el.className = `card ${s.val().type}-obj`;
+            el.innerHTML = `<div class="handle"><div class="mini-color-btn" tabindex="0" style="background:${s.val().color}"><div class="color-popover"><div class="dot" style="background:#ffffff" onclick="updateObjColor('${s.key}','#ffffff')"></div><div class="dot" style="background:#fff9c4" onclick="updateObjColor('${s.key}','#fff9c4')"></div><div class="dot" style="background:#ef4444" onclick="updateObjColor('${s.key}','#ef4444')"></div><div class="dot" style="background:#e0f2fe" onclick="updateObjColor('${s.key}','#e0f2fe')"></div></div></div><span class="del-btn" onclick="roomRef.child('${s.key}').remove()">×</span></div><div class="card-content" id="c-${s.key}"></div>`;
             container.appendChild(el); setupInteract(el, s.key); updateUI(s.val(), s.key);
         });
+
         roomRef.on('child_changed', (s) => updateUI(s.val(), s.key));
         roomRef.on('child_removed', (s) => document.getElementById(s.key)?.remove());
 
         function updateUI(data, id) {
             const el = document.getElementById(id), area = document.getElementById(`c-${id}`); if(!el || !area) return;
             el.style.backgroundColor = data.color; el.style.width = data.w+'px'; el.style.height = data.h+'px';
-            el.style.left = data.x + 'px'; el.style.top = data.y + 'px'; el.querySelector('.mini-color-btn').style.background = data.color;
+            el.style.left = data.x + 'px'; el.style.top = data.y + 'px'; el.querySelector('.mini-color-btn').style.background = (data.type === 'line') ? 'transparent' : data.color;
             if(document.activeElement?.closest(`#${id}`)) return;
-            if(data.type === 'note') {
+            if(data.type === 'note' || data.type === 'text') {
                 area.innerHTML = `<textarea placeholder="..."> ${data.content||''}</textarea>`;
                 area.querySelector('textarea').oninput = (e) => roomRef.child(id).update({content: e.target.value});
-            } else {
+            } else if(data.type === 'table') {
                 let html = `<div class="table-tools"><span onclick="modTab('${id}','r',1)">+Z</span><span onclick="modTab('${id}','r',-1)">-Z</span><span onclick="modTab('${id}','c',1)">+S</span><span onclick="modTab('${id}','c',-1)">-S</span></div><table>`;
                 for(let i=0; i<data.content.rows; i++){ html += '<tr>'; for(let j=0; j<data.content.cols; j++) html += `<td><input oninput="updCell('${id}',${i},${j},this.value)" value="${(data.content.data||{})[`${i}-${j}`]||''}"></td>`; html += '</tr>'; }
                 area.innerHTML = html + '</table>';
+            } else if(data.type === 'line') {
+                area.innerHTML = `<div class="line-inner" style="background:${data.color}"></div>`;
             }
         }
         function setupInteract(el, id) {
             interact(el).draggable({ allowFrom: '.handle', listeners: { move(e) { 
-                const x = (parseFloat(el.style.left)||0) + e.dx / scale; const y = (parseFloat(el.style.top)||0) + e.dy / scale;
+                const x = (parseFloat(el.style.left)||0) + e.dx / scale, y = (parseFloat(el.style.top)||0) + e.dy / scale;
                 el.style.left = x + 'px'; el.style.top = y + 'px'; roomRef.child(id).update({x, y});
             }}}).resizable({ edges: {right:true, bottom:true}, listeners: { move(e) { 
-                const w = e.rect.width / scale; const h = e.rect.height / scale;
+                const w = e.rect.width / scale, h = e.rect.height / scale;
                 el.style.width = w + 'px'; el.style.height = h + 'px'; roomRef.child(id).update({w, h});
             }}});
         }
-        function updateCardColor(id, c) { roomRef.child(id).update({color: c}); }
+        function updateObjColor(id, c) { roomRef.child(id).update({color: c}); }
+        function updCell(id, r, c, v) { roomRef.child(`${id}/content/data/${r}-${c}`).set(v); }
         function modTab(id, m, delta) { roomRef.child(id).once('value', s => { const c = s.val().content; if(m === 'r') c.rows = Math.max(1, (c.rows || 1) + delta); else c.cols = Math.max(1, (c.cols || 1) + delta); roomRef.child(id).update({content: c}); }); }
         function downloadJSON() { Promise.all([roomRef.once('value'), drawRef.once('value'), metaRef.once('value')]).then(snaps => { const blob = new Blob([JSON.stringify({o:snaps[0].val(), d:snaps[1].val(), m:snaps[2].val()})], {type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tafel.json'; a.click(); }); }
         function uploadJSON(input) { const reader = new FileReader(); reader.onload = (e) => { const data = JSON.parse(e.target.result); roomRef.set(data.o); drawRef.set(data.d); metaRef.set(data.m); location.reload(); }; reader.readAsText(input.files[0]); }
         function downloadPNG() { const oldS = scale, oldX = posX, oldY = posY; scale = 1; posX = 0; posY = 0; updateTransform(); html2canvas(container).then(c => { const a=document.createElement('a'); a.download='tafel.png'; a.href=c.toDataURL(); a.click(); scale = oldS; posX = oldX; posY = oldY; updateTransform(); }); }
-        function updCell(id, r, c, v) { roomRef.child(`${id}/content/data/${r}-${c}`).set(v); }
         function clearAll() { drawRef.remove(); ctx.clearRect(0,0,5000,5000); }
         async function shareLink() { if (navigator.share) { await navigator.share({ title: document.getElementById('board-title-tag').innerText, url: window.location.href }); } else { navigator.clipboard.writeText(window.location.href); alert("Kopiert!"); } }
     </script>
