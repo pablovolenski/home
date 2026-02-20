@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-time Canvas</title>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <style>
+        :root { --dot-color: #cbd5e1; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #f8fafc; font-family: sans-serif; }
+        #canvas { width: 5000px; height: 5000px; position: relative; background-image: radial-gradient(var(--dot-color) 1px, transparent 1px); background-size: 30px 30px; }
+        
+        .controls { position: fixed; top: 20px; left: 20px; z-index: 1000; display: flex; gap: 10px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { padding: 8px 12px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: white; font-weight: bold; }
+        
+        .card { position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 150px; min-height: 100px; display: flex; flex-direction: column; border: 1px solid #e2e8f0; }
+        .handle { height: 25px; background: #f1f5f9; border-radius: 8px 8px 0 0; cursor: move; display: flex; justify-content: flex-end; padding: 0 5px; }
+        .del-btn { color: red; cursor: pointer; font-size: 14px; line-height: 25px; }
+        
+        textarea { flex: 1; border: none; padding: 10px; outline: none; resize: none; background: transparent; }
+        
+        table { border-collapse: collapse; width: 100%; margin: 5px; }
+        td { border: 1px solid #ddd; padding: 4px; }
+        td input { width: 100%; border: none; outline: none; }
+        .table-ctrl { font-size: 10px; padding: 5px; color: #2563eb; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn" onclick="spawn('note')">📝 + Note</button>
+        <button class="btn" onclick="spawn('table')">📊 + Table</button>
+        <span id="room-display" style="margin-left:10px; color:#64748b; font-size:12px; align-self:center;"></span>
+    </div>
+
+    <div id="canvas"></div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const roomId = params.get('id') || 'public-demo';
+        document.getElementById('room-display').innerText = `Room: ${roomId}`;
+
+        // Initialize Gun (p2p relay peers)
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        const room = gun.get('collab-canvas-v1').get(roomId);
+
+        function spawn(type) {
+            const id = Math.random().toString(36).substring(2, 9);
+            room.get(id).put({
+                id, type, 
+                x: window.scrollX + 150, y: window.scrollY + 150, 
+                w: 200, h: 150, content: ''
+            });
+        }
+
+        // Listen for data changes
+        room.map().on((data, id) => {
+            if (!data) {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+                return;
+            }
+            updateOrCreateEl(data, id);
+        });
+
+        function updateOrCreateEl(data, id) {
+            let el = document.getElementById(id);
+            if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.className = 'card';
+                el.innerHTML = `
+                    <div class="handle"><span class="del-btn" onclick="removeCard('${id}')">✕</span></div>
+                    <div class="content-area"></div>
+                `;
+                document.getElementById('canvas').appendChild(el);
+                setupInteract(el, id);
+
+                const area = el.querySelector('.content-area');
+                if (data.type === 'note') {
+                    area.innerHTML = `<textarea oninput="updateContent('${id}', this.value)"></textarea>`;
+                } else {
+                    area.innerHTML = `<div class="table-ctrl" onclick="addRow('${id}')">+ Row</div>
+                                     <table id="t-${id}"><tr><td><input></td><td><input></td></tr></table>`;
+                }
+            }
+
+            // Update state without resetting focus if user is typing
+            if (document.activeElement.parentElement?.parentElement?.id !== id && 
+                document.activeElement.parentElement?.id !== id) {
+                if (data.type === 'note') el.querySelector('textarea').value = data.content || '';
+            }
+
+            el.style.transform = `translate(${data.x}px, ${data.y}px)`;
+            el.style.width = data.w + 'px';
+            el.style.height = data.h + 'px';
+            el.setAttribute('data-x', data.x);
+            el.setAttribute('data-y', data.y);
+        }
+
+        function setupInteract(el, id) {
+            interact(el).draggable({
+                allowFrom: '.handle',
+                listeners: {
+                    move(event) {
+                        const x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
+                        const y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
+                        el.style.transform = `translate(${x}px, ${y}px)`;
+                        el.setAttribute('data-x', x);
+                        el.setAttribute('data-y', y);
+                    },
+                    end(event) {
+                        room.get(id).update({ x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y')) });
+                    }
+                }
+            }).resizable({
+                edges: { right: true, bottom: true },
+                listeners: {
+                    move(event) {
+                        Object.assign(event.target.style, { width: `${event.rect.width}px`, height: `${event.rect.height}px` });
+                    },
+                    end(event) {
+                        room.get(id).update({ w: event.rect.width, h: event.rect.height });
+                    }
+                }
+            });
+        }
+
+        function updateContent(id, val) { room.get(id).update({ content: val }); }
+        function removeCard(id) { room.get(id).put(null); }
+        
+        // Initial positioning
+        window.scrollTo(2000, 2000);
+    </script>
+</body>
+</html>
