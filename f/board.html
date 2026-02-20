@@ -11,38 +11,42 @@
     <style>
         :root { --primary: #2563eb; --bg: #e5e7eb; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); touch-action: none; font-family: sans-serif; }
-        
         #tafel-container { width: 5000px; height: 5000px; position: relative; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
         
-        /* The Drawing Board (Layered behind notes) */
-        #zeichen-layer { position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none; }
-        #zeichen-layer.active { pointer-events: auto; cursor: crosshair; }
+        /* Persistent Drawing Layer (for Pencil only) */
+        #pencil-layer { position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none; }
+        #pencil-layer.active { pointer-events: auto; cursor: crosshair; }
 
-        /* Navigation & UI */
+        /* UI Elements */
         .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 40px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .url-display { background: #f1f5f9; padding: 4px 10px; border-radius: 10px; font-size: 10px; font-family: monospace; cursor: pointer; }
-
         .toolbar { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: white; padding: 5px; border-radius: 30px; display: flex; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 2000; border: 1px solid #ddd; }
         .tool-btn { border: none; background: transparent; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
         .tool-btn.active { background: var(--primary); color: white; }
         
         /* Minimalist Card UI */
-        .card { position: absolute; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 10; border: 1px solid #ccc; overflow: hidden; }
-        .handle { height: 8px; background: #eee; cursor: move; border-bottom: 1px solid #ddd; position: relative; }
+        .card { position: absolute; border-radius: 4px; z-index: 10; overflow: hidden; display: flex; flex-direction: column; }
+        .note, .table { background: white; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .handle { height: 8px; background: #eee; cursor: move; border-bottom: 1px solid #ddd; position: relative; flex-shrink: 0; }
         .handle:hover { background: #ddd; }
         .del-btn { position: absolute; top: -4px; right: 2px; color: #aaa; cursor: pointer; font-size: 9px; line-height: 8px; }
         
-        .card-content { padding: 4px; }
-        textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; background: transparent; display: block; padding: 0; line-height: 1.2; }
+        /* Tightened Content & Tables */
+        .card-content { padding: 4px; flex-grow: 1; display: flex; flex-direction: column; }
+        textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; background: transparent; padding: 0; flex-grow: 1; line-height: 1.2; display: block; }
         
-        /* Ultra-Minimalist Table */
-        .table-tools { display: flex; gap: 5px; margin-bottom: 2px; font-size: 9px; color: var(--primary); }
         table { border-collapse: collapse; width: 100%; table-layout: fixed; }
         td { border: 1px solid #ddd; padding: 0; margin: 0; }
-        td input { 
-            width: 100%; border: none; outline: none; background: transparent; 
-            font-size: 12px; padding: 1px 2px; margin: 0; display: block;
-            height: 1.2em; /* Matches font height */
+        td input { width: 100%; border: none; outline: none; background: transparent; font-size: 12px; padding: 1px 2px; height: 1.2em; display: block; }
+
+        /* Shape Styles */
+        .shape { border: 2px solid black; background: transparent; }
+        .circle { border-radius: 50%; }
+        .triangle { border: none; width: 0; height: 0; background: transparent; }
+        .triangle-inner { 
+            width: 100%; height: 100%; 
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
+            background: black; 
         }
     </style>
 </head>
@@ -51,8 +55,8 @@
     <div class="top-bar">
         <div class="url-display" onclick="copyBoardUrl()" id="url-text">URL KOPIEREN</div>
         <div style="display:flex; gap:5px;">
-            <button onclick="downloadPNG()" style="font-size:10px; cursor:pointer;">PNG</button>
-            <button onclick="window.location.href='index.html'" style="font-size:10px; cursor:pointer;">X</button>
+            <button onclick="downloadPNG()" style="font-size:10px;">PNG</button>
+            <button onclick="window.location.href='index.html'" style="font-size:10px;">X</button>
         </div>
     </div>
 
@@ -62,16 +66,18 @@
         <button class="tool-btn" onclick="spawn('table')">📊</button>
         <div style="width:1px; height:20px; background:#eee;"></div>
         <button class="tool-btn" id="btn-pencil" onclick="setTool('pencil')">✏️</button>
-        <button class="tool-btn" id="btn-rect" onclick="setTool('rect')">⬜</button>
-        <button class="tool-btn" id="btn-circle" onclick="setTool('circle')">⭕</button>
-        <button class="tool-btn" onclick="clearDrawings()" style="color:red">🗑️</button>
+        <button class="tool-btn" onclick="spawn('rect')">⬜</button>
+        <button class="tool-btn" onclick="spawn('circle')">⭕</button>
+        <button class="tool-btn" onclick="spawn('triangle')">🔺</button>
+        <button class="tool-btn" onclick="clearPencil()" style="color:red">🗑️</button>
     </div>
 
     <div id="tafel-container">
-        <canvas id="zeichen-layer" width="5000" height="5000"></canvas>
+        <canvas id="pencil-layer" width="5000" height="5000"></canvas>
     </div>
 
     <script>
+        // --- FIREBASE CONFIG (Provided by User) ---
         const firebaseConfig = {
           apiKey: "AIzaSyB6PzmLTjSSdm_ptrf_V3oxEDoajRM79_c",
           authDomain: "collabcanvas-ba771.firebaseapp.com",
@@ -88,129 +94,96 @@
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('id') || 'lobby';
         const roomRef = db.ref('rooms/' + roomId);
-        const drawRef = db.ref('drawings/' + roomId);
+        const pencilRef = db.ref('pencil/' + roomId);
 
-        const canvas = document.getElementById('zeichen-layer');
+        const canvas = document.getElementById('pencil-layer');
         const ctx = canvas.getContext('2d');
         let currentTool = 'select';
         let isDrawing = false;
-        let points = [];
 
         function setTool(t) {
             currentTool = t;
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-'+t)?.classList.add('active');
-            canvas.classList.toggle('active', t !== 'select');
+            canvas.classList.toggle('active', t === 'pencil');
         }
 
-        // --- IMPROVED DRAWING ---
-        const getCoords = (e) => {
-            const r = canvas.getBoundingClientRect();
-            return {
-                x: (e.clientX || e.touches?.[0].clientX) - r.left + window.scrollX,
-                y: (e.clientY || e.touches?.[0].clientY) - r.top + window.scrollY
-            };
-        };
-
-        const startDraw = (e) => {
-            if(currentTool === 'select') return;
+        // --- PENCIL LOGIC (FREEHAND) ---
+        canvas.onmousedown = (e) => {
+            if(currentTool !== 'pencil') return;
             isDrawing = true;
-            const pos = getCoords(e);
-            points = [pos];
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
+            const r = canvas.getBoundingClientRect();
+            lastX = e.clientX - r.left + window.scrollX;
+            lastY = e.clientY - r.top + window.scrollY;
         };
 
-        const moveDraw = (e) => {
+        canvas.onmousemove = (e) => {
             if(!isDrawing) return;
-            const pos = getCoords(e);
-            points.push(pos);
-            
-            if(currentTool === 'pencil') {
-                ctx.lineTo(pos.x, pos.y);
-                ctx.strokeStyle = "#000";
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
+            const r = canvas.getBoundingClientRect();
+            const x = e.clientX - r.left + window.scrollX;
+            const y = e.clientY - r.top + window.scrollY;
+            pencilRef.push({x1: lastX, y1: lastY, x2: x, y2: y});
+            lastX = x; lastY = y;
         };
 
-        const stopDraw = () => {
-            if(!isDrawing) return;
-            isDrawing = false;
-            if(points.length > 1) {
-                drawRef.push({ type: currentTool, path: points });
-            }
-            points = [];
-        };
+        window.onmouseup = () => isDrawing = false;
 
-        canvas.onmousedown = startDraw;
-        canvas.onmousemove = moveDraw;
-        window.onmouseup = stopDraw;
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); });
-        canvas.addEventListener('touchend', stopDraw);
-
-        drawRef.on('child_added', (snap) => {
+        pencilRef.on('child_added', (snap) => {
             const d = snap.val();
-            if(!d.path) return;
             ctx.beginPath();
-            ctx.strokeStyle = "#000";
-            ctx.lineWidth = 2;
-            ctx.moveTo(d.path[0].x, d.path[0].y);
-            
-            if(d.type === 'pencil') {
-                d.path.forEach(p => ctx.lineTo(p.x, p.y));
-                ctx.stroke();
-            } else if(d.type === 'rect') {
-                const last = d.path[d.path.length-1];
-                ctx.strokeRect(d.path[0].x, d.path[0].y, last.x - d.path[0].x, last.y - d.path[0].y);
-            } else if(d.type === 'circle') {
-                const last = d.path[d.path.length-1];
-                const r = Math.sqrt(Math.pow(last.x - d.path[0].x, 2) + Math.pow(last.y - d.path[0].y, 2));
-                ctx.arc(d.path[0].x, d.path[0].y, r, 0, 2 * Math.PI);
-                ctx.stroke();
-            }
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+            ctx.moveTo(d.x1, d.y1); ctx.lineTo(d.x2, d.y2);
+            ctx.stroke();
         });
 
-        function clearDrawings() { if(confirm("Löschen?")) { drawRef.remove(); ctx.clearRect(0,0,5000,5000); } }
-
-        // --- CARDS & TABLES ---
+        // --- OBJECT SPAWNING (Notes, Tables, Editable Shapes) ---
         function spawn(type) {
             const ref = roomRef.push();
-            const content = (type === 'note') ? "" : { rows: 2, cols: 2, data: {} };
-            ref.set({ type, x: window.scrollX + 150, y: window.scrollY + 150, w: 200, h: 100, content });
+            let data = { type, x: window.scrollX + 200, y: window.scrollY + 200, w: 150, h: 100 };
+            if(type === 'note') data.content = "";
+            if(type === 'table') data.content = { rows: 2, cols: 2, data: {} };
+            if(type === 'circle') { data.w = 100; data.h = 100; }
+            ref.set(data);
         }
 
-        roomRef.on('child_added', (snap) => renderCard(snap.val(), snap.key));
-        roomRef.on('child_changed', (snap) => updateCardUI(snap.val(), snap.key));
+        roomRef.on('child_added', (snap) => renderObject(snap.val(), snap.key));
+        roomRef.on('child_changed', (snap) => updateObjectUI(snap.val(), snap.key));
         roomRef.on('child_removed', (snap) => document.getElementById(snap.key)?.remove());
 
-        function renderCard(data, id) {
+        function renderObject(data, id) {
             const el = document.createElement('div');
-            el.id = id; el.className = 'card';
-            el.innerHTML = `<div class="handle"><span class="del-btn" onclick="removeCard('${id}')">x</span></div><div class="card-content" id="c-${id}"></div>`;
+            el.id = id;
+            el.className = `card ${data.type}`;
+            
+            let inner = `<div class="handle"><span class="del-btn" onclick="removeObj('${id}')">x</span></div>`;
+            if(data.type === 'note' || data.type === 'table') {
+                inner += `<div class="card-content" id="c-${id}"></div>`;
+            } else if(data.type === 'triangle') {
+                inner += `<div class="triangle-inner"></div>`;
+            }
+
+            el.innerHTML = inner;
             document.getElementById('tafel-container').appendChild(el);
-            updateCardUI(data, id);
+            updateObjectUI(data, id);
             setupInteract(el, id);
         }
 
-        function updateCardUI(data, id) {
+        function updateObjectUI(data, id) {
             const el = document.getElementById(id);
-            const area = document.getElementById(`c-${id}`);
-            if(!el || !area) return;
-            
-            el.style.transform = `translate(${data.x}px, ${data.y}px)`;
+            if(!el) return;
             el.style.width = data.w + 'px';
             el.style.height = data.h + 'px';
+            el.style.transform = `translate(${data.x}px, ${data.y}px)`;
             el.setAttribute('data-x', data.x); el.setAttribute('data-y', data.y);
 
-            if(document.activeElement.closest(`#${id}`)) return;
+            const area = document.getElementById(`c-${id}`);
+            if(!area || document.activeElement.closest(`#${id}`)) return;
 
             if(data.type === 'note') {
-                area.innerHTML = `<textarea placeholder="...">${data.content || ''}</textarea>`;
+                area.innerHTML = `<textarea placeholder="..."> ${data.content || ''}</textarea>`;
                 area.querySelector('textarea').oninput = (e) => roomRef.child(id).update({content: e.target.value});
-            } else {
-                let html = `<div class="table-tools"><span onclick="modTab('${id}','r')">+ Z</span><span onclick="modTab('${id}','c')">+ S</span></div><table>`;
+            } else if(data.type === 'table') {
+                let html = `<div class="table-tools"><span onclick="modTab('${id}','r')">+Z</span> <span onclick="modTab('${id}','c')">+S</span></div><table>`;
                 const r = data.content.rows || 2, c = data.content.cols || 2, d = data.content.data || {};
                 for(let i=0; i<r; i++) {
                     html += '<tr>';
@@ -222,15 +195,6 @@
                 }
                 area.innerHTML = html + `</table>`;
             }
-        }
-
-        function updCell(id, r, c, v) { roomRef.child(`${id}/content/data/${r}-${c}`).set(v); }
-        function modTab(id, mode) {
-            roomRef.child(id).once('value', s => {
-                const c = s.val().content;
-                if(mode === 'r') c.rows++; else c.cols++;
-                roomRef.child(id).update({content: c});
-            });
         }
 
         function setupInteract(el, id) {
@@ -246,16 +210,40 @@
                     end() { roomRef.child(id).update({x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y'))}); }
                 }
             }).resizable({
-                edges: { right: true, bottom: true },
+                edges: { right: true, bottom: true, left: true, top: true },
                 listeners: {
-                    move(event) { Object.assign(event.target.style, {width: `${event.rect.width}px`, height: `${event.rect.height}px`}); },
-                    end(event) { roomRef.child(id).update({w: event.rect.width, h: event.rect.height}); }
+                    move(event) {
+                        let x = (parseFloat(el.getAttribute('data-x')) || 0) + event.deltaRect.left;
+                        let y = (parseFloat(el.getAttribute('data-y')) || 0) + event.deltaRect.top;
+                        Object.assign(event.target.style, {
+                            width: `${event.rect.width}px`,
+                            height: `${event.rect.height}px`,
+                            transform: `translate(${x}px, ${y}px)`
+                        });
+                        el.setAttribute('data-x', x); el.setAttribute('data-y', y);
+                    },
+                    end(event) {
+                        roomRef.child(id).update({
+                            w: event.rect.width, h: event.rect.height,
+                            x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y'))
+                        });
+                    }
                 }
             });
         }
 
-        function removeCard(id) { if(confirm("Löschen?")) roomRef.child(id).remove(); }
-        function copyBoardUrl() { navigator.clipboard.writeText(window.location.href); alert("Kopiert!"); }
+        // --- UTILS ---
+        function updCell(id, r, c, v) { roomRef.child(`${id}/content/data/${r}-${c}`).set(v); }
+        function modTab(id, mode) {
+            roomRef.child(id).once('value', s => {
+                const c = s.val().content;
+                if(mode === 'r') c.rows++; else c.cols++;
+                roomRef.child(id).update({content: c});
+            });
+        }
+        function removeObj(id) { if(confirm("Löschen?")) roomRef.child(id).remove(); }
+        function clearPencil() { if(confirm("Handzeichnungen löschen?")) { pencilRef.remove(); ctx.clearRect(0,0,5000,5000); } }
+        function copyBoardUrl() { navigator.clipboard.writeText(window.location.href); alert("URL kopiert!"); }
         function downloadPNG() { html2canvas(document.getElementById('tafel-container'), {width:5000, height:5000}).then(c => { const l=document.createElement('a'); l.download='tafel.png'; l.href=c.toDataURL(); l.click(); }); }
         window.scrollTo(2300, 2300);
     </script>
