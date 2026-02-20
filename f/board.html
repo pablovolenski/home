@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tafel V13</title>
+    <title>Tafel V14</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
@@ -11,40 +11,46 @@
     <style>
         :root { --primary: #2563eb; --bg: #e5e7eb; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); touch-action: none; font-family: sans-serif; }
-        #tafel-container { width: 5000px; height: 5000px; position: relative; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
+        
+        /* Zoom Wrapper */
+        #viewport { width: 100vw; height: 100vh; overflow: hidden; position: relative; cursor: grab; }
+        #viewport.panning { cursor: grabbing; }
+
+        #tafel-container { 
+            width: 5000px; height: 5000px; 
+            position: absolute; top: 0; left: 0;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px); 
+            background-size: 30px 30px; 
+            transform-origin: 0 0;
+        }
+        
         #paint-layer { position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none; }
         #paint-layer.active { pointer-events: auto; cursor: crosshair; }
 
         .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 35px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; z-index: 2000; border-bottom: 1px solid #ddd; }
-        
         .toolbar { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: white; padding: 6px; border-radius: 30px; display: flex; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 2000; border: 1px solid #ddd; align-items: center; }
         .tool-btn { border: none; background: transparent; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
         .tool-btn.active { background: var(--primary); color: white; }
         
         #color-picker { width: 24px; height: 24px; border: none; padding: 0; cursor: pointer; background: none; border-radius: 50%; overflow: hidden; }
 
-        /* Minimalist Cards */
-        .card { position: absolute; border-radius: 2px; z-index: 10; border: 1px solid #999; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .handle { height: 12px; background: rgba(0,0,0,0.05); cursor: move; flex-shrink: 0; position: relative; border-bottom: 1px solid rgba(0,0,0,0.1); }
-        .del-btn { position: absolute; top: -3px; right: 2px; color: #666; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .card { position: absolute; border-radius: 2px; z-index: 10; border: 1px solid #999; display: flex; flex-direction: column; overflow: hidden; background: white; }
+        .handle { height: 15px; background: rgba(0,0,0,0.05); cursor: move; flex-shrink: 0; position: relative; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .del-btn { position: absolute; top: -1px; right: 4px; color: #666; cursor: pointer; font-size: 12px; font-weight: bold; }
         
-        .card-content { padding: 0 !important; margin: 0 !important; flex-grow: 1; display: flex; flex-direction: column; }
-        textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; background: transparent; padding: 2px; margin: 0; flex-grow: 1; line-height: 1.1; display: block; box-sizing: border-box; }
+        .card-content { padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; }
+        textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; background: transparent; padding: 2px; flex-grow: 1; line-height: 1.1; display: block; }
         
-        /* Table Zero-Padding */
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 0; padding: 0; border: none; }
-        td { border: 1px solid rgba(0,0,0,0.1); padding: 0 !important; height: 1.3em; }
-        td input { width: 100%; border: none; outline: none; background: transparent; font-size: 12px; padding: 0 2px; display: block; height: 1.3em; box-sizing: border-box; }
-        
-        .table-tools { display: flex; gap: 6px; font-size: 9px; color: var(--primary); padding: 2px 4px; background: rgba(255,255,255,0.8); border-bottom: 1px solid #eee; }
-        .table-tools span { cursor: pointer; font-weight: bold; }
-        .table-tools .red { color: #ef4444; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        td { border: 1px solid rgba(0,0,0,0.1); height: 1.3em; }
+        td input { width: 100%; border: none; outline: none; background: transparent; font-size: 12px; padding: 0 2px; display: block; height: 1.3em; }
+        .table-tools { display: flex; gap: 6px; font-size: 9px; color: var(--primary); padding: 2px 4px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <div style="font-size:9px; color:#999;" onclick="copyBoardUrl()">V13 - URL KOPIEREN</div>
+        <div style="font-size:9px; color:#999;" onclick="copyBoardUrl()">V14 - URL KOPIEREN</div>
         <div style="display:flex; gap:8px;">
             <button onclick="document.getElementById('file-up').click()" style="font-size:9px;">UPLOAD</button>
             <input type="file" id="file-up" style="display:none" onchange="uploadJSON(this)">
@@ -54,6 +60,7 @@
     </div>
 
     <div class="toolbar">
+        <button class="tool-btn" id="btn-pan" onclick="setTool('pan')">🖐️</button>
         <button class="tool-btn active" id="btn-select" onclick="setTool('select')">🖱️</button>
         <button class="tool-btn" onclick="spawn('note')">📝</button>
         <button class="tool-btn" onclick="spawn('table')">📊</button>
@@ -63,8 +70,10 @@
         <button class="tool-btn" onclick="clearAll()" style="color:red">🗑️</button>
     </div>
 
-    <div id="tafel-container">
-        <canvas id="paint-layer" width="5000" height="5000"></canvas>
+    <div id="viewport">
+        <div id="tafel-container">
+            <canvas id="paint-layer" width="5000" height="5000"></canvas>
+        </div>
     </div>
 
     <script>
@@ -84,35 +93,74 @@
         const roomRef = db.ref('rooms/' + roomId);
         const drawRef = db.ref('drawings/' + roomId);
 
+        const viewport = document.getElementById('viewport');
+        const container = document.getElementById('tafel-container');
         const canvas = document.getElementById('paint-layer');
         const ctx = canvas.getContext('2d');
         ctx.lineWidth = 2; ctx.lineCap = 'round';
         
+        let scale = 1, posX = -2200, posY = -2200;
         let currentTool = 'select';
-        let isDrawing = false;
-        let lx, ly;
-        let activeColor = "#000000";
+        let isDrawing = false, lx, ly, activeColor = "#000000";
+
+        function updateTransform() {
+            container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+        updateTransform();
+
+        // Pan and Zoom Logic
+        interact('#viewport').gesturable({
+            listeners: {
+                move(event) {
+                    scale = scale * (1 + event.ds);
+                    posX += event.dx;
+                    posY += event.dy;
+                    updateTransform();
+                }
+            }
+        }).draggable({
+            listeners: {
+                move(event) {
+                    if (currentTool === 'pan') {
+                        posX += event.dx;
+                        posY += event.dy;
+                        updateTransform();
+                    }
+                }
+            }
+        });
+
+        // Mouse Wheel Zoom
+        viewport.addEventListener('wheel', e => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale *= delta;
+            updateTransform();
+        }, { passive: false });
 
         function setTool(t) {
             currentTool = t;
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-'+t)?.classList.add('active');
             canvas.classList.toggle('active', t === 'pencil');
+            viewport.classList.toggle('panning', t === 'pan');
         }
 
         function updateColor(val) {
             activeColor = val;
             ctx.strokeStyle = val;
-            // If a note is being edited, update its color in DB
-            const activeId = document.activeElement.closest('.card')?.id;
-            if(activeId) roomRef.child(activeId).update({ color: val });
+            const activeCard = document.activeElement?.closest('.card');
+            if(activeCard) roomRef.child(activeCard.id).update({ color: val });
         }
 
         const getPos = (e) => {
-            const r = canvas.getBoundingClientRect();
+            const r = container.getBoundingClientRect();
             const cx = e.clientX || (e.touches ? e.touches[0].clientX : 0);
             const cy = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-            return { x: cx - r.left + window.scrollX, y: cy - r.top + window.scrollY };
+            return { 
+                x: (cx - r.left) / scale, 
+                y: (cy - r.top) / scale 
+            };
         };
 
         canvas.onmousedown = (e) => {
@@ -137,15 +185,13 @@
 
         drawRef.on('child_added', s => {
             const d = s.val();
-            ctx.beginPath(); 
-            ctx.strokeStyle = d.c || '#000';
-            ctx.moveTo(d.x1, d.y1); ctx.lineTo(d.x2, d.y2); 
-            ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = d.c || '#000';
+            ctx.moveTo(d.x1, d.y1); ctx.lineTo(d.x2, d.y2); ctx.stroke();
         });
 
         function spawn(type) {
             roomRef.push().set({ 
-                type, x: window.scrollX + 250, y: window.scrollY + 250, 
+                type, x: Math.abs(posX) / scale + 100, y: Math.abs(posY) / scale + 100, 
                 w: 180, h: 80, color: '#ffffff',
                 content: type==='note'?'':{rows:2,cols:2,data:{}} 
             });
@@ -155,7 +201,7 @@
             const el = document.createElement('div');
             el.id = s.key; el.className = 'card';
             el.innerHTML = `<div class="handle"><span class="del-btn" onclick="removeObj('${s.key}')">x</span></div><div class="card-content" id="c-${s.key}"></div>`;
-            document.getElementById('tafel-container').appendChild(el);
+            container.appendChild(el);
             setupInteract(el, s.key);
             updateUI(s.val(), s.key);
         });
@@ -168,18 +214,18 @@
             if(!el || !area) return;
             el.style.backgroundColor = data.color || '#ffffff';
             el.style.width = data.w+'px'; el.style.height = data.h+'px';
-            el.style.transform = `translate(${data.x}px, ${data.y}px)`;
-            el.setAttribute('data-x', data.x); el.setAttribute('data-y', data.y);
+            el.style.left = data.x + 'px';
+            el.style.top = data.y + 'px';
 
-            if(document.activeElement.closest(`#${id}`)) return;
+            if(document.activeElement?.closest(`#${id}`)) return;
 
             if(data.type === 'note') {
                 area.innerHTML = `<textarea placeholder="..."> ${data.content||''}</textarea>`;
                 area.querySelector('textarea').oninput = (e) => roomRef.child(id).update({content: e.target.value});
             } else {
                 let html = `<div class="table-tools">
-                    <span onclick="modTab('${id}','r',1)">+Z</span><span class="red" onclick="modTab('${id}','r',-1)">-Z</span>
-                    <span onclick="modTab('${id}','c',1)">+S</span><span class="red" onclick="modTab('${id}','c',-1)">-S</span>
+                    <span onclick="modTab('${id}','r',1)">+Z</span><span onclick="modTab('${id}','r',-1)">-Z</span>
+                    <span onclick="modTab('${id}','c',1)">+S</span><span onclick="modTab('${id}','c',-1)">-S</span>
                 </div><table>`;
                 for(let i=0; i<data.content.rows; i++){
                     html += '<tr>';
@@ -192,12 +238,16 @@
 
         function setupInteract(el, id) {
             interact(el).draggable({ allowFrom: '.handle', listeners: { move(e) { 
-                    const x = (parseFloat(el.getAttribute('data-x'))||0)+e.dx, y=(parseFloat(el.getAttribute('data-y'))||0)+e.dy;
-                    el.style.transform=`translate(${x}px, ${y}px)`; el.setAttribute('data-x',x); el.setAttribute('data-y',y);
-                }, end() { roomRef.child(id).update({x:parseFloat(el.getAttribute('data-x')), y:parseFloat(el.getAttribute('data-y'))}); }
-            }}).resizable({ edges: {right:true, bottom:true}, listeners: {
-                move(e) { Object.assign(e.target.style, {width:`${e.rect.width}px`, height:`${e.rect.height}px`}); },
-                end(e) { roomRef.child(id).update({w:e.rect.width, h:e.rect.height}); }
+                const x = (parseFloat(el.style.left)||0) + e.dx / scale;
+                const y = (parseFloat(el.style.top)||0) + e.dy / scale;
+                el.style.left = x + 'px'; el.style.top = y + 'px';
+            }, end() { 
+                roomRef.child(id).update({x: parseFloat(el.style.left), y: parseFloat(el.style.top)}); 
+            }}}).resizable({ edges: {right:true, bottom:true}, listeners: {
+                move(e) { 
+                    Object.assign(e.target.style, { width: `${e.rect.width / scale}px`, height: `${e.rect.height / scale}px` }); 
+                },
+                end(e) { roomRef.child(id).update({w: parseFloat(el.style.width), h: parseFloat(el.style.height)}); }
             }});
         }
 
@@ -221,12 +271,18 @@
             reader.onload = (e) => { const data = JSON.parse(e.target.result); roomRef.set(data.o); drawRef.set(data.d); location.reload(); };
             reader.readAsText(input.files[0]);
         }
-        function downloadPNG() { html2canvas(document.getElementById('tafel-container'), {width:5000, height:5000}).then(c => { const a=document.createElement('a'); a.download='tafel.png'; a.href=c.toDataURL(); a.click(); }); }
+        function downloadPNG() { 
+            const oldS = scale, oldX = posX, oldY = posY;
+            scale = 1; posX = 0; posY = 0; updateTransform();
+            html2canvas(container).then(c => {
+                const a=document.createElement('a'); a.download='tafel.png'; a.href=c.toDataURL(); a.click();
+                scale = oldS; posX = oldX; posY = oldY; updateTransform();
+            });
+        }
         function updCell(id, r, c, v) { roomRef.child(`${id}/content/data/${r}-${c}`).set(v); }
         function removeObj(id) { if(confirm("Löschen?")) roomRef.child(id).remove(); }
         function clearAll() { if(confirm("Tafel leeren?")) { drawRef.remove(); ctx.clearRect(0,0,5000,5000); } }
         function copyBoardUrl() { navigator.clipboard.writeText(window.location.href); alert("URL kopiert!"); }
-        window.scrollTo(2400, 2400);
     </script>
 </body>
 </html>
