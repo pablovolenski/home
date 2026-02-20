@@ -2,136 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pablo Volenski | Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CollabCanvas | Home</title>
     <style>
-        :root {
-            --border-thickness: 5px; 
-            --color-a: #ff595e;
-            --color-b: #ffca3a;
-            --color-c: #8ac926;
-            --color-d: #1982c4;
-            --color-e: #6a4c93;
-            --color-f: #ff924c;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body, html {
-            height: 100%;
-            width: 100%;
-            background-color: black;
-            overflow: hidden;
-            font-family: 'Arial Black', sans-serif;
-        }
-
-        .container {
-            display: grid;
-            width: 100vw;
-            height: 100vh;
-            gap: 0; 
-            grid-template-columns: 1fr 2fr;
-            grid-template-rows: 1fr;
-        }
-
-        .letters-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            height: 100%;
-        }
-
-        /* LINK STYLING 
-           We make the <a> tag the "box" so the entire area is clickable 
-        */
-        .box-link {
-            text-decoration: none;
-            color: black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: var(--border-thickness) solid black;
-            font-size: 5rem;
-            transition: background 0.2s ease, color 0.2s ease;
-            cursor: crosshair;
-            position: relative;
-        }
-
-        /* VERTICAL MARQUEE HEADER */
-        .header {
-            background: white;
-            overflow: hidden;
-            border: var(--border-thickness) solid black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .marquee-content {
-            display: inline-block;
-            white-space: nowrap;
-            transform: rotate(-90deg); 
-            font-size: 5rem;
-            text-transform: uppercase;
-            animation: vertical-marquee 12s linear infinite;
-        }
-
-        @keyframes vertical-marquee {
-            0% { transform: rotate(-90deg) translateX(50%); }
-            100% { transform: rotate(-90deg) translateX(-50%); }
-        }
-
-        /* INVERT HOVER EFFECT */
-        .box-link:hover {
-            background-color: black !important;
-            z-index: 2;
-        }
-        
-        .a:hover { color: var(--color-a); }
-        .b:hover { color: var(--color-b); }
-        .c:hover { color: var(--color-c); }
-        .d:hover { color: var(--color-d); }
-        .e:hover { color: var(--color-e); }
-        .f:hover { color: var(--color-f); }
-
-        /* Base Colors */
-        .a { background-color: var(--color-a); }
-        .b { background-color: var(--color-b); }
-        .c { background-color: var(--color-c); }
-        .d { background-color: var(--color-d); }
-        .e { background-color: var(--color-e); }
-        .f { background-color: var(--color-f); }
-
-        /* Mobile Fix */
-        @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; grid-template-rows: 120px 1fr; }
-            .marquee-content { transform: rotate(0); animation: marquee 10s linear infinite; font-size: 3rem; }
-            @keyframes marquee {
-                0% { transform: translateX(50%); }
-                100% { transform: translateX(-50%); }
-            }
-            .box-link { font-size: 3rem; }
-        }
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: opacity 0.2s; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+        #post-check { display: none; margin-top: 20px; border-top: 1px solid #eee; pt: 20px; }
+        .share-group { display: flex; gap: 5px; margin-top: 10px; }
+        .copy-input { background: #f1f5f9; cursor: pointer; font-family: monospace; font-size: 0.8rem; }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h1>CollabCanvas</h1>
+        <div id="check-zone">
+            <p>Prove you're human:</p>
+            <h2 id="captcha-text"></h2>
+            <input type="number" id="captcha-input" placeholder="Enter result">
+        </div>
 
-    <div class="container">
-        <header class="header">
-            <div class="marquee-content">
-                pablo volenski — pablo volenski — pablo volenski —
+        <div id="post-check">
+            <p>Your workspace is ready!</p>
+            <input type="text" id="room-url" class="copy-input" readonly onclick="copyUrl()">
+            <div class="share-group">
+                <button onclick="copyUrl()" style="background:#64748b">Copy Link</button>
+                <button onclick="shareUrl()" style="background:#0ea5e9">Share</button>
             </div>
-        </header>
-
-        <div class="letters-grid">
-            <a href="a.html" class="box-link a">A</a>
-            <a href="b.html" class="box-link b">B</a>
-            <a href="c.html" class="box-link c">C</a>
-            <a href="d.html" class="box-link d">D</a>
-            <a href="e.html" class="box-link e">E</a>
-            <a href="/f" class="box-link f">F</a>
+            <button onclick="enterRoom()">Enter to the Room →</button>
         </div>
     </div>
 
+    <script>
+        const a = Math.floor(Math.random() * 9) + 2;
+        const b = Math.floor(Math.random() * 9) + 2;
+        const sum = a + b;
+        let generatedRoomId = '';
+
+        document.getElementById('captcha-text').innerText = `${a} + ${b} = ?`;
+        document.getElementById('captcha-input').oninput = function(e) {
+            if (parseInt(e.target.value) === sum) {
+                generatedRoomId = Math.random().toString(36).substring(2, 10);
+                const fullUrl = window.location.href.replace('index.html', '') + 'board.html?id=' + generatedRoomId;
+                document.getElementById('room-url').value = fullUrl;
+                document.getElementById('check-zone').style.display = 'none';
+                document.getElementById('post-check').style.display = 'block';
+            }
+        };
+
+        function copyUrl() {
+            const input = document.getElementById('room-url');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            alert("URL copied!");
+        }
+
+        async function shareUrl() {
+            const url = document.getElementById('room-url').value;
+            if (navigator.share) {
+                await navigator.share({ title: 'Join my CollabCanvas', url: url });
+            } else { copyUrl(); }
+        }
+
+        function enterRoom() {
+            window.location.href = `board.html?id=${generatedRoomId}`;
+        }
+    </script>
 </body>
 </html>
