@@ -13,45 +13,40 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); touch-action: none; font-family: sans-serif; }
         #tafel-container { width: 5000px; height: 5000px; position: relative; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
         
-        /* MS Paint Layer - Stays behind cards */
+        /* Paint Layer - Background logic */
         #paint-layer { position: absolute; top: 0; left: 0; z-index: 5; pointer-events: none; }
         #paint-layer.active { pointer-events: auto; cursor: crosshair; }
 
-        /* UI Navigation */
-        .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 40px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; z-index: 2000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .toolbar { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: white; padding: 5px; border-radius: 30px; display: flex; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 2000; border: 1px solid #ddd; }
-        .tool-btn { border: none; background: transparent; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        /* Navigation Bar */
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 35px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; z-index: 2000; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .toolbar { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: white; padding: 4px; border-radius: 30px; display: flex; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 2000; border: 1px solid #ddd; }
+        .tool-btn { border: none; background: transparent; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
         .tool-btn.active { background: var(--primary); color: white; }
         
-        /* Minimalist Floating Cards */
-        .card { position: absolute; background: white; border-radius: 2px; z-index: 10; border: 1px solid #ccc; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .handle { height: 10px; background: #eee; cursor: move; border-bottom: 1px solid #ddd; flex-shrink: 0; position: relative; }
-        .del-btn { position: absolute; top: -3px; right: 2px; color: #bbb; cursor: pointer; font-size: 10px; }
+        /* ZERO PADDING Cards */
+        .card { position: absolute; background: white; border-radius: 2px; z-index: 10; border: 1px solid #ccc; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .handle { height: 10px; background: #f1f1f1; cursor: move; border-bottom: 1px solid #ddd; flex-shrink: 0; position: relative; }
+        .del-btn { position: absolute; top: -4px; right: 2px; color: #ccc; cursor: pointer; font-size: 10px; }
         
-        /* Fixed Padding for Notes */
-        .card-content { padding: 2px; flex-grow: 1; display: flex; flex-direction: column; margin: 0; }
-        textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; background: transparent; padding: 0; margin: 0; flex-grow: 1; line-height: 1.2; display: block; }
+        .card-content { padding: 0; margin: 0; flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        textarea { width: 100%; border: none; outline: none; resize: none; font-size: 13px; background: transparent; padding: 2px; margin: 0; flex-grow: 1; line-height: 1.1; display: block; box-sizing: border-box; }
         
-        /* Fixed Table Padding */
+        /* Table Reset */
         table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 0; padding: 0; border: none; }
         td { border: 1px solid #ddd; padding: 0; margin: 0; line-height: 0; }
-        td input { 
-            width: 100%; border: none; outline: none; background: transparent; 
-            font-size: 12px; padding: 1px 2px; margin: 0; display: block;
-            height: 1.4em; line-height: 1.4em; box-sizing: border-box;
-        }
-        .table-tools { display: flex; gap: 5px; font-size: 8px; color: var(--primary); margin-bottom: 2px; font-weight: bold; }
+        td input { width: 100%; border: none; outline: none; background: transparent; font-size: 12px; padding: 0 2px; margin: 0; display: block; height: 1.3em; line-height: 1.3em; box-sizing: border-box; }
+        .table-tools { display: flex; gap: 4px; font-size: 8px; color: var(--primary); padding: 1px 2px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <div id="url-text" style="font-size:10px; color:#999; cursor:pointer;" onclick="copyBoardUrl()">URL KOPIEREN</div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="document.getElementById('file-up').click()" style="font-size:10px;">UPLOAD</button>
+        <div style="font-size:10px; color:#999; cursor:pointer;" onclick="copyBoardUrl()">URL KOPIEREN</div>
+        <div style="display:flex; gap:8px;">
+            <button onclick="document.getElementById('file-up').click()" style="font-size:9px;">UPLOAD</button>
             <input type="file" id="file-up" style="display:none" onchange="uploadJSON(this)">
-            <button onclick="downloadJSON()" style="font-size:10px;">JSON</button>
-            <button onclick="downloadPNG()" style="font-size:10px;">PNG</button>
+            <button onclick="downloadJSON()" style="font-size:9px;">JSON</button>
+            <button onclick="downloadPNG()" style="font-size:9px;">PNG</button>
         </div>
     </div>
 
@@ -59,7 +54,7 @@
         <button class="tool-btn active" id="btn-select" onclick="setTool('select')">🖱️</button>
         <button class="tool-btn" onclick="spawn('note')">📝</button>
         <button class="tool-btn" onclick="spawn('table')">📊</button>
-        <div style="width:1px; height:20px; background:#eee;"></div>
+        <div style="width:1px; height:15px; background:#eee;"></div>
         <button class="tool-btn" id="btn-pencil" onclick="setTool('pencil')">✏️</button>
         <button class="tool-btn" onclick="clearAll()" style="color:red">🗑️</button>
     </div>
@@ -69,7 +64,7 @@
     </div>
 
     <script>
-        // Use your configuration from the screenshot
+        // Data from configuration
         const firebaseConfig = {
           apiKey: "AIzaSyB6PzmLTjSSdm_ptrf_V3oxEDoajRM79_c",
           authDomain: "collabcanvas-ba771.firebaseapp.com",
@@ -88,11 +83,11 @@
 
         const canvas = document.getElementById('paint-layer');
         const ctx = canvas.getContext('2d');
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round';
         
         let currentTool = 'select';
         let isDrawing = false;
-        let lastX, lastY;
+        let lx, ly;
 
         function setTool(t) {
             currentTool = t;
@@ -101,7 +96,6 @@
             canvas.classList.toggle('active', t === 'pencil');
         }
 
-        // --- ENHANCED PENCIL SYNC ---
         const getPos = (e) => {
             const r = canvas.getBoundingClientRect();
             return {
@@ -110,48 +104,34 @@
             };
         };
 
-        const startDraw = (e) => {
+        // --- PENCIL FIX ---
+        canvas.onmousedown = (e) => {
             if(currentTool !== 'pencil') return;
             isDrawing = true;
-            const pos = getPos(e);
-            lastX = pos.x; lastY = pos.y;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
+            const p = getPos(e); lx = p.x; ly = p.y;
+            ctx.beginPath(); ctx.moveTo(lx, ly);
         };
 
-        const moveDraw = (e) => {
+        canvas.onmousemove = (e) => {
             if(!isDrawing) return;
-            const pos = getPos(e);
-            
-            // Draw locally immediately
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-
-            // Push to Firebase for others
-            drawRef.push({x1: lastX, y1: lastY, x2: pos.x, y2: pos.y});
-            
-            lastX = pos.x; lastY = pos.y;
+            const p = getPos(e);
+            ctx.lineTo(p.x, p.y); ctx.stroke(); // Immediate local draw
+            drawRef.push({x1: lx, y1: ly, x2: p.x, y2: p.y}); // Sync
+            lx = p.x; ly = p.y;
         };
 
-        canvas.onmousedown = startDraw;
-        canvas.onmousemove = moveDraw;
-        window.onmouseup = () => { isDrawing = false; };
-        
-        canvas.addEventListener('touchstart', (e) => { if(currentTool==='pencil') e.preventDefault(); startDraw(e); }, {passive: false});
-        canvas.addEventListener('touchmove', (e) => { if(currentTool==='pencil') e.preventDefault(); moveDraw(e); }, {passive: false});
+        window.onmouseup = () => isDrawing = false;
+        canvas.addEventListener('touchstart', (e) => { if(currentTool==='pencil') e.preventDefault(); canvas.onmousedown(e.touches[0]); }, {passive:false});
+        canvas.addEventListener('touchmove', (e) => { if(currentTool==='pencil') e.preventDefault(); canvas.onmousemove(e.touches[0]); }, {passive:false});
 
-        // Sync incoming drawings
-        drawRef.on('child_added', (s) => {
+        drawRef.on('child_added', s => {
             const d = s.val();
-            ctx.beginPath();
-            ctx.moveTo(d.x1, d.y1);
-            ctx.lineTo(d.x2, d.y2);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(d.x1, d.y1); ctx.lineTo(d.x2, d.y2); ctx.stroke();
         });
 
         // --- CARDS & TABLES ---
         function spawn(type) {
-            roomRef.push().set({ type, x: window.scrollX + 200, y: window.scrollY + 200, w: 200, h: 80, content: type==='note'?'':{rows:2,cols:2,data:{}} });
+            roomRef.push().set({ type, x: window.scrollX + 200, y: window.scrollY + 200, w: 180, h: 80, content: type==='note'?'':{rows:2,cols:2,data:{}} });
         }
 
         roomRef.on('child_added', (s) => {
@@ -174,7 +154,7 @@
             el.setAttribute('data-x', data.x); el.setAttribute('data-y', data.y);
 
             if(data.type === 'note') {
-                area.innerHTML = `<textarea placeholder="...">${data.content||''}</textarea>`;
+                area.innerHTML = `<textarea placeholder="..."> ${data.content||''}</textarea>`;
                 area.querySelector('textarea').oninput = (e) => roomRef.child(id).update({content: e.target.value});
             } else {
                 let html = `<div class="table-tools"><span onclick="modTab('${id}','r')">+Z</span> <span onclick="modTab('${id}','c')">+S</span></div><table>`;
