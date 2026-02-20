@@ -2,39 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CollabCanvas - Create Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CollabCanvas | Home</title>
     <style>
-        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f0f2f5; margin: 0; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 80%; margin: 10px 0; font-size: 1.1rem; text-align: center; }
-        button { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #ccc; }
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: opacity 0.2s; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; }
+        #post-check { display: none; margin-top: 20px; border-top: 1px solid #eee; pt: 20px; }
+        .share-group { display: flex; gap: 5px; margin-top: 10px; }
+        .copy-input { background: #f1f5f9; cursor: pointer; font-family: monospace; font-size: 0.8rem; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>CollabCanvas</h1>
-        <p>Enter the result to create a collaborative board:</p>
-        <h2 id="captcha-text"></h2>
-        <input type="number" id="captcha-input" placeholder="Result?">
-        <br>
-        <button id="create-btn" onclick="createRoom()" disabled>Create Workspace</button>
+        <div id="check-zone">
+            <p>Prove you're human:</p>
+            <h2 id="captcha-text"></h2>
+            <input type="number" id="captcha-input" placeholder="Enter result">
+        </div>
+
+        <div id="post-check">
+            <p>Your workspace is ready!</p>
+            <input type="text" id="room-url" class="copy-input" readonly onclick="copyUrl()">
+            <div class="share-group">
+                <button onclick="copyUrl()" style="background:#64748b">Copy Link</button>
+                <button onclick="shareUrl()" style="background:#0ea5e9">Share</button>
+            </div>
+            <button onclick="enterRoom()">Enter to the Room →</button>
+        </div>
     </div>
 
     <script>
-        const a = Math.floor(Math.random() * 10) + 1;
-        const b = Math.floor(Math.random() * 10) + 1;
+        const a = Math.floor(Math.random() * 9) + 2;
+        const b = Math.floor(Math.random() * 9) + 2;
         const sum = a + b;
-        document.getElementById('captcha-text').innerText = `${a} + ${b} = ?`;
+        let generatedRoomId = '';
 
+        document.getElementById('captcha-text').innerText = `${a} + ${b} = ?`;
         document.getElementById('captcha-input').oninput = function(e) {
-            document.getElementById('create-btn').disabled = (parseInt(e.target.value) !== sum);
+            if (parseInt(e.target.value) === sum) {
+                generatedRoomId = Math.random().toString(36).substring(2, 10);
+                const fullUrl = window.location.href.replace('index.html', '') + 'board.html?id=' + generatedRoomId;
+                document.getElementById('room-url').value = fullUrl;
+                document.getElementById('check-zone').style.display = 'none';
+                document.getElementById('post-check').style.display = 'block';
+            }
         };
 
-        function createRoom() {
-            const roomId = Math.random().toString(36).substring(2, 9);
-            window.location.href = `board.html?id=${roomId}`;
+        function copyUrl() {
+            const input = document.getElementById('room-url');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            alert("URL copied!");
+        }
+
+        async function shareUrl() {
+            const url = document.getElementById('room-url').value;
+            if (navigator.share) {
+                await navigator.share({ title: 'Join my CollabCanvas', url: url });
+            } else { copyUrl(); }
+        }
+
+        function enterRoom() {
+            window.location.href = `board.html?id=${generatedRoomId}`;
         }
     </script>
 </body>
