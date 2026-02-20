@@ -4,93 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Live Collab Board</title>
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
-        :root { 
-            --primary: #2563eb; 
-            --success: #059669;
-            --error: #dc2626;
-            --bg: #e5e7eb;
-        }
-        
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); touch-action: none; font-family: sans-serif; }
+        :root { --primary: #2563eb; --success: #059669; --bg: #e5e7eb; --card-border: #d1d5db; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); touch-action: none; font-family: -apple-system, sans-serif; }
         
         /* Infinite Canvas */
-        #canvas { 
-            width: 5000px; height: 5000px; 
-            position: relative; 
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px); 
-            background-size: 30px 30px; 
-            transition: transform 0.1s ease-out;
-        }
-
-        /* Top Navigation Bar */
-        .top-bar { 
-            position: fixed; top: 0; left: 0; right: 0; height: 60px; 
-            background: white; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 15px; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-        }
+        #canvas { width: 5000px; height: 5000px; position: relative; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
         
-        .room-info { display: flex; align-items: center; gap: 10px; }
-        .status-dot { width: 10px; height: 10px; background: #94a3b8; border-radius: 50%; }
-        .status-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        /* Navigation */
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .url-display { background: #f1f5f9; padding: 8px 15px; border-radius: 20px; font-size: 12px; font-family: monospace; cursor: pointer; border: 1px solid #e2e8f0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .url-display { 
-            background: #f1f5f9; padding: 8px 15px; border-radius: 20px; 
-            font-size: 12px; font-family: monospace; cursor: pointer;
-            border: 1px solid #e2e8f0; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-
-        /* Mobile Action Buttons (FAB) */
         .action-btns { position: fixed; bottom: 25px; right: 25px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; }
-        .fab { 
-            width: 60px; height: 60px; border-radius: 30px; background: var(--primary); 
-            color: white; border: none; font-size: 28px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); 
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
+        .fab { width: 60px; height: 60px; border-radius: 30px; background: var(--primary); color: white; border: none; font-size: 28px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* Note/Card Styles */
-        .card { 
-            position: absolute; background: white; border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-width: 200px; min-height: 150px; 
-            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ddd;
-            touch-action: none; /* Crucial for interact.js */
-        }
+        /* Card System */
+        .card { position: absolute; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-width: 200px; min-height: 150px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--card-border); touch-action: none; }
+        .handle { height: 40px; background: #f8fafc; border-bottom: 1px solid #eee; cursor: move; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; user-select: none; }
+        .card-content { flex: 1; padding: 10px; display: flex; flex-direction: column; overflow: auto; }
         
-        .handle { 
-            height: 38px; background: #f8fafc; border-bottom: 1px solid #eee; 
-            cursor: move; display: flex; align-items: center; justify-content: space-between; padding: 0 12px;
-            user-select: none;
-        }
-
-        .card-content { flex: 1; padding: 5px; display: flex; flex-direction: column; }
+        textarea { width: 100%; height: 100%; border: none; outline: none; resize: none; font-size: 16px; background: transparent; }
         
-        textarea { 
-            width: 100%; height: 100%; border: none; outline: none; 
-            resize: none; font-size: 16px; background: transparent; padding: 8px;
-            box-sizing: border-box;
-        }
-        
-        table { border-collapse: collapse; width: 100%; height: 100%; }
-        td { border: 1px solid #e2e8f0; padding: 4px; }
-        td input { width: 100%; border: none; outline: none; background: transparent; font-size: 14px; }
+        /* Table Styles */
+        .table-tools { display: flex; gap: 10px; margin-bottom: 8px; font-size: 12px; font-weight: bold; color: var(--primary); }
+        .table-tools span { cursor: pointer; padding: 2px 5px; background: #eff6ff; border-radius: 4px; }
+        table { border-collapse: collapse; width: 100%; }
+        td { border: 1px solid #e2e8f0; padding: 0; }
+        td input { width: 100%; padding: 8px; border: none; outline: none; font-size: 14px; box-sizing: border-box; }
 
-        .del-btn { color: var(--error); cursor: pointer; font-weight: bold; font-size: 18px; padding: 5px; }
-
-        @media (max-width: 600px) {
-            .url-display { max-width: 120px; }
-            .top-bar { height: 50px; }
-        }
+        .del-btn { color: #ef4444; cursor: pointer; font-weight: bold; font-size: 18px; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <div class="room-info">
-            <div id="status-light" class="status-dot"></div>
-            <strong>Collab</strong>
-            <div class="url-display" onclick="copyBoardUrl()" id="url-text">Loading URL...</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div id="status-light" style="width:10px; height:10px; background:#059669; border-radius:50%"></div>
+            <strong style="font-size: 18px;">Canvas</strong>
+            <div class="url-display" onclick="copyBoardUrl()" id="url-text">Copy URL</div>
         </div>
         <button onclick="window.location.href='index.html'" style="border:none; background:none; font-weight:bold; color:#64748b; cursor:pointer;">Exit</button>
     </div>
@@ -103,98 +57,125 @@
     <div id="canvas"></div>
 
     <script>
-        // 1. Setup Robust Real-time Sync
-        const peers = [
-            'https://gun-manhattan.herokuapp.com/gun',
-            'https://relay.peer.ooo/gun',
-            'https://gun-us.herokuapp.com/gun'
-        ];
+        // 1. Firebase Initialization with your Config
+        const firebaseConfig = {
+          apiKey: "AIzaSyB6PzmLTjSSdm_ptrf_V3oxEDoajRM79_c",
+          authDomain: "collabcanvas-ba771.firebaseapp.com",
+          databaseURL: "https://collabcanvas-ba771-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "collabcanvas-ba771",
+          storageBucket: "collabcanvas-ba771.firebasestorage.app",
+          messagingSenderId: "889941054639",
+          appId: "1:889941054639:web:a1c236f44344d03f85f05a",
+          measurementId: "G-VWQ41CPW6N"
+        };
 
-        const gun = Gun({ peers: peers, localStorage: false });
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
         const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('id') || 'public-default';
-        const room = gun.get('collab-v4').get(roomId);
+        const roomId = params.get('id') || 'lobby';
+        const roomRef = db.ref('rooms/' + roomId);
 
         document.getElementById('url-text').innerText = window.location.href;
 
-        // Connection Status Indicator
-        gun.on('hi', () => document.getElementById('status-light').classList.add('online'));
-        gun.on('bye', () => document.getElementById('status-light').classList.remove('online'));
-
-        // 2. Card Creation
+        // 2. Core Functions
         function spawn(type) {
-            const id = 'card_' + Math.random().toString(36).substring(2, 11);
-            // Place item relative to current scroll position
+            const newCardRef = roomRef.push();
             const spawnX = window.scrollX + (window.innerWidth / 2) - 100;
             const spawnY = window.scrollY + (window.innerHeight / 2) - 75;
 
-            room.get(id).put({
-                id, type, 
-                x: spawnX, y: spawnY, 
-                w: 240, h: 180, content: ''
+            let initialContent = (type === 'note') ? "" : { rows: 3, cols: 2, data: {} };
+
+            newCardRef.set({
+                type,
+                x: spawnX, y: spawnY,
+                w: 250, h: 200,
+                content: initialContent
             });
         }
 
-        // 3. Listen for changes and render
-        room.map().on((data, id) => {
-            if (!data) {
-                const existing = document.getElementById(id);
-                if (existing) existing.remove();
-                return;
-            }
-            renderOrUpdateCard(data, id);
-        });
+        roomRef.on('child_added', (snapshot) => renderCard(snapshot.val(), snapshot.key));
+        roomRef.on('child_changed', (snapshot) => updateCardUI(snapshot.val(), snapshot.key));
+        roomRef.on('child_removed', (snapshot) => document.getElementById(snapshot.key)?.remove());
 
-        function renderOrUpdateCard(data, id) {
-            let el = document.getElementById(id);
+        function renderCard(data, id) {
+            const el = document.createElement('div');
+            el.id = id; el.className = 'card';
+            el.innerHTML = `
+                <div class="handle">
+                    <span style="font-size:11px; color:#64748b; font-weight:bold;">${data.type.toUpperCase()}</span>
+                    <span class="del-btn" onclick="removeCard('${id}')">✕</span>
+                </div>
+                <div class="card-content" id="content-${id}"></div>
+            `;
+            document.getElementById('canvas').appendChild(el);
             
-            if (!el) {
-                el = document.createElement('div');
-                el.id = id;
-                el.className = 'card';
-                el.innerHTML = `
-                    <div class="handle">
-                        <span style="font-size:10px; font-weight:bold; color:#64748b">${data.type.toUpperCase()}</span>
-                        <span class="del-btn" onclick="removeCard('${id}')">✕</span>
-                    </div>
-                    <div class="card-content"></div>
-                `;
-                document.getElementById('canvas').appendChild(el);
-                
-                const area = el.querySelector('.card-content');
-                if (data.type === 'note') {
-                    area.innerHTML = `<textarea placeholder="Type here..."></textarea>`;
-                    const txt = area.querySelector('textarea');
-                    txt.addEventListener('input', (e) => {
-                        room.get(id).update({ content: e.target.value });
-                    });
-                } else {
-                    area.innerHTML = `<table><tr><td><input></td><td><input></td></tr><tr><td><input></td><td><input></td></tr></table>`;
-                    area.addEventListener('input', () => {
-                        room.get(id).update({ content: area.innerHTML });
-                    });
-                }
-                setupInteract(el, id);
-            }
-
-            // Update content only if user is NOT currently typing in this card
-            if (document.activeElement.closest(`#${id}`) === null) {
-                if (data.type === 'note') {
-                    el.querySelector('textarea').value = data.content || '';
-                } else if (data.content) {
-                    el.querySelector('.card-content').innerHTML = data.content;
-                }
+            const area = el.querySelector('.card-content');
+            if (data.type === 'note') {
+                area.innerHTML = `<textarea placeholder="Write something..."></textarea>`;
+                const tx = area.querySelector('textarea');
+                tx.value = data.content || '';
+                tx.oninput = (e) => roomRef.child(id).update({ content: e.target.value });
+            } else {
+                renderTable(id, data.content);
             }
             
-            // Update Position & Size
+            setupInteract(el, id);
+            updateCardUI(data, id);
+        }
+
+        function renderTable(id, tableData) {
+            const area = document.getElementById(`content-${id}`);
+            if (!area) return;
+            const rows = tableData.rows || 3;
+            const cols = tableData.cols || 2;
+            const values = tableData.data || {};
+
+            let html = `<div class="table-tools">
+                <span onclick="modifyTable('${id}', 'addRow')">+ Row</span>
+                <span onclick="modifyTable('${id}', 'addCol')">+ Col</span>
+            </div><table>`;
+            
+            for (let r = 0; r < rows; r++) {
+                html += '<tr>';
+                for (let c = 0; c < cols; c++) {
+                    const val = values[`${r}-${c}`] || '';
+                    html += `<td><input type="text" data-r="${r}" data-c="${c}" value="${val}" oninput="updateTableCell('${id}', ${r}, ${c}, this.value)"></td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            area.innerHTML = html;
+        }
+
+        function updateTableCell(cardId, r, c, val) {
+            roomRef.child(`${cardId}/content/data/${r}-${c}`).set(val);
+        }
+
+        function modifyTable(cardId, action) {
+            roomRef.child(cardId).once('value', (snap) => {
+                const data = snap.val().content;
+                if (action === 'addRow') data.rows = (data.rows || 0) + 1;
+                if (action === 'addCol') data.cols = (data.cols || 0) + 1;
+                roomRef.child(cardId).update({ content: data });
+                renderTable(cardId, data);
+            });
+        }
+
+        function updateCardUI(data, id) {
+            const el = document.getElementById(id);
+            if (!el) return;
             el.style.width = data.w + 'px';
             el.style.height = data.h + 'px';
             el.style.transform = `translate(${data.x}px, ${data.y}px)`;
             el.setAttribute('data-x', data.x);
             el.setAttribute('data-y', data.y);
+            
+            if (document.activeElement.closest(`#${id}`) === null) {
+                if (data.type === 'note') el.querySelector('textarea').value = data.content || '';
+                else renderTable(id, data.content);
+            }
         }
 
-        // 4. Drag and Resize Logic (Optimized for Mobile)
         function setupInteract(el, id) {
             interact(el).draggable({
                 allowFrom: '.handle',
@@ -208,47 +189,27 @@
                         el.setAttribute('data-y', y);
                     },
                     end() {
-                        room.get(id).update({ 
-                            x: parseFloat(el.getAttribute('data-x')), 
-                            y: parseFloat(el.getAttribute('data-y')) 
-                        });
+                        roomRef.child(id).update({ x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y')) });
                     }
                 }
             }).resizable({
                 edges: { right: true, bottom: true },
                 listeners: {
                     move(event) {
-                        let { x, y } = event.target.dataset;
-                        Object.assign(event.target.style, {
-                            width: `${event.rect.width}px`,
-                            height: `${event.rect.height}px`
-                        });
+                        Object.assign(event.target.style, { width: `${event.rect.width}px`, height: `${event.rect.height}px` });
                     },
                     end(event) {
-                        room.get(id).update({ 
-                            w: event.rect.width, 
-                            h: event.rect.height 
-                        });
+                        roomRef.child(id).update({ w: event.rect.width, h: event.rect.height });
                     }
                 }
             });
         }
 
-        function removeCard(id) {
-            if(confirm("Delete this card?")) room.get(id).put(null);
-        }
-
-        function copyBoardUrl() {
-            navigator.clipboard.writeText(window.location.href);
-            const display = document.getElementById('url-text');
-            const original = display.innerText;
-            display.innerText = "COPIED!";
-            setTimeout(() => display.innerText = original, 1500);
-        }
-
-        // Start user in the middle of the canvas
-        window.scrollTo(2000, 2000);
-
+        function removeCard(id) { if(confirm("Delete this?")) roomRef.child(id).remove(); }
+        function copyBoardUrl() { navigator.clipboard.writeText(window.location.href); alert("URL Copied!"); }
+        
+        // Center view on load
+        window.scrollTo(2300, 2300);
     </script>
 </body>
 </html>
