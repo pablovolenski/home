@@ -2,74 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CollabCanvas | Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pablo Volenski</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        button { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: opacity 0.2s; }
-        button:disabled { background: #cbd5e1; cursor: not-allowed; }
-        #post-check { display: none; margin-top: 20px; border-top: 1px solid #eee; pt: 20px; }
-        .share-group { display: flex; gap: 5px; margin-top: 10px; }
-        .copy-input { background: #f1f5f9; cursor: pointer; font-family: monospace; font-size: 0.8rem; }
+        :root {
+            --thick-border: 6px solid black;
+            --color-a: #ff5f56; --color-b: #ffbd2e; --color-c: #27c93f;
+            --color-d: #007aff; --color-e: #af52de; --color-f: #ff9500;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            height: 100vh;
+            font-family: sans-serif;
+            background-color: white;
+        }
+
+        /* 2/3 Section: The Grid */
+        .grid-container {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            min-width: 300px; /* Ensures responsiveness on small screens */
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 3rem;
+            font-weight: bold;
+            border: var(--thick-border);
+            transition: all 0.3s ease;
+        }
+
+        /* Initial colors and text colors */
+        .a { background-color: var(--color-a); color: white; }
+        .b { background-color: var(--color-b); color: white; }
+        .c { background-color: var(--color-c); color: white; }
+        .d { background-color: var(--color-d); color: white; }
+        .e { background-color: var(--color-e); color: white; }
+        .f { background-color: var(--color-f); color: white; }
+
+        /* Hover Effect: Square turns black, letter turns original square color */
+        .square:hover { background-color: black !important; }
+        .a:hover { color: var(--color-a); }
+        .b:hover { color: var(--color-b); }
+        .c:hover { color: var(--color-c); }
+        .d:hover { color: var(--color-d); }
+        .e:hover { color: var(--color-e); }
+        .f:hover { color: var(--color-f); }
+
+        /* 1/3 Section: The Name */
+        .name-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: var(--thick-border);
+            min-width: 300px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            text-align: center;
+        }
+
+        /* Stack vertically on mobile */
+        @media (max-width: 768px) {
+            body { height: auto; flex-direction: column; }
+            .grid-container { height: 66vh; }
+            .name-section { height: 33vh; border-left: none; border-top: var(--thick-border); }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>CollabCanvas</h1>
-        <div id="check-zone">
-            <p>Prove you're human:</p>
-            <h2 id="captcha-text"></h2>
-            <input type="number" id="captcha-input" placeholder="Enter result">
-        </div>
 
-        <div id="post-check">
-            <p>Your workspace is ready!</p>
-            <input type="text" id="room-url" class="copy-input" readonly onclick="copyUrl()">
-            <div class="share-group">
-                <button onclick="copyUrl()" style="background:#64748b">Copy Link</button>
-                <button onclick="shareUrl()" style="background:#0ea5e9">Share</button>
-            </div>
-            <button onclick="enterRoom()">Enter to the Room →</button>
-        </div>
+    <div class="grid-container">
+        <a href="/a.html" class="square a">a</a>
+        <a href="/b.html" class="square b">b</a>
+        <a href="/c.html" class="square c">c</a>
+        <a href="/d.html" class="square d">d</a>
+        <a href="/e.html" class="square e">e</a>
+        <a href="/f" class="square f">f</a>
     </div>
 
-    <script>
-        const a = Math.floor(Math.random() * 9) + 2;
-        const b = Math.floor(Math.random() * 9) + 2;
-        const sum = a + b;
-        let generatedRoomId = '';
+    <div class="name-section">
+        <h1>Pablo Volenski</h1>
+    </div>
 
-        document.getElementById('captcha-text').innerText = `${a} + ${b} = ?`;
-        document.getElementById('captcha-input').oninput = function(e) {
-            if (parseInt(e.target.value) === sum) {
-                generatedRoomId = Math.random().toString(36).substring(2, 10);
-                const fullUrl = window.location.href.replace('index.html', '') + 'board.html?id=' + generatedRoomId;
-                document.getElementById('room-url').value = fullUrl;
-                document.getElementById('check-zone').style.display = 'none';
-                document.getElementById('post-check').style.display = 'block';
-            }
-        };
-
-        function copyUrl() {
-            const input = document.getElementById('room-url');
-            input.select();
-            navigator.clipboard.writeText(input.value);
-            alert("URL copied!");
-        }
-
-        async function shareUrl() {
-            const url = document.getElementById('room-url').value;
-            if (navigator.share) {
-                await navigator.share({ title: 'Join my CollabCanvas', url: url });
-            } else { copyUrl(); }
-        }
-
-        function enterRoom() {
-            window.location.href = `board.html?id=${generatedRoomId}`;
-        }
-    </script>
 </body>
 </html>
