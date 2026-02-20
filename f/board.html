@@ -2,101 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Real-time Canvas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Board</title>
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
-        :root { --dot-color: #cbd5e1; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #f8fafc; font-family: sans-serif; }
-        #canvas { width: 5000px; height: 5000px; position: relative; background-image: radial-gradient(var(--dot-color) 1px, transparent 1px); background-size: 30px 30px; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #e5e7eb; touch-action: none; }
+        #canvas { width: 4000px; height: 4000px; position: relative; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
         
-        .controls { position: fixed; top: 20px; left: 20px; z-index: 1000; display: flex; gap: 10px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn { padding: 8px 12px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: white; font-weight: bold; }
+        /* Top Navigation Bar */
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .room-info { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+        .url-display { background: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; cursor: pointer; }
         
-        .card { position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 150px; min-height: 100px; display: flex; flex-direction: column; border: 1px solid #e2e8f0; }
-        .handle { height: 25px; background: #f1f5f9; border-radius: 8px 8px 0 0; cursor: move; display: flex; justify-content: flex-end; padding: 0 5px; }
-        .del-btn { color: red; cursor: pointer; font-size: 14px; line-height: 25px; }
+        .action-btns { display: flex; gap: 8px; position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+        .fab { width: 56px; height: 56px; border-radius: 28px; background: #2563eb; color: white; border: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+        /* Card Styles */
+        .card { position: absolute; background: white; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.12); min-width: 180px; min-height: 120px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ddd; touch-action: none; }
+        .handle { height: 35px; background: #f8fafc; border-bottom: 1px solid #eee; cursor: move; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
+        .card-content { flex: 1; padding: 5px; display: flex; flex-direction: column; }
+        textarea { width: 100%; height: 100%; border: none; outline: none; resize: none; font-size: 16px; }
         
-        textarea { flex: 1; border: none; padding: 10px; outline: none; resize: none; background: transparent; }
-        
-        table { border-collapse: collapse; width: 100%; margin: 5px; }
-        td { border: 1px solid #ddd; padding: 4px; }
-        td input { width: 100%; border: none; outline: none; }
-        .table-ctrl { font-size: 10px; padding: 5px; color: #2563eb; cursor: pointer; }
+        table { border-collapse: collapse; width: 100%; }
+        td { border: 1px solid #e2e8f0; padding: 4px; }
+        td input { width: 100%; border: none; outline: none; font-size: 14px; }
+
+        @media (max-width: 600px) {
+            .url-display { max-width: 100px; }
+            .fab { width: 50px; height: 50px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <button class="btn" onclick="spawn('note')">📝 + Note</button>
-        <button class="btn" onclick="spawn('table')">📊 + Table</button>
-        <span id="room-display" style="margin-left:10px; color:#64748b; font-size:12px; align-self:center;"></span>
+    <div class="top-bar">
+        <div class="room-info">
+            <strong>Live Board</strong>
+            <div class="url-display" onclick="copyBoardUrl()" id="url-text">Copy URL</div>
+        </div>
+        <button onclick="window.location.href='index.html'" style="border:none; background:none; color:#64748b;">Exit</button>
+    </div>
+
+    <div class="action-btns">
+        <button class="fab" onclick="spawn('note')">📝</button>
+        <button class="fab" onclick="spawn('table')" style="background:#059669">📊</button>
     </div>
 
     <div id="canvas"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('id') || 'public-demo';
-        document.getElementById('room-display').innerText = `Room: ${roomId}`;
+        const roomId = params.get('id') || 'demo';
+        document.getElementById('url-text').innerText = window.location.href;
 
-        // Initialize Gun (p2p relay peers)
         const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-        const room = gun.get('collab-canvas-v1').get(roomId);
+        const room = gun.get('collab-v2').get(roomId);
+
+        function copyBoardUrl() {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied for sharing!");
+        }
 
         function spawn(type) {
             const id = Math.random().toString(36).substring(2, 9);
             room.get(id).put({
                 id, type, 
-                x: window.scrollX + 150, y: window.scrollY + 150, 
-                w: 200, h: 150, content: ''
+                x: window.pageXOffset + 50, y: window.pageYOffset + 100, 
+                w: 220, h: 160, content: ''
             });
         }
 
-        // Listen for data changes
         room.map().on((data, id) => {
-            if (!data) {
-                const el = document.getElementById(id);
-                if (el) el.remove();
-                return;
-            }
-            updateOrCreateEl(data, id);
-        });
-
-        function updateOrCreateEl(data, id) {
+            if (!data) { document.getElementById(id)?.remove(); return; }
             let el = document.getElementById(id);
             if (!el) {
                 el = document.createElement('div');
-                el.id = id;
-                el.className = 'card';
+                el.id = id; el.className = 'card';
                 el.innerHTML = `
-                    <div class="handle"><span class="del-btn" onclick="removeCard('${id}')">✕</span></div>
-                    <div class="content-area"></div>
+                    <div class="handle"><span>${data.type.toUpperCase()}</span><span onclick="removeCard('${id}')" style="color:red">✕</span></div>
+                    <div class="card-content"></div>
                 `;
                 document.getElementById('canvas').appendChild(el);
-                setupInteract(el, id);
-
-                const area = el.querySelector('.content-area');
+                
+                const area = el.querySelector('.card-content');
                 if (data.type === 'note') {
-                    area.innerHTML = `<textarea oninput="updateContent('${id}', this.value)"></textarea>`;
+                    area.innerHTML = `<textarea oninput="updateGun('${id}', {content: this.value})"></textarea>`;
                 } else {
-                    area.innerHTML = `<div class="table-ctrl" onclick="addRow('${id}')">+ Row</div>
-                                     <table id="t-${id}"><tr><td><input></td><td><input></td></tr></table>`;
+                    area.innerHTML = `<table><tr><td><input></td><td><input></td></tr><tr><td><input></td><td><input></td></tr></table>`;
                 }
+                setupInteract(el, id);
             }
 
-            // Update state without resetting focus if user is typing
-            if (document.activeElement.parentElement?.parentElement?.id !== id && 
-                document.activeElement.parentElement?.id !== id) {
+            if (document.activeElement.closest(`#${id}`) === null) {
                 if (data.type === 'note') el.querySelector('textarea').value = data.content || '';
             }
-
-            el.style.transform = `translate(${data.x}px, ${data.y}px)`;
+            
             el.style.width = data.w + 'px';
             el.style.height = data.h + 'px';
+            el.style.transform = `translate(${data.x}px, ${data.y}px)`;
             el.setAttribute('data-x', data.x);
             el.setAttribute('data-y', data.y);
-        }
+        });
 
         function setupInteract(el, id) {
             interact(el).draggable({
@@ -109,7 +116,7 @@
                         el.setAttribute('data-x', x);
                         el.setAttribute('data-y', y);
                     },
-                    end(event) {
+                    end() {
                         room.get(id).update({ x: parseFloat(el.getAttribute('data-x')), y: parseFloat(el.getAttribute('data-y')) });
                     }
                 }
@@ -126,11 +133,11 @@
             });
         }
 
-        function updateContent(id, val) { room.get(id).update({ content: val }); }
+        function updateGun(id, obj) { room.get(id).update(obj); }
         function removeCard(id) { room.get(id).put(null); }
-        
-        // Initial positioning
-        window.scrollTo(2000, 2000);
+
+        // Start in the middle
+        window.scrollTo(1000, 1000);
     </script>
 </body>
 </html>
