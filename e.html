@@ -1,591 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Text & Code Editor</title>
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-  
-  <style>
-    /* Variables */
-    :root {
-      --bg: #f4f4f5;
-      --surface: #ffffff;
-      --text: #27272a;
-      --text-muted: #a1a1aa;
-      --primary: #16a34a;
-      --primary-hover: #15803d; 
-      --primary-light: #f0fdf4; 
-      --danger: #ef4444;
-      --border: #e4e4e7;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Editor</title>
+    <style>
+        :root {
+            --bg-color: #fcfcfc;
+            --text-color: #333;
+            --accent-color: #e0e0e0;
+            --btn-hover: #d5d5d5;
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
 
-    /* Reset & Base */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      background: var(--bg); 
-      color: var(--text); 
-      display: flex; 
-      justify-content: center; 
-      height: 100vh; 
-    }
-    
-    .app-container { 
-      width: 100%; 
-      max-width: 900px; 
-      display: flex; 
-      flex-direction: column; 
-      height: 100%; 
-      background: var(--surface); 
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-    }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+        }
 
-    /* Header & Navigation */
-    .top-bar { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: flex-end; 
-      padding: 0 16px; 
-      border-bottom: 1px solid var(--border); 
-      background: var(--surface); 
-      height: 56px;
-    }
+        /* Sidebar for Saved Files */
+        .sidebar {
+            width: 250px;
+            background-color: #f4f4f4;
+            border-right: 1px solid var(--accent-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
 
-    .tabs {
-      display: flex;
-      height: 100%;
-    }
-    
-    .tab-btn {
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent; 
-      padding: 0 20px;
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      transition: all 0.2s;
-    }
+        .sidebar h3 {
+            margin: 0 20px 15px 20px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #777;
+        }
 
-    .tab-btn:hover:not(.active) {
-      color: var(--text);
-      background: #fafafa;
-    }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
 
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary); 
-    }
-    
-    .top-actions { 
-      display: flex; 
-      gap: 16px; 
-      align-items: center; 
-      padding-bottom: 12px; 
-    }
+        .file-list li {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
 
-    /* Action Buttons */
-    .action-btn { 
-      background: none; 
-      border: none; 
-      font-size: 20px; 
-      cursor: pointer; 
-      color: var(--text-muted); 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s; 
-    }
-    
-    .action-btn:hover { color: var(--text); }
+        .file-list li:hover, .file-list li.active {
+            background-color: var(--accent-color);
+        }
 
-    #save-btn {
-      color: var(--primary);
-      background: var(--primary-light);
-      font-size: 22px;
-      padding: 4px 8px;
-      border-radius: 6px; 
-      border: 1px solid #bbf7d0; 
-    }
-    
-    #save-btn:hover { 
-      background: #dcfce7;
-      color: var(--primary-hover); 
-    }
+        .new-file-btn {
+            margin: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-main);
+        }
 
-    #download-btn {
-      background: var(--surface);
-      border: 3px solid #ffffff; 
-      box-shadow: 0 0 0 1px var(--border); 
-      padding: 2px 10px;
-      font-size: 16px;
-    }
-    
-    #download-btn:hover { 
-      color: var(--text); 
-      box-shadow: 0 0 0 1px var(--text); 
-    }
+        .new-file-btn:hover { background-color: var(--btn-hover); }
 
-    /* Standard Buttons */
-    .btn {
-      padding: 8px 16px; 
-      border-radius: 0; 
-      font-size: 14px; 
-      cursor: pointer; 
-      font-weight: 500; 
-      transition: all 0.2s;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-    }
-    
-    .btn:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
-    .btn-danger { color: var(--danger); border-color: var(--border); }
-    .btn-danger:hover { background: #fef2f2; border-color: var(--danger); color: var(--danger); }
+        /* Main Editor Area */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
 
-    /* Layout Containers */
-    .view-container {
-      display: none;
-      flex-direction: column;
-      flex-grow: 1;
-      padding: 24px;
-      overflow-y: auto;
-    }
-    
-    .view-container.active { display: flex; }
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px 30px;
+            gap: 10px;
+        }
 
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th, td { padding: 12px; border-bottom: 1px solid var(--border); }
-    th { font-weight: 600; color: var(--text-muted); }
-    tr:hover { background: #fafafa; }
-    .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        button {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 13px;
+        }
+        
+        button:hover { background-color: var(--btn-hover); }
 
-    /* Editor View */
-    .editor-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
+        /* Dropdown for Share */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
 
-    #note-title { 
-      font-size: 24px; 
-      font-weight: 600; 
-      border: none; 
-      outline: none; 
-      background: transparent;
-      color: var(--text);
-      flex-grow: 1;
-      margin-right: 16px;
-    }
-    
-    #note-title::placeholder { color: var(--border); }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+            z-index: 1;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
 
-    /* Toggle Component */
-    .mode-toggle-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--text-muted);
-      user-select: none;
-    }
-    
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 34px;
-      height: 18px;
-    }
-    
-    .switch input { 
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: var(--border);
-      transition: .2s;
-      border-radius: 18px;
-    }
-    
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 12px;
-      width: 12px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .2s;
-      border-radius: 50%;
-    }
-    
-    input:checked + .slider { background-color: var(--primary); }
-    input:checked + .slider:before { transform: translateX(16px); }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 13px;
+        }
 
-    /* Inputs */
-    #note-content-plain { 
-      flex-grow: 1; 
-      font-size: 16px; 
-      line-height: 1.6; 
-      border: 1px solid var(--border); 
-      padding: 12px;
-      outline: none; 
-      resize: none; 
-      background: transparent; 
-      color: var(--text);
-      display: block;
-    }
+        .dropdown-content a:hover { background-color: #f1f1f1; }
+        .dropdown.show .dropdown-content { display: block; }
 
-    #code-editor-container {
-      display: none;
-      flex-grow: 1;
-      border: 1px solid var(--border);
-    }
-    
-    .CodeMirror { height: 100% !important; font-family: monospace; font-size: 14px; }
+        .editor-textarea {
+            flex-grow: 1;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 20px 40px;
+            border: none;
+            resize: none;
+            font-size: 16px;
+            font-family: var(--font-main);
+            line-height: 1.6;
+            background-color: transparent;
+            outline: none;
+        }
 
-    /* Status */
-    .status-bar { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-top: 16px; 
-      font-size: 12px; 
-      color: var(--text-muted); 
-    }
+        /* Discreet Word/Char Count */
+        .stats {
+            text-align: right;
+            padding: 5px 40px 15px 40px;
+            font-size: 11px;
+            color: #aaa;
+        }
 
-    .loading { opacity: 0.5; pointer-events: none; }
-  </style>
+        /* Sticky Note */
+        .sticky-note {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            width: 200px;
+            height: 200px;
+            background-color: #fffacd; /* Light yellow */
+            border: 1px solid #e6dca3;
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.05);
+            border-radius: 0 0 15px 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .sticky-note::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            border-width: 0 15px 15px 0;
+            border-style: solid;
+            border-color: #fcfcfc #fcfcfc #e6dca3 #e6dca3;
+            background: #e6dca3;
+            display: block; width: 0;
+            box-shadow: -1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .sticky-textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            background: transparent;
+            outline: none;
+            font-family: var(--font-main);
+            font-size: 13px;
+            line-height: 1.4;
+            color: #444;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <header class="top-bar">
-      <div class="tabs">
-        <button id="tab-list-btn" class="tab-btn">Files</button>
-        <button id="tab-editor-btn" class="tab-btn active">Editor</button>
-      </div>
-      
-      <div class="top-actions">
-        <button id="new-btn" class="action-btn" title="Create New Note">＋</button>
-        <button id="save-btn" class="action-btn" title="Save Note">💾</button>
-        <button id="download-btn" class="action-btn" title="Download all notes as JSON">↓</button>
-      </div>
-    </header>
+    <div class="sidebar">
+        <h3>Your Files</h3>
+        <ul class="file-list" id="fileList"></ul>
+        <button class="new-file-btn" id="newFileBtn">+ New File</button>
+    </div>
 
-    <main id="view-list" class="view-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Last Saved</th>
-            <th style="width: 80px;">Edit</th>
-            <th style="width: 80px;">Delete</th>
-          </tr>
-        </thead>
-        <tbody id="files-tbody"></tbody>
-      </table>
-      <div id="empty-state" class="empty-state" style="display: none;">No files saved yet.</div>
-    </main>
-    
-    <main id="view-editor" class="view-container active">
-      <div class="editor-header-row">
-        <input type="text" id="note-title" placeholder="Note Title">
-        
-        <div class="mode-toggle-wrapper">
-          <span>Code</span>
-          <label class="switch" title="Toggle Code Editor">
-            <input type="checkbox" id="toggle-mode-checkbox">
-            <span class="slider"></span>
-          </label>
+    <div class="main-content">
+        <div class="toolbar">
+            <button id="saveBtn">Save</button>
+            <div class="dropdown" id="shareDropdown">
+                <button id="shareBtn">Share ▾</button>
+                <div class="dropdown-content">
+                    <a href="#" id="downloadBtn">Download as .txt</a>
+                    <a href="#" id="copyBtn">Copy to Clipboard</a>
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <textarea id="note-content-plain" placeholder="Start typing..."></textarea>
-      
-      <div id="code-editor-container">
-        <textarea id="note-content-code"></textarea>
-      </div>
-      
-      <div class="status-bar">
-        <span id="last-saved"></span>
-      </div>
-    </main>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-
-  <script>
-    // Config
-    const BIN_ID = '69978e9043b1c97be98c8f3e'; 
-    const API_KEY = '$2a$10$E4z8VdkmPaSv1dUTQJKH6.myc0Ex5Cs1jIQZgZOY9bgIU72cPiefu'; 
-    const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
-    // Elements
-    const ui = {
-      tabListBtn: document.getElementById('tab-list-btn'),
-      tabEditorBtn: document.getElementById('tab-editor-btn'),
-      viewList: document.getElementById('view-list'),
-      viewEditor: document.getElementById('view-editor'),
-      tbody: document.getElementById('files-tbody'),
-      emptyState: document.getElementById('empty-state'),
-      titleInput: document.getElementById('note-title'),
-      plainTextArea: document.getElementById('note-content-plain'),
-      codeContainer: document.getElementById('code-editor-container'),
-      codeTextArea: document.getElementById('note-content-code'),
-      toggleModeCheckbox: document.getElementById('toggle-mode-checkbox'),
-      saveBtn: document.getElementById('save-btn'),
-      newBtn: document.getElementById('new-btn'),
-      downloadBtn: document.getElementById('download-btn'),
-      lastSavedStr: document.getElementById('last-saved'),
-      appContainer: document.querySelector('.app-container')
-    };
-
-    // State
-    let notes = [];
-    let currentId = null;
-    let isCodeMode = false; 
-    let editorInstance = null; 
-
-    // Init
-    function initCodeEditor() {
-      editorInstance = CodeMirror.fromTextArea(ui.codeTextArea, {
-        lineNumbers: true,
-        mode: "htmlmixed", 
-        theme: "default",
-        lineWrapping: true
-      });
-    }
-    initCodeEditor();
-
-    // UI Logic
-    function switchTab(tab) {
-      if (tab === 'list') {
-        ui.viewList.classList.add('active');
-        ui.viewEditor.classList.remove('active');
-        ui.tabListBtn.classList.add('active');
-        ui.tabEditorBtn.classList.remove('active');
         
-        ui.saveBtn.style.display = 'none';
-        ui.downloadBtn.style.display = 'none';
-
-        renderTable(); 
-      } else {
-        ui.viewList.classList.remove('active');
-        ui.viewEditor.classList.add('active');
-        ui.tabListBtn.classList.remove('active');
-        ui.tabEditorBtn.classList.add('active');
+        <textarea class="editor-textarea" id="mainEditor" placeholder="Start typing... The first line will automatically become the file name."></textarea>
         
-        ui.saveBtn.style.display = 'flex';
-        ui.downloadBtn.style.display = 'flex';
+        <div class="stats" id="textStats">0 words | 0 characters</div>
+    </div>
 
-        setTimeout(() => editorInstance.refresh(), 10);
-      }
-    }
+    <div class="sticky-note">
+        <textarea class="sticky-textarea" id="stickyEditor" placeholder="Quick note..."></textarea>
+    </div>
 
-    function setEditorMode(mode) {
-      isCodeMode = mode === 'code';
-      ui.toggleModeCheckbox.checked = isCodeMode; 
-      
-      if (isCodeMode) {
-        ui.plainTextArea.style.display = 'none';
-        ui.codeContainer.style.display = 'flex';
-        editorInstance.setValue(ui.plainTextArea.value);
-        setTimeout(() => editorInstance.refresh(), 10);
-      } else {
-        ui.codeContainer.style.display = 'none';
-        ui.plainTextArea.style.display = 'block';
-        ui.plainTextArea.value = editorInstance.getValue();
-      }
-    }
+    <script>
+        // DOM Elements
+        const mainEditor = document.getElementById('mainEditor');
+        const textStats = document.getElementById('textStats');
+        const fileList = document.getElementById('fileList');
+        const saveBtn = document.getElementById('saveBtn');
+        const newFileBtn = document.getElementById('newFileBtn');
+        const stickyEditor = document.getElementById('stickyEditor');
+        const shareBtn = document.getElementById('shareBtn');
+        const shareDropdown = document.getElementById('shareDropdown');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
 
-    // Handlers
-    ui.tabListBtn.addEventListener('click', () => switchTab('list'));
-    ui.tabEditorBtn.addEventListener('click', () => switchTab('editor'));
-    ui.toggleModeCheckbox.addEventListener('change', (e) => setEditorMode(e.target.checked ? 'code' : 'text'));
+        let currentFileId = null;
 
-    // Network
-    async function fetchNotesFromServer() {
-      try {
-        const response = await fetch(URL, { method: 'GET', headers: { 'X-Master-Key': API_KEY } });
-        const data = await response.json();
-        notes = data.record || []; 
-        renderTable();
-        
-        if (notes.length > 0 && !currentId) {
-          loadNote(notes[0].id);
-        } else if (notes.length === 0) {
-          createNewNote();
+        // --- Core Functions ---
+
+        function loadFiles() {
+            const files = JSON.parse(localStorage.getItem('myFiles')) || [];
+            fileList.innerHTML = '';
+            
+            files.forEach(file => {
+                const li = document.createElement('li');
+                // Extract first line as title, fallback to 'Untitled'
+                const firstLine = file.content.split('\n')[0].trim();
+                li.textContent = firstLine ? firstLine : 'Untitled';
+                
+                if (file.id === currentFileId) li.classList.add('active');
+                
+                li.onclick = () => openFile(file.id);
+                fileList.appendChild(li);
+            });
         }
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    }
 
-    async function syncToServer() {
-      ui.appContainer.classList.add('loading');
-      try {
-        await fetch(URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-          body: JSON.stringify(notes)
+        function saveFile() {
+            const content = mainEditor.value;
+            if (!content.trim()) return; // Don't save completely empty files
+
+            let files = JSON.parse(localStorage.getItem('myFiles')) || [];
+            
+            if (currentFileId) {
+                // Update existing
+                const index = files.findIndex(f => f.id === currentFileId);
+                if (index > -1) files[index].content = content;
+            } else {
+                // Create new
+                currentFileId = Date.now().toString();
+                files.push({ id: currentFileId, content: content });
+            }
+
+            localStorage.setItem('myFiles', JSON.stringify(files));
+            loadFiles();
+        }
+
+        function openFile(id) {
+            const files = JSON.parse(localStorage.getItem('myFiles')) || [];
+            const file = files.find(f => f.id === id);
+            if (file) {
+                currentFileId = file.id;
+                mainEditor.value = file.content;
+                updateStats();
+                loadFiles(); // Update active class
+            }
+        }
+
+        function startNewFile() {
+            currentFileId = null;
+            mainEditor.value = '';
+            updateStats();
+            loadFiles();
+        }
+
+        // --- UI Interactions & Listeners ---
+
+        // Word and Character Count
+        function updateStats() {
+            const text = mainEditor.value;
+            const chars = text.length;
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            textStats.textContent = `${words} words | ${chars} characters`;
+        }
+
+        mainEditor.addEventListener('input', updateStats);
+
+        // Auto-save on typing (optional, but good UX for local storage)
+        mainEditor.addEventListener('input', () => {
+            if(currentFileId) saveFile(); // Auto-save if it's an existing file
         });
-      } catch (error) {
-        console.error("Sync error:", error);
-      } finally {
-        ui.appContainer.classList.remove('loading');
-      }
-    }
 
-    // Core Functions
-    function sanitizeText(input) {
-      return input.replace(/[\u200B\u2060\uFEFF]/g, '');
-    }
+        // Sticky Note Logic (Independent of main files)
+        stickyEditor.value = localStorage.getItem('stickyNote') || '';
+        stickyEditor.addEventListener('input', () => {
+            localStorage.setItem('stickyNote', stickyEditor.value);
+        });
 
-    function renderTable() {
-      ui.tbody.innerHTML = '';
-      if (notes.length === 0) {
-        ui.emptyState.style.display = 'block';
-        return;
-      }
-      ui.emptyState.style.display = 'none';
+        // Button Listeners
+        saveBtn.addEventListener('click', saveFile);
+        newFileBtn.addEventListener('click', startNewFile);
 
-      notes.forEach(note => {
-        const tr = document.createElement('tr');
-        
-        const tdName = document.createElement('td');
-        tdName.textContent = note.title || 'Untitled';
-        
-        const tdTime = document.createElement('td');
-        tdTime.textContent = note.lastSavedTime || 'Unknown';
-        
-        const tdEdit = document.createElement('td');
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn';
-        editBtn.textContent = 'Edit';
-        editBtn.onclick = () => loadNote(note.id);
-        tdEdit.appendChild(editBtn);
-        
-        const tdDelete = document.createElement('td');
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn btn-danger';
-        delBtn.textContent = 'Delete';
-        delBtn.onclick = () => deleteNote(note.id);
-        tdDelete.appendChild(delBtn);
+        // Share Dropdown Toggle
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shareDropdown.classList.toggle('show');
+        });
 
-        tr.append(tdName, tdTime, tdEdit, tdDelete);
-        ui.tbody.appendChild(tr);
-      });
-    }
+        window.addEventListener('click', () => {
+            if (shareDropdown.classList.contains('show')) {
+                shareDropdown.classList.remove('show');
+            }
+        });
 
-    function loadNote(id) {
-      const note = notes.find(n => n.id === id);
-      if (note) {
-        currentId = note.id;
-        ui.titleInput.value = note.title;
-        ui.lastSavedStr.textContent = `Last saved: ${note.lastSavedTime}`;
-        
-        ui.plainTextArea.value = note.text;
-        editorInstance.setValue(note.text);
-        setEditorMode(note.isCode ? 'code' : 'text');
-        
-        switchTab('editor');
-      }
-    }
+        // Share: Copy to Clipboard
+        copyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigator.clipboard.writeText(mainEditor.value).then(() => {
+                alert('Copied to clipboard!');
+            });
+        });
 
-    async function saveNote() {
-      const originalIcon = ui.saveBtn.textContent;
-      ui.saveBtn.textContent = "⏳"; 
-      
-      const title = ui.titleInput.value.trim() || "Untitled";
-      const rawText = isCodeMode ? editorInstance.getValue() : ui.plainTextArea.value;
-      const text = sanitizeText(rawText);
-      const now = new Date();
-      const timeString = now.toLocaleString();
+        // Share: Download as .txt
+        downloadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const text = mainEditor.value;
+            if(!text) return;
+            
+            const firstLine = text.split('\n')[0].trim() || 'document';
+            // Clean the title so it's a valid filename
+            const filename = firstLine.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt';
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
 
-      if (!currentId) {
-        currentId = Date.now().toString();
-        notes.unshift({ id: currentId, title, text, lastSavedTime: timeString, isCode: isCodeMode });
-      } else {
-        const index = notes.findIndex(n => n.id === currentId);
-        if (index > -1) {
-          notes[index].title = title;
-          notes[index].text = text;
-          notes[index].lastSavedTime = timeString;
-          notes[index].isCode = isCodeMode;
-          const [updatedNote] = notes.splice(index, 1);
-          notes.unshift(updatedNote); 
-        }
-      }
+        // Initialize
+        loadFiles();
+        updateStats();
 
-      await syncToServer();
-      ui.lastSavedStr.textContent = `Saved: ${timeString}`;
-      ui.saveBtn.textContent = originalIcon;
-    }
-
-    async function deleteNote(id) {
-      const confirmDelete = confirm("Delete this file?");
-      if (!confirmDelete) return;
-
-      notes = notes.filter(n => n.id !== id);
-      await syncToServer();
-      
-      if (currentId === id) {
-        createNewNote();
-      } else {
-        renderTable();
-      }
-    }
-
-    function createNewNote() {
-      currentId = null;
-      ui.titleInput.value = '';
-      ui.plainTextArea.value = '';
-      editorInstance.setValue('');
-      ui.lastSavedStr.textContent = '';
-      setEditorMode('text'); 
-      switchTab('editor');
-      ui.titleInput.focus();
-    }
-
-    function downloadJSON() {
-      if (notes.length === 0) return;
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes, null, 2));
-      const timeStr = new Date().toLocaleString().replace(/[\/:]/g, '-').replace(',', '');
-      const fileName = `online Noten von ${timeStr}.json`;
-      
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", fileName);
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
-    }
-
-    // Bind Actions
-    ui.saveBtn.addEventListener('click', saveNote);
-    ui.newBtn.addEventListener('click', createNewNote);
-    ui.downloadBtn.addEventListener('click', downloadJSON);
-
-    // Boot
-    fetchNotesFromServer();
-  </script>
+    </script>
 </body>
 </html>
