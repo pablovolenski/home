@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arbeitstisch</title>
-<meta name="robots" content="noindex, nofollow">
+    <title>Workspace</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
 </head>
@@ -34,7 +33,7 @@
     <div class="file-dropdown" id="fileDropdown">
         <ul class="file-list" id="fileList"></ul>
         <div style="padding: 10px; text-align: center;">
-            <button class="icon-btn" id="newFileBtn" style="width: 100%;">+ Create New</button>
+            <button class="icon-btn" id="newFileBtn" style="width: 100%; justify-content: center;">+ Create New</button>
         </div>
     </div>
 
@@ -56,6 +55,8 @@
             <button class="icon-btn" id="addNoteBtn">📝 Note</button>
             <button class="icon-btn" id="addTableBtn">📊 Table</button>
             <button class="icon-btn" id="addDrawBtn">🖌️ Draw</button>
+            <button class="icon-btn" id="addImgBtn">🖼️ Image</button>
+            <input type="file" id="imageUpload" accept="image/*" style="display: none;">
         </div>
     </div>
 
