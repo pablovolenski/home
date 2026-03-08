@@ -3,371 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minimal Editor</title>
+    <title>Workspace</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
     <style>
         :root {
             --bg: #fcfcfc;
             --text: #333;
-            --accent: #eee;
             --border: #ddd;
+            --accent: #eee;
+            --top-bar: #fff;
             --font-main: 'Segoe UI', system-ui, sans-serif;
             --font-code: 'Courier New', Courier, monospace;
-            --note-bg: #fff9c4;
-            --note-border: #f0e68c;
         }
 
         body, html {
             margin: 0; padding: 0; height: 100%;
             font-family: var(--font-main);
             background: var(--bg); color: var(--text);
-            overflow: hidden; /* Prevent body scroll, handle internally */
+            overflow: hidden; display: flex; flex-direction: column;
         }
 
-        /* Top Navigation / Toolbar */
-        .toolbar {
+        /* Top Bar & File Menu */
+        .top-bar {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 15px; border-bottom: 1px solid var(--border);
-            background: var(--bg); position: relative; z-index: 10;
-        }
-
-        .tools { display: flex; gap: 15px; align-items: center; }
-
-        .icon-btn {
-            background: none; border: none; padding: 5px;
-            cursor: pointer; color: #555; display: flex; align-items: center;
-            justify-content: center; border-radius: 4px; transition: 0.2s;
-        }
-        .icon-btn:hover { background: var(--accent); color: #000; }
-        .icon-btn.active { background: #d0d0d0; }
-        .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
-
-        /* Dropdown for Share */
-        .dropdown { position: relative; }
-        .dropdown-menu {
-            display: none; position: absolute; right: 0; top: 100%;
-            background: white; border: 1px solid var(--border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 6px;
-            min-width: 150px; z-index: 20; overflow: hidden;
-        }
-        .dropdown-menu.show { display: block; }
-        .dropdown-menu button {
-            width: 100%; text-align: left; background: none; border: none;
-            padding: 12px 15px; cursor: pointer; font-family: var(--font-main);
-            font-size: 14px; border-bottom: 1px solid var(--accent);
-        }
-        .dropdown-menu button:hover { background: var(--accent); }
-        .dropdown-menu button:last-child { border-bottom: none; }
-
-        /* Sliding Drawer for Files */
-        .drawer-overlay {
-            display: none; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 30;
-        }
-        .drawer {
-            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
-            background: #f9f9f9; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            transition: left 0.3s ease; z-index: 40; display: flex; flex-direction: column;
-        }
-        .drawer.open { left: 0; }
-        .drawer-header {
-            padding: 15px; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .drawer-header h3 { margin: 0; font-size: 14px; text-transform: uppercase; color: #777; }
-        .file-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; }
-        .file-list li {
-            padding: 12px 20px; border-bottom: 1px solid var(--accent);
-            cursor: pointer; font-size: 14px; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
-        }
-        .file-list li:hover, .file-list li.active { background: var(--border); }
-        .new-file-btn {
-            margin: 15px; padding: 10px; background: white; border: 1px solid var(--border);
-            border-radius: 4px; cursor: pointer; font-family: var(--font-main);
-        }
-
-        /* Main Editor */
-        .editor-container {
-            height: calc(100vh - 50px); position: relative; display: flex; flex-direction: column;
-        }
-        .editor-textarea {
-            flex-grow: 1; width: 100%; box-sizing: border-box;
-            padding: 20px; border: none; resize: none; font-size: 16px; line-height: 1.6;
-            background: transparent; outline: none; font-family: var(--font-main);
-        }
-        .editor-textarea.code-mode {
-            font-family: var(--font-code); white-space: pre-wrap; font-size: 14px;
-        }
-        .stats {
-            text-align: right; padding: 5px 20px 10px; font-size: 11px; color: #aaa;
-            background: var(--bg); position: absolute; bottom: 0; right: 0;
-        }
-
-        /* Draggable Sticky Notes */
-        .note {
-            position: absolute; background: var(--note-bg); border: 1px solid var(--note-border);
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.1); border-radius: 4px;
-            min-width: 150px; min-height: 150px; resize: both; overflow: hidden;
-            display: flex; flex-direction: column; z-index: 5;
-        }
-        .note-header {
-            background: #f0e68c; padding: 5px; display: flex; justify-content: flex-end;
-            cursor: move; touch-action: none; /* Crucial for mobile drag */
-        }
-        .note-close {
-            background: none; border: none; cursor: pointer; font-size: 12px; font-weight: bold;
-            color: #666; padding: 0 5px;
-        }
-        .note-body {
-            flex-grow: 1; border: none; background: transparent; resize: none; outline: none;
-            padding: 10px; font-family: var(--font-main); font-size: 13px; color: #444; width: 100%; box-sizing: border-box;
+            padding: 10px 15px; background: var(--top-bar);
+            border-bottom: 1px solid var(--border); z-index: 100;
         }
         
-        /* Save indicator animation */
-        @keyframes flashSave {
-            0% { fill: #555; } 50% { fill: #4CAF50; transform: scale(1.1); } 100% { fill: #555; }
+        .nav-tabs { display: flex; gap: 10px; }
+        .nav-btn {
+            padding: 8px 16px; border: 1px solid var(--border);
+            background: #fff; border-radius: 4px; cursor: pointer;
+            font-family: var(--font-main); font-weight: bold; color: #555;
         }
-        .saved-flash svg { animation: flashSave 0.5s ease; }
+        .nav-btn.active { background: #e0e0e0; color: #000; }
+
+        .file-controls { display: flex; gap: 10px; align-items: center; }
+        .icon-btn {
+            background: none; border: 1px solid var(--border); padding: 6px 10px;
+            cursor: pointer; border-radius: 4px; font-size: 14px;
+        }
+        .icon-btn:hover { background: var(--accent); }
+
+        /* Collapsible File Section */
+        .file-dropdown {
+            position: absolute; top: 50px; left: 0; width: 100%;
+            background: #fff; border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-100%);
+            transition: transform 0.3s ease; z-index: 90; max-height: 40vh; overflow-y: auto;
+        }
+        .file-dropdown.open { transform: translateY(0); }
+        .file-list { list-style: none; margin: 0; padding: 0; }
+        .file-list li {
+            padding: 12px 20px; border-bottom: 1px solid #f0f0f0;
+            cursor: pointer; display: flex; justify-content: space-between;
+        }
+        .file-list li:hover { background: var(--accent); }
+        .file-title { font-weight: bold; font-size: 14px; }
+        .file-date { font-size: 12px; color: #888; }
+
+        /* View Containers */
+        .view-container {
+            flex-grow: 1; position: relative; display: none; height: 100%;
+        }
+        .view-container.active { display: flex; flex-direction: column; }
+
+        /* --- TEXT VIEW --- */
+        .editor-wrapper {
+            position: relative; flex-grow: 1; display: flex; overflow: hidden;
+            background: #fff;
+        }
+        
+        /* Line Numbers Gutter */
+        .line-numbers {
+            width: 40px; background: #f9f9f9; border-right: 1px solid var(--border);
+            text-align: right; padding: 20px 5px 20px 0; font-family: var(--font-code);
+            font-size: 14px; line-height: 1.6; color: #999; overflow: hidden;
+            user-select: none; display: none;
+        }
+
+        /* Code coloring overlay technique */
+        .code-overlay, .editor-textarea {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            padding: 20px; box-sizing: border-box; font-size: 16px; line-height: 1.6;
+            margin: 0; border: none; outline: none; overflow-y: auto;
+        }
+        
+        .code-overlay {
+            z-index: 1; pointer-events: none; font-family: var(--font-code);
+            white-space: pre-wrap; word-wrap: break-word; color: transparent;
+            display: none;
+        }
+        
+        .editor-textarea {
+            z-index: 2; background: transparent; color: var(--text);
+            font-family: var(--font-main); resize: none;
+        }
+
+        .editor-wrapper.code-mode .line-numbers { display: block; }
+        .editor-wrapper.code-mode .editor-textarea {
+            left: 45px; width: calc(100% - 45px); font-family: var(--font-code);
+            color: transparent; caret-color: #000; /* Hide text, show caret */
+        }
+        .editor-wrapper.code-mode .code-overlay {
+            display: block; left: 45px; width: calc(100% - 45px); color: #333;
+        }
+
+        .stats-bar {
+            text-align: right; padding: 5px 20px; font-size: 11px; color: #999;
+            background: #fff; border-top: 1px solid var(--border);
+        }
+
+        /* --- BOARD VIEW --- */
+        .board-viewport {
+            width: 100%; height: 100%; overflow: auto; position: relative;
+            background: #f0f0f0; touch-action: none; /* Allows custom drag panning */
+        }
+        
+        /* The "Infinite" Canvas container */
+        .board-canvas {
+            width: 5000px; height: 5000px; position: absolute;
+            background-image: radial-gradient(#ccc 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .board-tools {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; background: white; padding: 10px;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 50;
+        }
+
+        /* Draggable Elements (Notes, Tables, Drawings) */
+        .draggable {
+            position: absolute; background: white; border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 4px;
+            display: flex; flex-direction: column; z-index: 10;
+        }
+        .drag-handle {
+            height: 20px; background: rgba(0,0,0,0.05); cursor: move;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 5px; touch-action: none; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .close-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: #666; }
+        
+        /* specific draggables */
+        .note-body {
+            border: none; outline: none; padding: 10px; resize: both;
+            min-width: 150px; min-height: 150px; font-family: var(--font-main); font-size: 14px;
+        }
+        
+        .board-table { border-collapse: collapse; margin: 10px; }
+        .board-table td {
+            border: 1px solid #ccc; padding: 5px; min-width: 60px; height: 30px;
+            outline: none;
+        }
+
+        .drawing-canvas { cursor: crosshair; touch-action: none; background: #fff;}
+
+        /* Color Picker for Notes */
+        .color-dots { display: flex; gap: 5px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
+
     </style>
 </head>
 <body>
 
-    <div class="drawer-overlay" id="drawerOverlay"></div>
-
-    <div class="drawer" id="fileDrawer">
-        <div class="drawer-header">
-            <h3>Files</h3>
-            <button class="icon-btn" id="closeDrawerBtn">
-                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
+    <div class="top-bar">
+        <div class="nav-tabs">
+            <button class="nav-btn active" id="tabText">Text</button>
+            <button class="nav-btn" id="tabBoard">Board</button>
         </div>
+        <div class="file-controls" id="textControls">
+            <button class="icon-btn" id="toggleCodeBtn">&lt;/&gt; Code</button>
+            <button class="icon-btn" id="saveBtn">Save</button>
+            <button class="icon-btn" id="filesBtn">Files ▾</button>
+        </div>
+    </div>
+
+    <div class="file-dropdown" id="fileDropdown">
         <ul class="file-list" id="fileList"></ul>
-        <button class="new-file-btn" id="newFileBtn">+ New File</button>
-    </div>
-
-    <div class="toolbar">
-        <button class="icon-btn" id="menuBtn" title="Files">
-            <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-        </button>
-        
-        <div class="tools">
-            <button class="icon-btn" id="codeToggle" title="Toggle Code View">
-                <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-            </button>
-            <button class="icon-btn" id="newNoteBtn" title="New Note">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z"/></svg>
-            </button>
-            <button class="icon-btn" id="saveBtn" title="Force Save (Auto-saves on typing)">
-                <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-            </button>
-            <div class="dropdown">
-                <button class="icon-btn" id="shareMenuBtn" title="Share / Download">
-                    <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-                </button>
-                <div class="dropdown-menu" id="shareMenu">
-                    <button id="nativeShareBtn">Share...</button>
-                    <button id="downloadBtn">Download .txt</button>
-                </div>
-            </div>
+        <div style="padding: 10px; text-align: center;">
+            <button class="icon-btn" id="newFileBtn">+ Create New File</button>
         </div>
     </div>
 
-    <div class="editor-container" id="editorArea">
-        <textarea class="editor-textarea" id="mainEditor" placeholder="Start typing..."></textarea>
-        <div class="stats" id="textStats">0 words | 0 chars</div>
+    <div class="view-container active" id="textView">
+        <div class="editor-wrapper" id="editorWrapper">
+            <div class="line-numbers" id="lineNumbers">1</div>
+            <pre class="code-overlay"><code id="codeHighlight" class="language-javascript"></code></pre>
+            <textarea class="editor-textarea" id="mainEditor" spellcheck="false" placeholder="Start typing..."></textarea>
+        </div>
+        <div class="stats-bar" id="textStats">0 words | 0 chars</div>
     </div>
 
-    <script>
-        // DOM Elements
-        const mainEditor = document.getElementById('mainEditor');
-        const textStats = document.getElementById('textStats');
-        const fileList = document.getElementById('fileList');
-        const fileDrawer = document.getElementById('fileDrawer');
-        const drawerOverlay = document.getElementById('drawerOverlay');
-        const editorArea = document.getElementById('editorArea');
-
-        // Buttons
-        const menuBtn = document.getElementById('menuBtn');
-        const closeDrawerBtn = document.getElementById('closeDrawerBtn');
-        const newFileBtn = document.getElementById('newFileBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        const codeToggle = document.getElementById('codeToggle');
-        const shareMenuBtn = document.getElementById('shareMenuBtn');
-        const shareMenu = document.getElementById('shareMenu');
-        const newNoteBtn = document.getElementById('newNoteBtn');
-
-        let currentFileId = null;
-        let notesData = JSON.parse(localStorage.getItem('myNotes')) || [];
-
-        // --- File Management ---
-
-        function loadFiles() {
-            const files = JSON.parse(localStorage.getItem('myFiles')) || [];
-            fileList.innerHTML = '';
-            files.forEach(file => {
-                const li = document.createElement('li');
-                const firstLine = file.content.split('\n')[0].trim() || 'Untitled';
-                li.textContent = firstLine;
-                if (file.id === currentFileId) li.classList.add('active');
-                li.onclick = () => { openFile(file.id); toggleDrawer(false); };
-                fileList.appendChild(li);
-            });
-        }
-
-        function saveFile(visualFeedback = false) {
-            const content = mainEditor.value;
-            let files = JSON.parse(localStorage.getItem('myFiles')) || [];
-            
-            if (!content.trim() && !currentFileId) return; 
-
-            if (currentFileId) {
-                const index = files.findIndex(f => f.id === currentFileId);
-                if (index > -1) files[index].content = content;
-            } else {
-                currentFileId = Date.now().toString();
-                files.push({ id: currentFileId, content: content });
-            }
-
-            localStorage.setItem('myFiles', JSON.stringify(files));
-            loadFiles();
-
-            if(visualFeedback) {
-                saveBtn.classList.add('saved-flash');
-                setTimeout(() => saveBtn.classList.remove('saved-flash'), 500);
-            }
-        }
-
-        function openFile(id) {
-            const files = JSON.parse(localStorage.getItem('myFiles')) || [];
-            const file = files.find(f => f.id === id);
-            if (file) {
-                currentFileId = file.id;
-                mainEditor.value = file.content;
-                updateStats();
-                loadFiles();
-            }
-        }
-
-        function startNewFile() {
-            currentFileId = null; mainEditor.value = '';
-            updateStats(); loadFiles(); toggleDrawer(false);
-        }
-
-        // --- Sticky Notes Management ---
-
-        function saveNotesData() {
-            localStorage.setItem('myNotes', JSON.stringify(notesData));
-        }
-
-        function renderNotes() {
-            // Clear existing rendered notes first (prevent duplicates on reload)
-            document.querySelectorAll('.note').forEach(n => n.remove());
-            notesData.forEach(note => createNoteElement(note));
-        }
-
-        function createNoteElement(note) {
-            const noteDiv = document.createElement('div');
-            noteDiv.className = 'note';
-            noteDiv.id = `note-${note.id}`;
-            noteDiv.style.left = note.left || '20px';
-            noteDiv.style.top = note.top || '80px';
-            if(note.width) noteDiv.style.width = note.width;
-            if(note.height) noteDiv.style.height = note.height;
-
-            noteDiv.innerHTML = `
-                <div class="note-header">
-                    <button class="note-close">✕</button>
+    <div class="view-container" id="boardView">
+        <div class="board-viewport" id="boardViewport">
+            <div class="board-canvas" id="boardCanvas">
                 </div>
-                <textarea class="note-body" placeholder="Quick note...">${note.text || ''}</textarea>
-            `;
+        </div>
+        <div class="board-tools">
+            <button class="icon-btn" id="addNoteBtn">📝 Note</button>
+            <button class="icon-btn" id="addTableBtn">📊 Table</button>
+            <button class="icon-btn" id="addDrawBtn">🖌️ Draw</button>
+        </div>
+    </div>
 
-            editorArea.appendChild(noteDiv);
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script>
+        // --- GLOBAL & NAVIGATION ---
+        const tabText = document.getElementById('tabText');
+        const tabBoard = document.getElementById('tabBoard');
+        const textView = document.getElementById('textView');
+        const boardView = document.getElementById('boardView');
+        const textControls = document.getElementById('textControls');
 
-            const header = noteDiv.querySelector('.note-header');
-            const textarea = noteDiv.querySelector('.note-body');
-            const closeBtn = noteDiv.querySelector('.note-close');
-
-            // Save text changes and dimensions
-            textarea.addEventListener('input', () => {
-                note.text = textarea.value;
-                saveNotesData();
-            });
-
-            // Note dragging logic (Pointer events for mobile & desktop)
-            let isDragging = false, startX, startY, initialX, initialY;
-
-            header.addEventListener('pointerdown', (e) => {
-                if(e.target === closeBtn) return;
-                isDragging = true;
-                startX = e.clientX; startY = e.clientY;
-                initialX = noteDiv.offsetLeft; initialY = noteDiv.offsetTop;
-                header.setPointerCapture(e.pointerId);
-            });
-
-            header.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                noteDiv.style.left = `${initialX + dx}px`;
-                noteDiv.style.top = `${initialY + dy}px`;
-            });
-
-            header.addEventListener('pointerup', (e) => {
-                isDragging = false;
-                header.releasePointerCapture(e.pointerId);
-                // Save new position
-                note.left = noteDiv.style.left;
-                note.top = noteDiv.style.top;
-                saveNotesData();
-            });
-
-            // Handle Resize saving (MutationObserver on style attribute)
-            const resizeObserver = new MutationObserver(() => {
-                note.width = noteDiv.style.width;
-                note.height = noteDiv.style.height;
-                saveNotesData();
-            });
-            resizeObserver.observe(noteDiv, { attributes: true, attributeFilter: ['style'] });
-
-            // Delete note
-            closeBtn.addEventListener('click', () => {
-                notesData = notesData.filter(n => n.id !== note.id);
-                saveNotesData();
-                noteDiv.remove();
-            });
-        }
-
-        newNoteBtn.addEventListener('click', () => {
-            const newNote = {
-                id: Date.now().toString(), text: '',
-                left: '20px', top: '80px', width: '200px', height: '200px'
-            };
-            notesData.push(newNote);
-            saveNotesData();
-            createNoteElement(newNote);
+        tabText.addEventListener('click', () => {
+            tabText.classList.add('active'); tabBoard.classList.remove('active');
+            textView.classList.add('active'); boardView.classList.remove('active');
+            textControls.style.display = 'flex';
         });
 
-        // --- UI Interactions ---
+        tabBoard.addEventListener('click', () => {
+            tabBoard.classList.add('active'); tabText.classList.remove('active');
+            boardView.classList.add('active'); textView.classList.remove('active');
+            textControls.style.display = 'none';
+            centerBoard();
+        });
 
-        function toggleDrawer(forceOpen) {
-            const isOpen = fileDrawer.classList.contains('open');
-            const shouldOpen = forceOpen !== undefined ? forceOpen : !isOpen;
-            
-            if (shouldOpen) {
-                fileDrawer.classList.add('open');
-                drawerOverlay.style.display = 'block';
-            } else {
-                fileDrawer.classList.remove('open');
-                drawerOverlay.style.display = 'none';
-            }
-        }
+        // --- TEXT FILES LOGIC ---
+        const mainEditor = document.getElementById('mainEditor');
+        const textStats = document.getElementById('textStats');
+        const saveBtn = document.getElementById('saveBtn');
+        const filesBtn = document.getElementById('filesBtn');
+        const fileDropdown = document.getElementById('fileDropdown');
+        const fileList = document.getElementById('fileList');
+        const newFileBtn = document.getElementById('newFileBtn');
+        const toggleCodeBtn = document.getElementById('toggleCodeBtn');
+        const editorWrapper = document.getElementById('editorWrapper');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const codeHighlight = document.getElementById('codeHighlight');
 
-        menuBtn.addEventListener('click', () => toggleDrawer(true));
-        closeDrawerBtn.addEventListener('click', () => toggleDrawer(false));
-        drawerOverlay.addEventListener('click', () => toggleDrawer(false));
-        newFileBtn.addEventListener('click', startNewFile);
+        let currentFileId = null;
+        let isCodeMode = false;
 
-        // Stats & Auto-save
         function updateStats() {
             const text = mainEditor.value;
             const chars = text.length;
@@ -375,57 +253,198 @@
             textStats.textContent = `${words} words | ${chars} chars`;
         }
 
+        function updateLineNumbersAndCode() {
+            const lines = mainEditor.value.split('\n');
+            lineNumbers.innerHTML = lines.map((_, i) => i + 1).join('<br>');
+            
+            if (isCodeMode) {
+                // Escape HTML for the overlay, then apply Prism
+                let text = mainEditor.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                // Fix trailing newline issue in pre/code blocks
+                if(text[text.length-1] === '\n') text += ' '; 
+                codeHighlight.innerHTML = text;
+                Prism.highlightElement(codeHighlight);
+            }
+        }
+
+        // Sync scrolling between textarea and overlays
+        mainEditor.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = mainEditor.scrollTop;
+            document.querySelector('.code-overlay').scrollTop = mainEditor.scrollTop;
+            document.querySelector('.code-overlay').scrollLeft = mainEditor.scrollLeft;
+        });
+
         mainEditor.addEventListener('input', () => {
             updateStats();
-            saveFile(false); // Silent auto-save
+            updateLineNumbersAndCode();
         });
 
-        saveBtn.addEventListener('click', () => saveFile(true)); // Explicit save with visual flash
-
-        // Code Toggle
-        codeToggle.addEventListener('click', () => {
-            mainEditor.classList.toggle('code-mode');
-            codeToggle.classList.toggle('active');
+        toggleCodeBtn.addEventListener('click', () => {
+            isCodeMode = !isCodeMode;
+            editorWrapper.classList.toggle('code-mode');
+            toggleCodeBtn.style.background = isCodeMode ? '#e0e0e0' : 'none';
+            updateLineNumbersAndCode();
         });
 
-        // Share & Download
-        shareMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            shareMenu.classList.toggle('show');
-        });
-        window.addEventListener('click', () => shareMenu.classList.remove('show'));
+        // File Management
+        function formatDate(ms) {
+            const d = new Date(parseInt(ms));
+            return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+        }
 
-        document.getElementById('nativeShareBtn').addEventListener('click', async () => {
-            const text = mainEditor.value;
-            const title = text.split('\n')[0].trim() || 'Document';
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title: title, text: text });
-                } catch (err) { console.log('Share canceled or failed', err); }
+        function loadFiles() {
+            const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
+            fileList.innerHTML = '';
+            files.sort((a,b) => b.lastSaved - a.lastSaved).forEach(file => {
+                const li = document.createElement('li');
+                const title = file.content.split('\n')[0].trim() || 'Untitled';
+                li.innerHTML = `<span class="file-title">${title}</span> <span class="file-date">${formatDate(file.lastSaved)}</span>`;
+                li.onclick = () => { openFile(file.id); fileDropdown.classList.remove('open'); };
+                fileList.appendChild(li);
+            });
+        }
+
+        function saveFile() {
+            const content = mainEditor.value;
+            if (!content.trim() && !currentFileId) return;
+            let files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
+            
+            if (currentFileId) {
+                const idx = files.findIndex(f => f.id === currentFileId);
+                if (idx > -1) {
+                    files[idx].content = content;
+                    files[idx].lastSaved = Date.now();
+                }
             } else {
-                // Fallback if native share isn't supported
-                navigator.clipboard.writeText(text);
-                alert('Native share not supported. Text copied to clipboard!');
+                currentFileId = Date.now().toString();
+                files.push({ id: currentFileId, content: content, lastSaved: Date.now() });
+            }
+            
+            localStorage.setItem('appTextFiles', JSON.stringify(files));
+            saveBtn.textContent = "Saved!";
+            setTimeout(() => saveBtn.textContent = "Save", 1000);
+            loadFiles();
+        }
+
+        function openFile(id) {
+            const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
+            const file = files.find(f => f.id === id);
+            if (file) {
+                currentFileId = file.id; mainEditor.value = file.content;
+                updateStats(); updateLineNumbersAndCode();
+            }
+        }
+
+        filesBtn.addEventListener('click', () => fileDropdown.classList.toggle('open'));
+        newFileBtn.addEventListener('click', () => {
+            currentFileId = null; mainEditor.value = '';
+            updateStats(); updateLineNumbersAndCode(); fileDropdown.classList.remove('open');
+        });
+
+        saveBtn.addEventListener('click', saveFile);
+
+        // --- BOARD LOGIC ---
+        const boardViewport = document.getElementById('boardViewport');
+        const boardCanvas = document.getElementById('boardCanvas');
+        let zIndexCounter = 10;
+
+        // Center board on load
+        function centerBoard() {
+            boardViewport.scrollLeft = 2500 - (boardViewport.clientWidth / 2);
+            boardViewport.scrollTop = 2500 - (boardViewport.clientHeight / 2);
+        }
+        window.onload = () => { loadFiles(); centerBoard(); };
+
+        // Board Panning (Middle Mouse or touch drag on background)
+        let isPanning = false, startPanX, startPanY, scrollLeft, scrollTop;
+        boardViewport.addEventListener('pointerdown', (e) => {
+            if (e.target === boardViewport || e.target === boardCanvas) {
+                isPanning = true;
+                startPanX = e.pageX; startPanY = e.pageY;
+                scrollLeft = boardViewport.scrollLeft; scrollTop = boardViewport.scrollTop;
+                boardViewport.style.cursor = 'grabbing';
             }
         });
-
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            const text = mainEditor.value;
-            if(!text) return;
-            const title = text.split('\n')[0].trim() || 'document';
-            const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt';
-            const blob = new Blob([text], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = filename; a.click();
-            window.URL.revokeObjectURL(url);
+        window.addEventListener('pointermove', (e) => {
+            if (!isPanning) return;
+            boardViewport.scrollLeft = scrollLeft - (e.pageX - startPanX);
+            boardViewport.scrollTop = scrollTop - (e.pageY - startPanY);
+        });
+        window.addEventListener('pointerup', () => {
+            isPanning = false; boardViewport.style.cursor = 'default';
         });
 
-        // Initialize
-        loadFiles();
-        updateStats();
-        renderNotes();
+        // Universal Draggable Logic
+        function makeDraggable(element, handle) {
+            let isDragging = false, startX, startY, initialLeft, initialTop;
+            
+            element.addEventListener('pointerdown', () => {
+                zIndexCounter++; element.style.zIndex = zIndexCounter;
+            });
 
-    </script>
-</body>
-</html>
+            handle.addEventListener('pointerdown', (e) => {
+                if(e.target.classList.contains('close-btn') || e.target.classList.contains('dot')) return;
+                isDragging = true;
+                startX = e.clientX; startY = e.clientY;
+                initialLeft = element.offsetLeft; initialTop = element.offsetTop;
+                handle.setPointerCapture(e.pointerId);
+                e.stopPropagation(); // Prevent board panning
+            });
+
+            handle.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                element.style.left = `${initialLeft + (e.clientX - startX)}px`;
+                element.style.top = `${initialTop + (e.clientY - startY)}px`;
+            });
+
+            handle.addEventListener('pointerup', (e) => {
+                isDragging = false; handle.releasePointerCapture(e.pointerId);
+            });
+        }
+
+        // 1. Post-it Notes
+        const colors = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#e1bee7'];
+        document.getElementById('addNoteBtn').addEventListener('click', () => {
+            const note = document.createElement('div');
+            note.className = 'draggable';
+            // Place near center of current view
+            note.style.left = `${boardViewport.scrollLeft + 100}px`;
+            note.style.top = `${boardViewport.scrollTop + 100}px`;
+            note.style.backgroundColor = colors[0];
+
+            note.innerHTML = `
+                <div class="drag-handle">
+                    <div class="color-dots">
+                        ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
+                    </div>
+                    <button class="close-btn">✕</button>
+                </div>
+                <textarea class="note-body" placeholder="Write here..." style="background:transparent;"></textarea>
+            `;
+            boardCanvas.appendChild(note);
+            makeDraggable(note, note.querySelector('.drag-handle'));
+
+            note.querySelector('.close-btn').addEventListener('click', () => note.remove());
+            note.querySelectorAll('.dot').forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    note.style.backgroundColor = e.target.dataset.color;
+                });
+            });
+        });
+
+        // 2. Tables
+        document.getElementById('addTableBtn').addEventListener('click', () => {
+            const container = document.createElement('div');
+            container.className = 'draggable';
+            container.style.left = `${boardViewport.scrollLeft + 100}px`;
+            container.style.top = `${boardViewport.scrollTop + 100}px`;
+            container.innerHTML = `
+                <div class="drag-handle"><span style="font-size:12px; margin-left:5px;">Table</span><button class="close-btn">✕</button></div>
+                <table class="board-table">
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                </table>
+            `;
+            boardCanvas.appendChild(container);
+ 
