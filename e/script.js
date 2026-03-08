@@ -96,8 +96,11 @@ function saveFile() {
         files.push({ id: currentFileId, content: content, lastSaved: Date.now() });
     }
     localStorage.setItem('appTextFiles', JSON.stringify(files));
-    saveBtn.textContent = "Saved!";
-    setTimeout(() => saveBtn.textContent = "Save", 1000);
+    
+    // Visual feedback for icon button
+    saveBtn.style.backgroundColor = "#d4edda";
+    setTimeout(() => saveBtn.style.backgroundColor = "transparent", 800);
+    
     loadFiles();
 }
 
@@ -202,7 +205,7 @@ function makeDraggable(element, handle) {
         zIndexCounter++; element.style.zIndex = zIndexCounter; saveBoardState();
     });
     handle.addEventListener('pointerdown', (e) => {
-        if(['BUTTON', 'DIV', 'SPAN'].includes(e.target.tagName) && e.target !== handle) return; // Prevent drag on inner buttons
+        if(['BUTTON', 'DIV', 'SPAN'].includes(e.target.tagName) && e.target !== handle) return; 
         isDragging = true; startX = e.clientX; startY = e.clientY;
         initialLeft = element.offsetLeft; initialTop = element.offsetTop;
         handle.setPointerCapture(e.pointerId); e.stopPropagation(); 
@@ -222,15 +225,17 @@ const colors = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#e1bee7'];
 
 function createNote(data = null) {
     const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
+    const currentColor = data ? data.bgColor : colors[0];
+    
     const note = document.createElement('div');
     note.className = 'draggable'; note.dataset.type = 'note';
     note.style.left = `${pos.x}px`; note.style.top = `${pos.y}px`;
     if (data && data.zIndex) note.style.zIndex = data.zIndex;
-    note.style.backgroundColor = data ? data.bgColor : colors[0];
+    note.style.backgroundColor = currentColor;
 
     note.innerHTML = `
         <div class="drag-handle">
-            <button class="palette-btn">🎨</button>
+            <div class="palette-btn" style="background-color: ${currentColor};"></div>
             <div class="color-dropdown">
                 ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
             </div>
@@ -255,7 +260,9 @@ function createNote(data = null) {
     
     note.querySelectorAll('.dot').forEach(dot => {
         dot.addEventListener('click', (e) => {
-            note.style.backgroundColor = e.target.dataset.color;
+            const chosenColor = e.target.dataset.color;
+            note.style.backgroundColor = chosenColor;
+            paletteBtn.style.backgroundColor = chosenColor; // Updates the dynamic circle
             colorDropdown.classList.remove('show');
             saveBoardState();
         });
@@ -294,8 +301,6 @@ function createTable(data = null) {
     makeDraggable(container, container.querySelector('.drag-handle'));
 
     const table = container.querySelector('.board-table');
-    
-    // Add Column
     container.querySelector('.add-col').addEventListener('click', () => {
         table.querySelectorAll('tr').forEach(row => {
             const td = document.createElement('td');
@@ -305,7 +310,6 @@ function createTable(data = null) {
         saveBoardState();
     });
 
-    // Delete Column
     container.querySelector('.del-col').addEventListener('click', () => {
         table.querySelectorAll('tr').forEach(row => {
             if (row.children.length > 1) row.lastElementChild.remove();
@@ -321,32 +325,61 @@ function createTable(data = null) {
 function createSketch(data = null) {
     const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
     const container = document.createElement('div');
-    container.className = 'draggable'; container.dataset.type = 'sketch';
+    container.className = 'draggable sketch-widget'; container.dataset.type = 'sketch';
     container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
     if (data && data.zIndex) container.style.zIndex = data.zIndex;
+    if (data && data.width) container.style.width = data.width;
+    if (data && data.height) container.style.height = data.height;
 
+    // High internal resolution for the canvas prevents pixelation when stretched
     container.innerHTML = `
         <div class="drag-handle"><span style="font-size:12px; margin-left:5px; font-weight:bold;">Sketch</span><button class="close-btn">✕</button></div>
-        <canvas class="drawing-canvas" width="250" height="250"></canvas>
+        <canvas class="drawing-canvas" width="1000" height="1000"></canvas>
     `;
     boardCanvas.appendChild(container);
     makeDraggable(container, container.querySelector('.drag-handle'));
 
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
+    
+    // Smooth lines
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4;
+
     if (data && data.image) {
         const img = new Image(); img.src = data.image;
         img.onload = () => ctx.drawImage(img, 0, 0);
     }
 
     let isDrawing = false;
-    function startDraw(e) { isDrawing = true; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top); }
-    function draw(e) { if (!isDrawing) return; const rect = canvas.getBoundingClientRect(); ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top); ctx.stroke(); }
+    
+    // We scale the mouse coordinates by the difference between the CSS display size and the internal 1000x1000 size
+    function startDraw(e) { 
+        isDrawing = true; 
+        const rect = canvas.getBoundingClientRect(); 
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        ctx.beginPath(); 
+        ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY); 
+    }
+    function draw(e) { 
+        if (!isDrawing) return; 
+        const rect = canvas.getBoundingClientRect(); 
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY); 
+        ctx.stroke(); 
+    }
     function stopDraw() { if (isDrawing) { isDrawing = false; saveBoardState(); } }
 
     canvas.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDraw(e); canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener('pointermove', (e) => { e.stopPropagation(); draw(e); });
     canvas.addEventListener('pointerup', (e) => { stopDraw(); canvas.releasePointerCapture(e.pointerId); });
+
+    // Ensure resizing the container triggers a save
+    const resizeObserver = new MutationObserver(() => saveBoardState());
+    resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
 
     container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
     if (!data) saveBoardState();
@@ -370,17 +403,14 @@ function createImageWidget(data) {
     boardCanvas.appendChild(container);
     makeDraggable(container, container.querySelector('.drag-handle'));
 
-    // Save on resize
     const resizeObserver = new MutationObserver(() => saveBoardState());
     resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
 
     container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
-    if (!data.left) saveBoardState(); // Only save if it's a new paste, not a load
+    if (!data.left) saveBoardState();
 }
 
-// Intercept Pastes for the Board
 document.addEventListener('paste', (e) => {
-    // Only intercept if we are looking at the board
     if (!boardView.classList.contains('active')) return; 
 
     const items = (e.clipboardData || e.originalEvent.clipboardData).items;
@@ -392,7 +422,6 @@ document.addEventListener('paste', (e) => {
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Compress image to fit nicely in localStorage (max 800px wide, reduced quality JPEG)
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 800;
                     let width = img.width; let height = img.height;
@@ -411,7 +440,6 @@ document.addEventListener('paste', (e) => {
     }
 });
 
-// Buttons
 document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
 document.getElementById('addTableBtn').addEventListener('click', () => createTable());
 document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
