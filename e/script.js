@@ -13,6 +13,7 @@ const boardView = document.getElementById('boardView');
 const toggleCodeBtn = document.getElementById('toggleCodeBtn');
 const saveBtn = document.getElementById('saveBtn');
 const filesBtn = document.getElementById('filesBtn');
+const deleteCurrentBtn = document.getElementById('deleteCurrentBtn');
 const fileDropdown = document.getElementById('fileDropdown');
 const fileList = document.getElementById('fileList');
 const newFileBtn = document.getElementById('newFileBtn');
@@ -28,10 +29,8 @@ const codeHighlight = document.getElementById('codeHighlight');
 const boardViewport = document.getElementById('boardViewport');
 const boardCanvas = document.getElementById('boardCanvas');
 
-// --- INITIALIZATION ---
 window.onload = () => { 
     renderFileList(); 
-    // Start canvas at 0,0 upper left
     boardViewport.scrollLeft = 0;
     boardViewport.scrollTop = 0;
 };
@@ -41,7 +40,7 @@ tabText.addEventListener('click', () => {
     currentTab = 'text';
     tabText.classList.add('active'); tabBoard.classList.remove('active');
     textView.classList.add('active'); boardView.classList.remove('active');
-    toggleCodeBtn.style.display = 'flex'; // Show code toggle
+    toggleCodeBtn.style.display = 'flex';
     renderFileList();
 });
 
@@ -49,7 +48,7 @@ tabBoard.addEventListener('click', () => {
     currentTab = 'board';
     tabBoard.classList.add('active'); tabText.classList.remove('active');
     boardView.classList.add('active'); textView.classList.remove('active');
-    toggleCodeBtn.style.display = 'none'; // Hide code toggle
+    toggleCodeBtn.style.display = 'none';
     renderFileList();
 });
 
@@ -58,28 +57,65 @@ function formatDate(ms) {
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
 }
 
-// --- DUAL FILE SYSTEM ---
+// --- FILE SYSTEM & DELETION ---
 function renderFileList() {
     fileList.innerHTML = '';
-    if (currentTab === 'text') {
-        const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
-        files.sort((a,b) => b.lastSaved - a.lastSaved).forEach(file => {
-            const li = document.createElement('li');
-            const title = file.content.split('\n')[0].trim() || 'Untitled';
-            li.innerHTML = `<span class="file-title">${title}</span> <span class="file-date">${formatDate(file.lastSaved)}</span>`;
-            li.onclick = () => { openTextFile(file.id); fileDropdown.classList.remove('open'); };
-            fileList.appendChild(li);
-        });
-    } else {
-        const boards = JSON.parse(localStorage.getItem('appBoardFiles')) || [];
-        boards.sort((a,b) => b.lastSaved - a.lastSaved).forEach(board => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span class="file-title">${board.title}</span> <span class="file-date">${formatDate(board.lastSaved)}</span>`;
-            li.onclick = () => { openBoardFile(board.id); fileDropdown.classList.remove('open'); };
-            fileList.appendChild(li);
-        });
-    }
+    const storageKey = currentTab === 'text' ? 'appTextFiles' : 'appBoardFiles';
+    const files = JSON.parse(localStorage.getItem(storageKey)) || [];
+    
+    files.sort((a,b) => b.lastSaved - a.lastSaved).forEach(file => {
+        const li = document.createElement('li');
+        let title = "Untitled";
+        if (currentTab === 'text') {
+            title = file.content.split('\n')[0].trim() || 'Untitled';
+        } else {
+            title = file.title || 'Untitled Board';
+        }
+
+        li.innerHTML = `
+            <span class="file-title">${title}</span> 
+            <div class="file-right-panel">
+                <button class="list-delete-btn" data-id="${file.id}">✕</button>
+                <span class="file-date">${formatDate(file.lastSaved)}</span>
+            </div>
+        `;
+
+        li.onclick = (e) => {
+            if (e.target.classList.contains('list-delete-btn')) {
+                e.stopPropagation(); // Don't open the file, just delete it
+                deleteFile(file.id);
+            } else {
+                if (currentTab === 'text') openTextFile(file.id);
+                else openBoardFile(file.id);
+                fileDropdown.classList.remove('open');
+            }
+        };
+        fileList.appendChild(li);
+    });
 }
+
+function deleteFile(id) {
+    if(!confirm("Are you sure you want to delete this file?")) return;
+    
+    const storageKey = currentTab === 'text' ? 'appTextFiles' : 'appBoardFiles';
+    let files = JSON.parse(localStorage.getItem(storageKey)) || [];
+    files = files.filter(f => f.id !== id);
+    localStorage.setItem(storageKey, JSON.stringify(files));
+
+    // Clear canvas/editor if the deleted file is currently open
+    if (currentTab === 'text' && currentTextId === id) {
+        currentTextId = null; mainEditor.value = ''; updateStats(); updateLineNumbersAndCode();
+    } else if (currentTab === 'board' && currentBoardId === id) {
+        currentBoardId = null; boardCanvas.innerHTML = ''; zIndexCounter = 10;
+    }
+    renderFileList();
+}
+
+deleteCurrentBtn.addEventListener('click', () => {
+    const idToDelete = currentTab === 'text' ? currentTextId : currentBoardId;
+    if (!idToDelete) return alert("No saved file is currently open.");
+    deleteFile(idToDelete);
+});
 
 filesBtn.addEventListener('click', () => fileDropdown.classList.toggle('open'));
 
@@ -88,8 +124,7 @@ newFileBtn.addEventListener('click', () => {
         currentTextId = null; mainEditor.value = '';
         updateStats(); updateLineNumbersAndCode();
     } else {
-        currentBoardId = null;
-        boardCanvas.innerHTML = ''; // Clear canvas
+        currentBoardId = null; boardCanvas.innerHTML = ''; zIndexCounter = 10;
     }
     fileDropdown.classList.remove('open');
 });
@@ -130,14 +165,13 @@ mainEditor.addEventListener('scroll', () => {
 });
 
 mainEditor.addEventListener('input', () => {
-    updateStats(); updateLineNumbersAndCode();
-    saveTextFile(false); // Auto-save
+    updateStats(); updateLineNumbersAndCode(); saveTextFile(false); 
 });
 
 toggleCodeBtn.addEventListener('click', () => {
     isCodeMode = !isCodeMode;
     editorWrapper.classList.toggle('code-mode');
-    toggleCodeBtn.style.background = isCodeMode ? '#e0e0e0' : 'none';
+    toggleCodeBtn.classList.toggle('active-invert'); // Changes color visually
     updateLineNumbersAndCode();
 });
 
@@ -202,7 +236,7 @@ function extractBoardTitle(elementsData) {
 
 function saveBoardFile(visualFeedback = false) {
     const elements = document.querySelectorAll('.draggable');
-    if (elements.length === 0 && !currentBoardId) return; // Don't save completely empty new boards
+    if (elements.length === 0 && !currentBoardId) return; 
 
     const elementsData = [];
     elements.forEach(el => {
@@ -246,7 +280,7 @@ function saveBoardFile(visualFeedback = false) {
     try {
         localStorage.setItem('appBoardFiles', JSON.stringify(boards));
         if (visualFeedback) triggerSaveAnimation();
-        renderFileList(); // Update sidebar names dynamically
+        renderFileList(); 
     } catch(e) {
         console.warn("Storage full! Couldn't save board state.");
     }
@@ -257,8 +291,8 @@ function openBoardFile(id) {
     const board = boards.find(b => b.id === id);
     if (board) {
         currentBoardId = board.id;
-        boardCanvas.innerHTML = ''; // Clear current
-        zIndexCounter = 10; // Reset Z-index
+        boardCanvas.innerHTML = ''; 
+        zIndexCounter = 10; 
         
         board.elements.forEach(data => {
             if (data.zIndex && parseInt(data.zIndex) > zIndexCounter) zIndexCounter = parseInt(data.zIndex);
@@ -358,20 +392,26 @@ function createTable(data = null) {
         <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
     `;
 
+    // Notice the table controls are now safely underneath the table itself
     container.innerHTML = `
         <div class="drag-handle">
-            <div class="table-controls">
-                <button class="add-col">+ Col</button>
-                <button class="del-col">- Col</button>
-            </div>
+            <span style="font-size:12px; margin-left:5px; font-weight:bold;">Table</span>
             <button class="close-btn">✕</button>
         </div>
         <table class="board-table">${data ? data.html : defaultHTML}</table>
+        <div class="table-controls">
+            <button class="add-col" title="Add Column">+ C</button>
+            <button class="del-col" title="Remove Column">- C</button>
+            <button class="add-row" title="Add Line/Row">+ L</button>
+            <button class="del-row" title="Remove Line/Row">- L</button>
+        </div>
     `;
     boardCanvas.appendChild(container);
     makeDraggable(container, container.querySelector('.drag-handle'));
 
     const table = container.querySelector('.board-table');
+    
+    // Column Logic
     container.querySelector('.add-col').addEventListener('click', () => {
         table.querySelectorAll('tr').forEach(row => {
             const td = document.createElement('td');
@@ -386,6 +426,27 @@ function createTable(data = null) {
             if (row.children.length > 1) row.lastElementChild.remove();
         });
         saveBoardFile();
+    });
+
+    // Row Logic
+    container.querySelector('.add-row').addEventListener('click', () => {
+        const tr = document.createElement('tr');
+        // Count how many columns the table currently has to add the right amount of cells
+        const colCount = table.rows.length > 0 ? table.rows[0].children.length : 3;
+        for (let i = 0; i < colCount; i++) {
+            const td = document.createElement('td');
+            td.contentEditable = "true";
+            tr.appendChild(td);
+        }
+        table.appendChild(tr);
+        saveBoardFile();
+    });
+
+    container.querySelector('.del-row').addEventListener('click', () => {
+        if (table.rows.length > 1) { // Prevents deleting the very last row
+            table.lastElementChild.remove();
+            saveBoardFile();
+        }
     });
 
     const resizeObserver = new MutationObserver(() => saveBoardFile());
