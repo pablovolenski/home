@@ -392,7 +392,6 @@ function createTable(data = null) {
         <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
     `;
 
-    // Notice the table controls are now safely underneath the table itself
     container.innerHTML = `
         <div class="drag-handle">
             <span style="font-size:12px; margin-left:5px; font-weight:bold;">Table</span>
@@ -411,7 +410,6 @@ function createTable(data = null) {
 
     const table = container.querySelector('.board-table');
     
-    // Column Logic
     container.querySelector('.add-col').addEventListener('click', () => {
         table.querySelectorAll('tr').forEach(row => {
             const td = document.createElement('td');
@@ -428,10 +426,8 @@ function createTable(data = null) {
         saveBoardFile();
     });
 
-    // Row Logic
     container.querySelector('.add-row').addEventListener('click', () => {
         const tr = document.createElement('tr');
-        // Count how many columns the table currently has to add the right amount of cells
         const colCount = table.rows.length > 0 ? table.rows[0].children.length : 3;
         for (let i = 0; i < colCount; i++) {
             const td = document.createElement('td');
@@ -443,7 +439,7 @@ function createTable(data = null) {
     });
 
     container.querySelector('.del-row').addEventListener('click', () => {
-        if (table.rows.length > 1) { // Prevents deleting the very last row
+        if (table.rows.length > 1) { 
             table.lastElementChild.remove();
             saveBoardFile();
         }
@@ -517,7 +513,28 @@ function createSketch(data = null) {
     if (!data) saveBoardFile();
 }
 
-// IMAGE PASTING LOGIC
+// --- IMAGE PASTING & UPLOAD LOGIC ---
+function processImageFile(file) {
+    if (!file || !file.type.includes('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            let width = img.width; let height = img.height;
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            createImageWidget({ imgSrc: canvas.toDataURL('image/jpeg', 0.6) });
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 function createImageWidget(data) {
     const pos = data.left ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
     const container = document.createElement('div');
@@ -529,49 +546,40 @@ function createImageWidget(data) {
     if (data.height) container.style.height = data.height;
 
     container.innerHTML = `
-        <div class="drag-handle"><button class="close-btn">✕</button></div>
-        <img src="${data.imgSrc}" />
+        <button class="img-close-btn">✕</button>
+        <img src="${data.imgSrc}" draggable="false" />
     `;
     boardCanvas.appendChild(container);
-    makeDraggable(container, container.querySelector('.drag-handle'));
+    
+    // The image itself is now the drag handle
+    makeDraggable(container, container.querySelector('img'));
 
     const resizeObserver = new MutationObserver(() => saveBoardFile());
     resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
 
-    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
+    container.querySelector('.img-close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
     if (!data.left) saveBoardFile();
 }
 
+// Handle native file picker (Mobile & Desktop)
+document.getElementById('addImgBtn').addEventListener('click', () => document.getElementById('imageUpload').click());
+document.getElementById('imageUpload').addEventListener('change', (e) => {
+    processImageFile(e.target.files[0]);
+    e.target.value = ''; // Reset input so you can upload the same image again if needed
+});
+
+// Handle Ctrl+V / Cmd+V (Desktop power users)
 document.addEventListener('paste', (e) => {
     if (currentTab !== 'board') return; 
-
     const items = (e.clipboardData || e.originalEvent.clipboardData).items;
     for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.includes('image/')) {
-            const blob = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    let width = img.width; let height = img.height;
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
-                    createImageWidget({ imgSrc: compressedDataUrl });
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(blob);
+        if (items[index].kind === 'file') {
+            processImageFile(items[index].getAsFile());
         }
     }
 });
 
+// Buttons
 document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
 document.getElementById('addTableBtn').addEventListener('click', () => createTable());
 document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
