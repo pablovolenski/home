@@ -74,7 +74,6 @@
             background: #fff;
         }
         
-        /* Line Numbers Gutter */
         .line-numbers {
             width: 40px; background: #f9f9f9; border-right: 1px solid var(--border);
             text-align: right; padding: 20px 5px 20px 0; font-family: var(--font-code);
@@ -82,7 +81,6 @@
             user-select: none; display: none;
         }
 
-        /* Code coloring overlay technique */
         .code-overlay, .editor-textarea {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             padding: 20px; box-sizing: border-box; font-size: 16px; line-height: 1.6;
@@ -103,7 +101,7 @@
         .editor-wrapper.code-mode .line-numbers { display: block; }
         .editor-wrapper.code-mode .editor-textarea {
             left: 45px; width: calc(100% - 45px); font-family: var(--font-code);
-            color: transparent; caret-color: #000; /* Hide text, show caret */
+            color: transparent; caret-color: #000;
         }
         .editor-wrapper.code-mode .code-overlay {
             display: block; left: 45px; width: calc(100% - 45px); color: #333;
@@ -117,10 +115,10 @@
         /* --- BOARD VIEW --- */
         .board-viewport {
             width: 100%; height: 100%; overflow: auto; position: relative;
-            background: #f0f0f0; touch-action: none; /* Allows custom drag panning */
+            background: #f0f0f0; 
+            /* Removed touch-action: none so native mobile scrolling works perfectly */
         }
         
-        /* The "Infinite" Canvas container */
         .board-canvas {
             width: 5000px; height: 5000px; position: absolute;
             background-image: radial-gradient(#ccc 1px, transparent 1px);
@@ -133,20 +131,19 @@
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 50;
         }
 
-        /* Draggable Elements (Notes, Tables, Drawings) */
+        /* Draggable Elements */
         .draggable {
             position: absolute; background: white; border: 1px solid var(--border);
             box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 4px;
             display: flex; flex-direction: column; z-index: 10;
         }
         .drag-handle {
-            height: 20px; background: rgba(0,0,0,0.05); cursor: move;
+            height: 25px; background: rgba(0,0,0,0.05); cursor: move;
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 5px; touch-action: none; border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .close-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: #666; }
+        .close-btn { background: none; border: none; font-size: 14px; cursor: pointer; color: #666; padding: 0 5px; }
         
-        /* specific draggables */
         .note-body {
             border: none; outline: none; padding: 10px; resize: both;
             min-width: 150px; min-height: 150px; font-family: var(--font-main); font-size: 14px;
@@ -160,9 +157,8 @@
 
         .drawing-canvas { cursor: crosshair; touch-action: none; background: #fff;}
 
-        /* Color Picker for Notes */
-        .color-dots { display: flex; gap: 5px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
+        .color-dots { display: flex; gap: 6px; padding-left: 5px; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
 
     </style>
 </head>
@@ -227,7 +223,8 @@
             tabBoard.classList.add('active'); tabText.classList.remove('active');
             boardView.classList.add('active'); textView.classList.remove('active');
             textControls.style.display = 'none';
-            centerBoard();
+            // Slight delay ensures the DOM has updated the display property before math happens
+            setTimeout(centerBoard, 10);
         });
 
         // --- TEXT FILES LOGIC ---
@@ -258,16 +255,13 @@
             lineNumbers.innerHTML = lines.map((_, i) => i + 1).join('<br>');
             
             if (isCodeMode) {
-                // Escape HTML for the overlay, then apply Prism
                 let text = mainEditor.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                // Fix trailing newline issue in pre/code blocks
                 if(text[text.length-1] === '\n') text += ' '; 
                 codeHighlight.innerHTML = text;
                 Prism.highlightElement(codeHighlight);
             }
         }
 
-        // Sync scrolling between textarea and overlays
         mainEditor.addEventListener('scroll', () => {
             lineNumbers.scrollTop = mainEditor.scrollTop;
             document.querySelector('.code-overlay').scrollTop = mainEditor.scrollTop;
@@ -286,7 +280,6 @@
             updateLineNumbersAndCode();
         });
 
-        // File Management
         function formatDate(ms) {
             const d = new Date(parseInt(ms));
             return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
@@ -347,17 +340,21 @@
         const boardViewport = document.getElementById('boardViewport');
         const boardCanvas = document.getElementById('boardCanvas');
         let zIndexCounter = 10;
+        let boardCentered = false;
 
-        // Center board on load
         function centerBoard() {
-            boardViewport.scrollLeft = 2500 - (boardViewport.clientWidth / 2);
-            boardViewport.scrollTop = 2500 - (boardViewport.clientHeight / 2);
+            if(!boardCentered && boardViewport.clientWidth > 0) {
+                boardViewport.scrollLeft = 2500 - (boardViewport.clientWidth / 2);
+                boardViewport.scrollTop = 2500 - (boardViewport.clientHeight / 2);
+                boardCentered = true;
+            }
         }
-        window.onload = () => { loadFiles(); centerBoard(); };
 
-        // Board Panning (Middle Mouse or touch drag on background)
+        window.onload = () => { loadFiles(); };
+
+        // Desktop Panning ONLY (Mouse events). Mobile will use natural swipe scrolling.
         let isPanning = false, startPanX, startPanY, scrollLeft, scrollTop;
-        boardViewport.addEventListener('pointerdown', (e) => {
+        boardViewport.addEventListener('mousedown', (e) => {
             if (e.target === boardViewport || e.target === boardCanvas) {
                 isPanning = true;
                 startPanX = e.pageX; startPanY = e.pageY;
@@ -365,16 +362,23 @@
                 boardViewport.style.cursor = 'grabbing';
             }
         });
-        window.addEventListener('pointermove', (e) => {
+        window.addEventListener('mousemove', (e) => {
             if (!isPanning) return;
             boardViewport.scrollLeft = scrollLeft - (e.pageX - startPanX);
             boardViewport.scrollTop = scrollTop - (e.pageY - startPanY);
         });
-        window.addEventListener('pointerup', () => {
+        window.addEventListener('mouseup', () => {
             isPanning = false; boardViewport.style.cursor = 'default';
         });
 
-        // Universal Draggable Logic
+        // Helper to get exactly center of the current screen view
+        function getSpawnCoords() {
+            return {
+                x: boardViewport.scrollLeft + (boardViewport.clientWidth / 2) - 100,
+                y: boardViewport.scrollTop + (boardViewport.clientHeight / 2) - 100
+            };
+        }
+
         function makeDraggable(element, handle) {
             let isDragging = false, startX, startY, initialLeft, initialTop;
             
@@ -388,7 +392,7 @@
                 startX = e.clientX; startY = e.clientY;
                 initialLeft = element.offsetLeft; initialTop = element.offsetTop;
                 handle.setPointerCapture(e.pointerId);
-                e.stopPropagation(); // Prevent board panning
+                e.stopPropagation(); 
             });
 
             handle.addEventListener('pointermove', (e) => {
@@ -405,11 +409,11 @@
         // 1. Post-it Notes
         const colors = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#e1bee7'];
         document.getElementById('addNoteBtn').addEventListener('click', () => {
+            const pos = getSpawnCoords();
             const note = document.createElement('div');
             note.className = 'draggable';
-            // Place near center of current view
-            note.style.left = `${boardViewport.scrollLeft + 100}px`;
-            note.style.top = `${boardViewport.scrollTop + 100}px`;
+            note.style.left = `${pos.x}px`;
+            note.style.top = `${pos.y}px`;
             note.style.backgroundColor = colors[0];
 
             note.innerHTML = `
@@ -434,17 +438,15 @@
 
         // 2. Tables
         document.getElementById('addTableBtn').addEventListener('click', () => {
+            const pos = getSpawnCoords();
             const container = document.createElement('div');
             container.className = 'draggable';
-            container.style.left = `${boardViewport.scrollLeft + 100}px`;
-            container.style.top = `${boardViewport.scrollTop + 100}px`;
+            container.style.left = `${pos.x}px`;
+            container.style.top = `${pos.y}px`;
             container.innerHTML = `
-                <div class="drag-handle"><span style="font-size:12px; margin-left:5px;">Table</span><button class="close-btn">✕</button></div>
+                <div class="drag-handle"><span style="font-size:12px; margin-left:5px; font-weight:bold;">Table</span><button class="close-btn">✕</button></div>
                 <table class="board-table">
                     <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                     <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                     <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                 </table>
-            `;
-            boardCanvas.appendChild(container);
- 
