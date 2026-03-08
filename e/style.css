@@ -29,11 +29,14 @@ body, html {
 }
 .nav-btn.active { background: #e0e0e0; color: #000; }
 
-.file-controls { display: flex; gap: 10px; align-items: center; }
+.file-controls { display: flex; gap: 8px; align-items: center; }
 .icon-btn {
     background: none; border: 1px solid var(--border); padding: 6px 10px;
     cursor: pointer; border-radius: 4px; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: background-color 0.2s ease;
 }
+.icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
 .icon-btn:hover { background: var(--accent); }
 
 .file-dropdown {
@@ -136,7 +139,7 @@ body, html {
     border: none; outline: none; padding: 10px; resize: both;
     min-width: 150px; min-height: 150px; font-family: var(--font-main); font-size: 14px;
 }
-.palette-btn { background: none; border: none; cursor: pointer; padding: 2px 5px; font-size: 12px; }
+.palette-btn { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.3); padding: 0; margin-left: 5px; }
 .color-dropdown {
     display: none; position: absolute; top: 100%; left: 0; background: white;
     border: 1px solid var(--border); border-radius: 4px; padding: 5px;
@@ -148,13 +151,15 @@ body, html {
 /* Table Specifics */
 .table-controls { display: flex; gap: 3px; margin-right: auto; margin-left: 10px;}
 .table-controls button { font-size: 10px; padding: 2px 5px; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 2px;}
-.board-table { border-collapse: collapse; margin: 0; } /* Removed margin to make padding 0 to the edge */
+.board-table { border-collapse: collapse; margin: 0; }
 .board-table td {
-    border: 1px solid #ccc; padding: 2px; /* Tiny padding */
-    min-width: 10px; height: auto; outline: none; font-size: 14px; /* Matches font exactly */
+    border: 1px solid #ccc; padding: 2px;
+    min-width: 10px; height: auto; outline: none; font-size: 14px;
 }
 
-/* Image Widget Specifics */
+/* Sketch & Image Widgets */
+.sketch-widget { resize: both; overflow: hidden; min-width: 150px; min-height: 150px; background: #fff;}
+.sketch-widget canvas { flex-grow: 1; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair;}
+
 .image-widget { resize: both; overflow: hidden; min-width: 100px; min-height: 100px; background: transparent;}
 .image-widget img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.drawing-canvas { cursor: crosshair; touch-action: none; background: #fff;}
