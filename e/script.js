@@ -42,7 +42,6 @@ function updateStats() {
 function updateLineNumbersAndCode() {
     const lines = mainEditor.value.split('\n');
     lineNumbers.innerHTML = lines.map((_, i) => i + 1).join('<br>');
-    
     if (isCodeMode) {
         let text = mainEditor.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         if(text[text.length-1] === '\n') text += ' '; 
@@ -58,8 +57,7 @@ mainEditor.addEventListener('scroll', () => {
 });
 
 mainEditor.addEventListener('input', () => {
-    updateStats();
-    updateLineNumbersAndCode();
+    updateStats(); updateLineNumbersAndCode();
 });
 
 toggleCodeBtn.addEventListener('click', () => {
@@ -90,18 +88,13 @@ function saveFile() {
     const content = mainEditor.value;
     if (!content.trim() && !currentFileId) return;
     let files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
-    
     if (currentFileId) {
         const idx = files.findIndex(f => f.id === currentFileId);
-        if (idx > -1) {
-            files[idx].content = content;
-            files[idx].lastSaved = Date.now();
-        }
+        if (idx > -1) { files[idx].content = content; files[idx].lastSaved = Date.now(); }
     } else {
         currentFileId = Date.now().toString();
         files.push({ id: currentFileId, content: content, lastSaved: Date.now() });
     }
-    
     localStorage.setItem('appTextFiles', JSON.stringify(files));
     saveBtn.textContent = "Saved!";
     setTimeout(() => saveBtn.textContent = "Save", 1000);
@@ -122,9 +115,9 @@ newFileBtn.addEventListener('click', () => {
     currentFileId = null; mainEditor.value = '';
     updateStats(); updateLineNumbersAndCode(); fileDropdown.classList.remove('open');
 });
-
 saveBtn.addEventListener('click', saveFile);
 
+// --- BOARD LOGIC & PERSISTENCE ---
 const boardViewport = document.getElementById('boardViewport');
 const boardCanvas = document.getElementById('boardCanvas');
 let zIndexCounter = 10;
@@ -138,13 +131,12 @@ function centerBoard() {
     }
 }
 
-window.onload = () => { loadFiles(); };
+window.onload = () => { loadFiles(); loadBoardState(); };
 
 let isPanning = false, startPanX, startPanY, scrollLeft, scrollTop;
 boardViewport.addEventListener('mousedown', (e) => {
     if (e.target === boardViewport || e.target === boardCanvas) {
-        isPanning = true;
-        startPanX = e.pageX; startPanY = e.pageY;
+        isPanning = true; startPanX = e.pageX; startPanY = e.pageY;
         scrollLeft = boardViewport.scrollLeft; scrollTop = boardViewport.scrollTop;
         boardViewport.style.cursor = 'grabbing';
     }
@@ -165,45 +157,81 @@ function getSpawnCoords() {
     };
 }
 
+function saveBoardState() {
+    const elements = document.querySelectorAll('.draggable');
+    const boardState = [];
+    elements.forEach(el => {
+        const type = el.dataset.type;
+        const data = { type: type, left: el.style.left, top: el.style.top, zIndex: el.style.zIndex, width: el.style.width, height: el.style.height };
+        
+        if (type === 'note') {
+            const textarea = el.querySelector('.note-body');
+            data.bgColor = el.style.backgroundColor;
+            data.text = textarea.value;
+            data.width = textarea.style.width; data.height = textarea.style.height;
+        } else if (type === 'table') {
+            data.html = el.querySelector('.board-table').innerHTML;
+        } else if (type === 'sketch') {
+            data.image = el.querySelector('canvas').toDataURL();
+        } else if (type === 'image') {
+            data.imgSrc = el.querySelector('img').src;
+        }
+        boardState.push(data);
+    });
+    try {
+        localStorage.setItem('appBoardState', JSON.stringify(boardState));
+    } catch(e) {
+        console.warn("Storage full! Couldn't save board state.");
+    }
+}
+
+function loadBoardState() {
+    const savedState = JSON.parse(localStorage.getItem('appBoardState')) || [];
+    savedState.forEach(data => {
+        if (data.zIndex && parseInt(data.zIndex) > zIndexCounter) zIndexCounter = parseInt(data.zIndex);
+        if (data.type === 'note') createNote(data);
+        else if (data.type === 'table') createTable(data);
+        else if (data.type === 'sketch') createSketch(data);
+        else if (data.type === 'image') createImageWidget(data);
+    });
+}
+
 function makeDraggable(element, handle) {
     let isDragging = false, startX, startY, initialLeft, initialTop;
-    
     element.addEventListener('pointerdown', () => {
-        zIndexCounter++; element.style.zIndex = zIndexCounter;
+        zIndexCounter++; element.style.zIndex = zIndexCounter; saveBoardState();
     });
-
     handle.addEventListener('pointerdown', (e) => {
-        if(e.target.classList.contains('close-btn') || e.target.classList.contains('dot')) return;
-        isDragging = true;
-        startX = e.clientX; startY = e.clientY;
+        if(['BUTTON', 'DIV', 'SPAN'].includes(e.target.tagName) && e.target !== handle) return; // Prevent drag on inner buttons
+        isDragging = true; startX = e.clientX; startY = e.clientY;
         initialLeft = element.offsetLeft; initialTop = element.offsetTop;
-        handle.setPointerCapture(e.pointerId);
-        e.stopPropagation(); 
+        handle.setPointerCapture(e.pointerId); e.stopPropagation(); 
     });
-
     handle.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         element.style.left = `${initialLeft + (e.clientX - startX)}px`;
         element.style.top = `${initialTop + (e.clientY - startY)}px`;
     });
-
     handle.addEventListener('pointerup', (e) => {
-        isDragging = false; handle.releasePointerCapture(e.pointerId);
+        if (isDragging) { isDragging = false; handle.releasePointerCapture(e.pointerId); saveBoardState(); }
     });
 }
 
+// Element Creators
 const colors = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#e1bee7'];
-document.getElementById('addNoteBtn').addEventListener('click', () => {
-    const pos = getSpawnCoords();
+
+function createNote(data = null) {
+    const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
     const note = document.createElement('div');
-    note.className = 'draggable';
-    note.style.left = `${pos.x}px`;
-    note.style.top = `${pos.y}px`;
-    note.style.backgroundColor = colors[0];
+    note.className = 'draggable'; note.dataset.type = 'note';
+    note.style.left = `${pos.x}px`; note.style.top = `${pos.y}px`;
+    if (data && data.zIndex) note.style.zIndex = data.zIndex;
+    note.style.backgroundColor = data ? data.bgColor : colors[0];
 
     note.innerHTML = `
         <div class="drag-handle">
-            <div class="color-dots">
+            <button class="palette-btn">🎨</button>
+            <div class="color-dropdown">
                 ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
             </div>
             <button class="close-btn">✕</button>
@@ -213,66 +241,177 @@ document.getElementById('addNoteBtn').addEventListener('click', () => {
     boardCanvas.appendChild(note);
     makeDraggable(note, note.querySelector('.drag-handle'));
 
-    note.querySelector('.close-btn').addEventListener('click', () => note.remove());
+    const textarea = note.querySelector('.note-body');
+    if (data) {
+        textarea.value = data.text || '';
+        if (data.width) textarea.style.width = data.width;
+        if (data.height) textarea.style.height = data.height;
+    }
+
+    // Toggle color palette
+    const paletteBtn = note.querySelector('.palette-btn');
+    const colorDropdown = note.querySelector('.color-dropdown');
+    paletteBtn.addEventListener('click', () => colorDropdown.classList.toggle('show'));
+    
     note.querySelectorAll('.dot').forEach(dot => {
         dot.addEventListener('click', (e) => {
             note.style.backgroundColor = e.target.dataset.color;
+            colorDropdown.classList.remove('show');
+            saveBoardState();
         });
     });
-});
 
-document.getElementById('addTableBtn').addEventListener('click', () => {
-    const pos = getSpawnCoords();
+    textarea.addEventListener('input', saveBoardState);
+    textarea.addEventListener('mouseup', saveBoardState);
+    note.querySelector('.close-btn').addEventListener('click', () => { note.remove(); saveBoardState(); });
+    if (!data) saveBoardState();
+}
+
+function createTable(data = null) {
+    const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
     const container = document.createElement('div');
-    container.className = 'draggable';
-    container.style.left = `${pos.x}px`;
-    container.style.top = `${pos.y}px`;
+    container.className = 'draggable'; container.dataset.type = 'table';
+    container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
+    if (data && data.zIndex) container.style.zIndex = data.zIndex;
+
+    const defaultHTML = `
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+    `;
+
     container.innerHTML = `
-        <div class="drag-handle"><span style="font-size:12px; margin-left:5px; font-weight:bold;">Table</span><button class="close-btn">✕</button></div>
-        <table class="board-table">
-            <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-            <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-            <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-        </table>
+        <div class="drag-handle">
+            <div class="table-controls">
+                <button class="add-col">+ Col</button>
+                <button class="del-col">- Col</button>
+            </div>
+            <button class="close-btn">✕</button>
+        </div>
+        <table class="board-table">${data ? data.html : defaultHTML}</table>
     `;
     boardCanvas.appendChild(container);
     makeDraggable(container, container.querySelector('.drag-handle'));
-    container.querySelector('.close-btn').addEventListener('click', () => container.remove());
-});
 
-document.getElementById('addDrawBtn').addEventListener('click', () => {
-    const pos = getSpawnCoords();
+    const table = container.querySelector('.board-table');
+    
+    // Add Column
+    container.querySelector('.add-col').addEventListener('click', () => {
+        table.querySelectorAll('tr').forEach(row => {
+            const td = document.createElement('td');
+            td.contentEditable = "true";
+            row.appendChild(td);
+        });
+        saveBoardState();
+    });
+
+    // Delete Column
+    container.querySelector('.del-col').addEventListener('click', () => {
+        table.querySelectorAll('tr').forEach(row => {
+            if (row.children.length > 1) row.lastElementChild.remove();
+        });
+        saveBoardState();
+    });
+
+    table.addEventListener('input', saveBoardState);
+    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
+    if (!data) saveBoardState();
+}
+
+function createSketch(data = null) {
+    const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
     const container = document.createElement('div');
-    container.className = 'draggable';
-    container.style.left = `${pos.x}px`;
-    container.style.top = `${pos.y}px`;
+    container.className = 'draggable'; container.dataset.type = 'sketch';
+    container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
+    if (data && data.zIndex) container.style.zIndex = data.zIndex;
+
     container.innerHTML = `
         <div class="drag-handle"><span style="font-size:12px; margin-left:5px; font-weight:bold;">Sketch</span><button class="close-btn">✕</button></div>
         <canvas class="drawing-canvas" width="250" height="250"></canvas>
     `;
     boardCanvas.appendChild(container);
     makeDraggable(container, container.querySelector('.drag-handle'));
-    container.querySelector('.close-btn').addEventListener('click', () => container.remove());
 
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
-    let isDrawing = false;
+    if (data && data.image) {
+        const img = new Image(); img.src = data.image;
+        img.onload = () => ctx.drawImage(img, 0, 0);
+    }
 
-    function startDraw(e) {
-        isDrawing = true;
-        const rect = canvas.getBoundingClientRect();
-        ctx.beginPath();
-        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-    }
-    function draw(e) {
-        if (!isDrawing) return;
-        const rect = canvas.getBoundingClientRect();
-        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-        ctx.stroke();
-    }
-    function stopDraw() { isDrawing = false; }
+    let isDrawing = false;
+    function startDraw(e) { isDrawing = true; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top); }
+    function draw(e) { if (!isDrawing) return; const rect = canvas.getBoundingClientRect(); ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top); ctx.stroke(); }
+    function stopDraw() { if (isDrawing) { isDrawing = false; saveBoardState(); } }
 
     canvas.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDraw(e); canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener('pointermove', (e) => { e.stopPropagation(); draw(e); });
     canvas.addEventListener('pointerup', (e) => { stopDraw(); canvas.releasePointerCapture(e.pointerId); });
+
+    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
+    if (!data) saveBoardState();
+}
+
+// IMAGE PASTING LOGIC
+function createImageWidget(data) {
+    const pos = data.left ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
+    const container = document.createElement('div');
+    container.className = 'draggable image-widget';
+    container.dataset.type = 'image';
+    container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
+    if (data.zIndex) container.style.zIndex = data.zIndex;
+    if (data.width) container.style.width = data.width;
+    if (data.height) container.style.height = data.height;
+
+    container.innerHTML = `
+        <div class="drag-handle"><button class="close-btn">✕</button></div>
+        <img src="${data.imgSrc}" />
+    `;
+    boardCanvas.appendChild(container);
+    makeDraggable(container, container.querySelector('.drag-handle'));
+
+    // Save on resize
+    const resizeObserver = new MutationObserver(() => saveBoardState());
+    resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
+
+    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
+    if (!data.left) saveBoardState(); // Only save if it's a new paste, not a load
+}
+
+// Intercept Pastes for the Board
+document.addEventListener('paste', (e) => {
+    // Only intercept if we are looking at the board
+    if (!boardView.classList.contains('active')) return; 
+
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image/')) {
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Compress image to fit nicely in localStorage (max 800px wide, reduced quality JPEG)
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let width = img.width; let height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+                    createImageWidget({ imgSrc: compressedDataUrl });
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(blob);
+        }
+    }
 });
+
+// Buttons
+document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
+document.getElementById('addTableBtn').addEventListener('click', () => createTable());
+document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
