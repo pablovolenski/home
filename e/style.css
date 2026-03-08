@@ -122,25 +122,39 @@ body, html {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 4px;
     display: flex; flex-direction: column; z-index: 10;
 }
+
 .drag-handle {
     height: 25px; background: rgba(0,0,0,0.05); cursor: move;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 5px; touch-action: none; border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 0 5px; touch-action: none; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative;
 }
+
 .close-btn { background: none; border: none; font-size: 14px; cursor: pointer; color: #666; padding: 0 5px; }
 
+/* Note Specifics */
 .note-body {
     border: none; outline: none; padding: 10px; resize: both;
     min-width: 150px; min-height: 150px; font-family: var(--font-main); font-size: 14px;
 }
+.palette-btn { background: none; border: none; cursor: pointer; padding: 2px 5px; font-size: 12px; }
+.color-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; background: white;
+    border: 1px solid var(--border); border-radius: 4px; padding: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; gap: 5px; flex-direction: row;
+}
+.color-dropdown.show { display: flex; }
+.dot { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
 
-.board-table { border-collapse: collapse; margin: 10px; }
+/* Table Specifics */
+.table-controls { display: flex; gap: 3px; margin-right: auto; margin-left: 10px;}
+.table-controls button { font-size: 10px; padding: 2px 5px; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 2px;}
+.board-table { border-collapse: collapse; margin: 0; } /* Removed margin to make padding 0 to the edge */
 .board-table td {
-    border: 1px solid #ccc; padding: 5px; min-width: 60px; height: 30px;
-    outline: none;
+    border: 1px solid #ccc; padding: 2px; /* Tiny padding */
+    min-width: 10px; height: auto; outline: none; font-size: 14px; /* Matches font exactly */
 }
 
+/* Image Widget Specifics */
+.image-widget { resize: both; overflow: hidden; min-width: 100px; min-height: 100px; background: transparent;}
+.image-widget img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .drawing-canvas { cursor: crosshair; touch-action: none; background: #fff;}
-
-.color-dots { display: flex; gap: 6px; padding-left: 5px; }
-.dot { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
