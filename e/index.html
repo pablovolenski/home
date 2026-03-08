@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Workspace</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <style>
+        /* PASTE CSS HERE (Part 2) */
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="nav-tabs">
+            <button class="nav-btn active" id="tabText">Text</button>
+            <button class="nav-btn" id="tabBoard">Board</button>
+        </div>
+        <div class="file-controls" id="textControls">
+            <button class="icon-btn" id="toggleCodeBtn">&lt;/&gt; Code</button>
+            <button class="icon-btn" id="saveBtn">Save</button>
+            <button class="icon-btn" id="filesBtn">Files ▾</button>
+        </div>
+    </div>
+
+    <div class="file-dropdown" id="fileDropdown">
+        <ul class="file-list" id="fileList"></ul>
+        <div style="padding: 10px; text-align: center;">
+            <button class="icon-btn" id="newFileBtn">+ Create New File</button>
+        </div>
+    </div>
+
+    <div class="view-container active" id="textView">
+        <div class="editor-wrapper" id="editorWrapper">
+            <div class="line-numbers" id="lineNumbers">1</div>
+            <pre class="code-overlay"><code id="codeHighlight" class="language-javascript"></code></pre>
+            <textarea class="editor-textarea" id="mainEditor" spellcheck="false" placeholder="Start typing..."></textarea>
+        </div>
+        <div class="stats-bar" id="textStats">0 words | 0 chars</div>
+    </div>
+
+    <div class="view-container" id="boardView">
+        <div class="board-viewport" id="boardViewport">
+            <div class="board-canvas" id="boardCanvas">
+                </div>
+        </div>
+        <div class="board-tools">
+            <button class="icon-btn" id="addNoteBtn">📝 Note</button>
+            <button class="icon-btn" id="addTableBtn">📊 Table</button>
+            <button class="icon-btn" id="addDrawBtn">🖌️ Draw</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script>
+        // PASTE JAVASCRIPT HERE (Part 3)
+    </script>
+</body>
+</html>
