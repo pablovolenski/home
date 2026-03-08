@@ -166,7 +166,6 @@ function openTextFile(id) {
         updateStats(); updateLineNumbersAndCode();
     }
 }
-
 // --- BOARD LOGIC & PERSISTENCE ---
 
 let isPanning = false, startPanX, startPanY, scrollLeft, scrollTop;
@@ -291,8 +290,7 @@ function makeDraggable(element, handle) {
         if (isDragging) { isDragging = false; handle.releasePointerCapture(e.pointerId); saveBoardFile(); }
     });
 }
-
-// Element Creators
+// --- ELEMENT CREATORS ---
 const colors = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#e1bee7'];
 
 function createNote(data = null) {
@@ -405,7 +403,6 @@ function createSketch(data = null) {
     container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
     if (data && data.zIndex) container.style.zIndex = data.zIndex;
     
-    // Explicitly set sizes from data, otherwise CSS min-width/height handles the 150x150 default
     if (data && data.width) container.style.width = data.width;
     if (data && data.height) container.style.height = data.height;
 
@@ -487,4 +484,33 @@ function createImageWidget(data) {
 document.addEventListener('paste', (e) => {
     if (currentTab !== 'board') return; 
 
-    const items = (e.clipboardData || e.or
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image/')) {
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let width = img.width; let height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+                    createImageWidget({ imgSrc: compressedDataUrl });
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(blob);
+        }
+    }
+});
+
+document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
+document.getElementById('addTableBtn').addEventListener('click', () => createTable());
+document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
