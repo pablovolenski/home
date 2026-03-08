@@ -1,37 +1,110 @@
+// --- GLOBAL STATE ---
+let currentTab = 'text'; // 'text' or 'board'
+let currentTextId = null;
+let currentBoardId = null;
+let isCodeMode = false;
+let zIndexCounter = 10;
+
+// --- DOM ELEMENTS ---
 const tabText = document.getElementById('tabText');
 const tabBoard = document.getElementById('tabBoard');
 const textView = document.getElementById('textView');
 const boardView = document.getElementById('boardView');
-const textControls = document.getElementById('textControls');
-
-tabText.addEventListener('click', () => {
-    tabText.classList.add('active'); tabBoard.classList.remove('active');
-    textView.classList.add('active'); boardView.classList.remove('active');
-    textControls.style.display = 'flex';
-});
-
-tabBoard.addEventListener('click', () => {
-    tabBoard.classList.add('active'); tabText.classList.remove('active');
-    boardView.classList.add('active'); textView.classList.remove('active');
-    textControls.style.display = 'none';
-    setTimeout(centerBoard, 10);
-});
-
-const mainEditor = document.getElementById('mainEditor');
-const textStats = document.getElementById('textStats');
+const toggleCodeBtn = document.getElementById('toggleCodeBtn');
 const saveBtn = document.getElementById('saveBtn');
 const filesBtn = document.getElementById('filesBtn');
 const fileDropdown = document.getElementById('fileDropdown');
 const fileList = document.getElementById('fileList');
 const newFileBtn = document.getElementById('newFileBtn');
-const toggleCodeBtn = document.getElementById('toggleCodeBtn');
+
+// Text Elements
+const mainEditor = document.getElementById('mainEditor');
+const textStats = document.getElementById('textStats');
 const editorWrapper = document.getElementById('editorWrapper');
 const lineNumbers = document.getElementById('lineNumbers');
 const codeHighlight = document.getElementById('codeHighlight');
 
-let currentFileId = null;
-let isCodeMode = false;
+// Board Elements
+const boardViewport = document.getElementById('boardViewport');
+const boardCanvas = document.getElementById('boardCanvas');
 
+// --- INITIALIZATION ---
+window.onload = () => { 
+    renderFileList(); 
+    // Start canvas at 0,0 upper left
+    boardViewport.scrollLeft = 0;
+    boardViewport.scrollTop = 0;
+};
+
+// --- NAVIGATION ---
+tabText.addEventListener('click', () => {
+    currentTab = 'text';
+    tabText.classList.add('active'); tabBoard.classList.remove('active');
+    textView.classList.add('active'); boardView.classList.remove('active');
+    toggleCodeBtn.style.display = 'flex'; // Show code toggle
+    renderFileList();
+});
+
+tabBoard.addEventListener('click', () => {
+    currentTab = 'board';
+    tabBoard.classList.add('active'); tabText.classList.remove('active');
+    boardView.classList.add('active'); textView.classList.remove('active');
+    toggleCodeBtn.style.display = 'none'; // Hide code toggle
+    renderFileList();
+});
+
+function formatDate(ms) {
+    const d = new Date(parseInt(ms));
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+}
+
+// --- DUAL FILE SYSTEM ---
+function renderFileList() {
+    fileList.innerHTML = '';
+    if (currentTab === 'text') {
+        const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
+        files.sort((a,b) => b.lastSaved - a.lastSaved).forEach(file => {
+            const li = document.createElement('li');
+            const title = file.content.split('\n')[0].trim() || 'Untitled';
+            li.innerHTML = `<span class="file-title">${title}</span> <span class="file-date">${formatDate(file.lastSaved)}</span>`;
+            li.onclick = () => { openTextFile(file.id); fileDropdown.classList.remove('open'); };
+            fileList.appendChild(li);
+        });
+    } else {
+        const boards = JSON.parse(localStorage.getItem('appBoardFiles')) || [];
+        boards.sort((a,b) => b.lastSaved - a.lastSaved).forEach(board => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="file-title">${board.title}</span> <span class="file-date">${formatDate(board.lastSaved)}</span>`;
+            li.onclick = () => { openBoardFile(board.id); fileDropdown.classList.remove('open'); };
+            fileList.appendChild(li);
+        });
+    }
+}
+
+filesBtn.addEventListener('click', () => fileDropdown.classList.toggle('open'));
+
+newFileBtn.addEventListener('click', () => {
+    if (currentTab === 'text') {
+        currentTextId = null; mainEditor.value = '';
+        updateStats(); updateLineNumbersAndCode();
+    } else {
+        currentBoardId = null;
+        boardCanvas.innerHTML = ''; // Clear canvas
+    }
+    fileDropdown.classList.remove('open');
+});
+
+saveBtn.addEventListener('click', () => {
+    if (currentTab === 'text') saveTextFile(true);
+    else saveBoardFile(true);
+});
+
+function triggerSaveAnimation() {
+    saveBtn.style.backgroundColor = "#d4edda";
+    setTimeout(() => saveBtn.style.backgroundColor = "transparent", 800);
+}
+
+// --- TEXT EDITOR LOGIC ---
 function updateStats() {
     const text = mainEditor.value;
     const chars = text.length;
@@ -58,6 +131,7 @@ mainEditor.addEventListener('scroll', () => {
 
 mainEditor.addEventListener('input', () => {
     updateStats(); updateLineNumbersAndCode();
+    saveTextFile(false); // Auto-save
 });
 
 toggleCodeBtn.addEventListener('click', () => {
@@ -67,74 +141,33 @@ toggleCodeBtn.addEventListener('click', () => {
     updateLineNumbersAndCode();
 });
 
-function formatDate(ms) {
-    const d = new Date(parseInt(ms));
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-}
-
-function loadFiles() {
-    const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
-    fileList.innerHTML = '';
-    files.sort((a,b) => b.lastSaved - a.lastSaved).forEach(file => {
-        const li = document.createElement('li');
-        const title = file.content.split('\n')[0].trim() || 'Untitled';
-        li.innerHTML = `<span class="file-title">${title}</span> <span class="file-date">${formatDate(file.lastSaved)}</span>`;
-        li.onclick = () => { openFile(file.id); fileDropdown.classList.remove('open'); };
-        fileList.appendChild(li);
-    });
-}
-
-function saveFile() {
+function saveTextFile(visualFeedback = false) {
     const content = mainEditor.value;
-    if (!content.trim() && !currentFileId) return;
+    if (!content.trim() && !currentTextId) return;
     let files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
-    if (currentFileId) {
-        const idx = files.findIndex(f => f.id === currentFileId);
+    
+    if (currentTextId) {
+        const idx = files.findIndex(f => f.id === currentTextId);
         if (idx > -1) { files[idx].content = content; files[idx].lastSaved = Date.now(); }
     } else {
-        currentFileId = Date.now().toString();
-        files.push({ id: currentFileId, content: content, lastSaved: Date.now() });
+        currentTextId = Date.now().toString();
+        files.push({ id: currentTextId, content: content, lastSaved: Date.now() });
     }
     localStorage.setItem('appTextFiles', JSON.stringify(files));
-    
-    // Visual feedback for icon button
-    saveBtn.style.backgroundColor = "#d4edda";
-    setTimeout(() => saveBtn.style.backgroundColor = "transparent", 800);
-    
-    loadFiles();
+    if (visualFeedback) triggerSaveAnimation();
+    renderFileList();
 }
 
-function openFile(id) {
+function openTextFile(id) {
     const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
     const file = files.find(f => f.id === id);
     if (file) {
-        currentFileId = file.id; mainEditor.value = file.content;
+        currentTextId = file.id; mainEditor.value = file.content;
         updateStats(); updateLineNumbersAndCode();
     }
 }
 
-filesBtn.addEventListener('click', () => fileDropdown.classList.toggle('open'));
-newFileBtn.addEventListener('click', () => {
-    currentFileId = null; mainEditor.value = '';
-    updateStats(); updateLineNumbersAndCode(); fileDropdown.classList.remove('open');
-});
-saveBtn.addEventListener('click', saveFile);
-
 // --- BOARD LOGIC & PERSISTENCE ---
-const boardViewport = document.getElementById('boardViewport');
-const boardCanvas = document.getElementById('boardCanvas');
-let zIndexCounter = 10;
-let boardCentered = false;
-
-function centerBoard() {
-    if(!boardCentered && boardViewport.clientWidth > 0) {
-        boardViewport.scrollLeft = 2500 - (boardViewport.clientWidth / 2);
-        boardViewport.scrollTop = 2500 - (boardViewport.clientHeight / 2);
-        boardCentered = true;
-    }
-}
-
-window.onload = () => { loadFiles(); loadBoardState(); };
 
 let isPanning = false, startPanX, startPanY, scrollLeft, scrollTop;
 boardViewport.addEventListener('mousedown', (e) => {
@@ -155,14 +188,24 @@ window.addEventListener('mouseup', () => {
 
 function getSpawnCoords() {
     return {
-        x: boardViewport.scrollLeft + (boardViewport.clientWidth / 2) - 100,
-        y: boardViewport.scrollTop + (boardViewport.clientHeight / 2) - 100
+        x: boardViewport.scrollLeft + 50,
+        y: boardViewport.scrollTop + 50
     };
 }
 
-function saveBoardState() {
+function extractBoardTitle(elementsData) {
+    const firstNote = elementsData.find(e => e.type === 'note');
+    if (firstNote && firstNote.text.trim()) {
+        return firstNote.text.trim().substring(0, 15) + '...';
+    }
+    return 'Untitled Board';
+}
+
+function saveBoardFile(visualFeedback = false) {
     const elements = document.querySelectorAll('.draggable');
-    const boardState = [];
+    if (elements.length === 0 && !currentBoardId) return; // Don't save completely empty new boards
+
+    const elementsData = [];
     elements.forEach(el => {
         const type = el.dataset.type;
         const data = { type: type, left: el.style.left, top: el.style.top, zIndex: el.style.zIndex, width: el.style.width, height: el.style.height };
@@ -179,30 +222,59 @@ function saveBoardState() {
         } else if (type === 'image') {
             data.imgSrc = el.querySelector('img').src;
         }
-        boardState.push(data);
+        elementsData.push(data);
     });
+
+    let boards = JSON.parse(localStorage.getItem('appBoardFiles')) || [];
+    
+    if (currentBoardId) {
+        const idx = boards.findIndex(b => b.id === currentBoardId);
+        if (idx > -1) {
+            boards[idx].elements = elementsData;
+            boards[idx].lastSaved = Date.now();
+            boards[idx].title = extractBoardTitle(elementsData);
+        }
+    } else {
+        currentBoardId = Date.now().toString();
+        boards.push({ 
+            id: currentBoardId, 
+            title: extractBoardTitle(elementsData),
+            elements: elementsData, 
+            lastSaved: Date.now() 
+        });
+    }
+
     try {
-        localStorage.setItem('appBoardState', JSON.stringify(boardState));
+        localStorage.setItem('appBoardFiles', JSON.stringify(boards));
+        if (visualFeedback) triggerSaveAnimation();
+        renderFileList(); // Update sidebar names dynamically
     } catch(e) {
         console.warn("Storage full! Couldn't save board state.");
     }
 }
 
-function loadBoardState() {
-    const savedState = JSON.parse(localStorage.getItem('appBoardState')) || [];
-    savedState.forEach(data => {
-        if (data.zIndex && parseInt(data.zIndex) > zIndexCounter) zIndexCounter = parseInt(data.zIndex);
-        if (data.type === 'note') createNote(data);
-        else if (data.type === 'table') createTable(data);
-        else if (data.type === 'sketch') createSketch(data);
-        else if (data.type === 'image') createImageWidget(data);
-    });
+function openBoardFile(id) {
+    const boards = JSON.parse(localStorage.getItem('appBoardFiles')) || [];
+    const board = boards.find(b => b.id === id);
+    if (board) {
+        currentBoardId = board.id;
+        boardCanvas.innerHTML = ''; // Clear current
+        zIndexCounter = 10; // Reset Z-index
+        
+        board.elements.forEach(data => {
+            if (data.zIndex && parseInt(data.zIndex) > zIndexCounter) zIndexCounter = parseInt(data.zIndex);
+            if (data.type === 'note') createNote(data);
+            else if (data.type === 'table') createTable(data);
+            else if (data.type === 'sketch') createSketch(data);
+            else if (data.type === 'image') createImageWidget(data);
+        });
+    }
 }
 
 function makeDraggable(element, handle) {
     let isDragging = false, startX, startY, initialLeft, initialTop;
     element.addEventListener('pointerdown', () => {
-        zIndexCounter++; element.style.zIndex = zIndexCounter; saveBoardState();
+        zIndexCounter++; element.style.zIndex = zIndexCounter; saveBoardFile();
     });
     handle.addEventListener('pointerdown', (e) => {
         if(['BUTTON', 'DIV', 'SPAN'].includes(e.target.tagName) && e.target !== handle) return; 
@@ -216,7 +288,7 @@ function makeDraggable(element, handle) {
         element.style.top = `${initialTop + (e.clientY - startY)}px`;
     });
     handle.addEventListener('pointerup', (e) => {
-        if (isDragging) { isDragging = false; handle.releasePointerCapture(e.pointerId); saveBoardState(); }
+        if (isDragging) { isDragging = false; handle.releasePointerCapture(e.pointerId); saveBoardFile(); }
     });
 }
 
@@ -253,7 +325,6 @@ function createNote(data = null) {
         if (data.height) textarea.style.height = data.height;
     }
 
-    // Toggle color palette
     const paletteBtn = note.querySelector('.palette-btn');
     const colorDropdown = note.querySelector('.color-dropdown');
     paletteBtn.addEventListener('click', () => colorDropdown.classList.toggle('show'));
@@ -262,24 +333,26 @@ function createNote(data = null) {
         dot.addEventListener('click', (e) => {
             const chosenColor = e.target.dataset.color;
             note.style.backgroundColor = chosenColor;
-            paletteBtn.style.backgroundColor = chosenColor; // Updates the dynamic circle
+            paletteBtn.style.backgroundColor = chosenColor;
             colorDropdown.classList.remove('show');
-            saveBoardState();
+            saveBoardFile();
         });
     });
 
-    textarea.addEventListener('input', saveBoardState);
-    textarea.addEventListener('mouseup', saveBoardState);
-    note.querySelector('.close-btn').addEventListener('click', () => { note.remove(); saveBoardState(); });
-    if (!data) saveBoardState();
+    textarea.addEventListener('input', () => saveBoardFile());
+    textarea.addEventListener('mouseup', () => saveBoardFile());
+    note.querySelector('.close-btn').addEventListener('click', () => { note.remove(); saveBoardFile(); });
+    if (!data) saveBoardFile();
 }
 
 function createTable(data = null) {
     const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
     const container = document.createElement('div');
-    container.className = 'draggable'; container.dataset.type = 'table';
+    container.className = 'draggable table-widget'; container.dataset.type = 'table';
     container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
     if (data && data.zIndex) container.style.zIndex = data.zIndex;
+    if (data && data.width) container.style.width = data.width;
+    if (data && data.height) container.style.height = data.height;
 
     const defaultHTML = `
         <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
@@ -307,19 +380,22 @@ function createTable(data = null) {
             td.contentEditable = "true";
             row.appendChild(td);
         });
-        saveBoardState();
+        saveBoardFile();
     });
 
     container.querySelector('.del-col').addEventListener('click', () => {
         table.querySelectorAll('tr').forEach(row => {
             if (row.children.length > 1) row.lastElementChild.remove();
         });
-        saveBoardState();
+        saveBoardFile();
     });
 
-    table.addEventListener('input', saveBoardState);
-    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
-    if (!data) saveBoardState();
+    const resizeObserver = new MutationObserver(() => saveBoardFile());
+    resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
+
+    table.addEventListener('input', () => saveBoardFile());
+    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
+    if (!data) saveBoardFile();
 }
 
 function createSketch(data = null) {
@@ -328,10 +404,11 @@ function createSketch(data = null) {
     container.className = 'draggable sketch-widget'; container.dataset.type = 'sketch';
     container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
     if (data && data.zIndex) container.style.zIndex = data.zIndex;
+    
+    // Explicitly set sizes from data, otherwise CSS min-width/height handles the 150x150 default
     if (data && data.width) container.style.width = data.width;
     if (data && data.height) container.style.height = data.height;
 
-    // High internal resolution for the canvas prevents pixelation when stretched
     container.innerHTML = `
         <div class="drag-handle"><span style="font-size:12px; margin-left:5px; font-weight:bold;">Sketch</span><button class="close-btn">✕</button></div>
         <canvas class="drawing-canvas" width="1000" height="1000"></canvas>
@@ -342,7 +419,6 @@ function createSketch(data = null) {
     const canvas = container.querySelector('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Smooth lines
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 4;
@@ -354,7 +430,6 @@ function createSketch(data = null) {
 
     let isDrawing = false;
     
-    // We scale the mouse coordinates by the difference between the CSS display size and the internal 1000x1000 size
     function startDraw(e) { 
         isDrawing = true; 
         const rect = canvas.getBoundingClientRect(); 
@@ -371,18 +446,17 @@ function createSketch(data = null) {
         ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY); 
         ctx.stroke(); 
     }
-    function stopDraw() { if (isDrawing) { isDrawing = false; saveBoardState(); } }
+    function stopDraw() { if (isDrawing) { isDrawing = false; saveBoardFile(); } }
 
     canvas.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDraw(e); canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener('pointermove', (e) => { e.stopPropagation(); draw(e); });
     canvas.addEventListener('pointerup', (e) => { stopDraw(); canvas.releasePointerCapture(e.pointerId); });
 
-    // Ensure resizing the container triggers a save
-    const resizeObserver = new MutationObserver(() => saveBoardState());
+    const resizeObserver = new MutationObserver(() => saveBoardFile());
     resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
 
-    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
-    if (!data) saveBoardState();
+    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
+    if (!data) saveBoardFile();
 }
 
 // IMAGE PASTING LOGIC
@@ -403,43 +477,14 @@ function createImageWidget(data) {
     boardCanvas.appendChild(container);
     makeDraggable(container, container.querySelector('.drag-handle'));
 
-    const resizeObserver = new MutationObserver(() => saveBoardState());
+    const resizeObserver = new MutationObserver(() => saveBoardFile());
     resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
 
-    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardState(); });
-    if (!data.left) saveBoardState();
+    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
+    if (!data.left) saveBoardFile();
 }
 
 document.addEventListener('paste', (e) => {
-    if (!boardView.classList.contains('active')) return; 
+    if (currentTab !== 'board') return; 
 
-    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-    for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.includes('image/')) {
-            const blob = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    let width = img.width; let height = img.height;
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6); 
-                    createImageWidget({ imgSrc: compressedDataUrl });
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(blob);
-        }
-    }
-});
-
-document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
-document.getElementById('addTableBtn').addEventListener('click', () => createTable());
-document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
+    const items = (e.clipboardData || e.or
