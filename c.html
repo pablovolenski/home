@@ -1,138 +1,270 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mondrian Sketch UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaico de Refranes - Pablo Volenski</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --black: #121212;
-            --red: #d42210;
-            --yellow: #f9cc00;
-            --blue: #004d98;
-            --white: #ffffff;
-            --thickness: 12px; /* The "paint" lines */
+            --border-thick: 5px;
+            --highlight-bg: #ffffcc;
         }
 
-        /* Fill the screen entirely */
-        html, body {
+        body {
             margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: var(--black);
-            overflow: hidden;
-        }
-
-        /* Main Grid Construction */
-        .mondrian-wrapper {
-            display: grid;
-            width: 100%;
-            height: 100%;
-            gap: var(--thickness);
-            border: var(--thickness) solid var(--black);
-            box-sizing: border-box;
-            
-            /* Based on your sketch: 3 main vertical sections */
-            grid-template-columns: 2fr 1fr 1fr;
-            grid-template-rows: 1.5fr 1fr 1.5fr;
-        }
-
-        .block {
-            background-color: var(--white);
+            padding: 30px;
+            background-color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Arial', sans-serif;
-            font-weight: bold;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            position: relative;
+            flex-direction: column;
+            overflow-x: hidden;
         }
 
-        .block:active { opacity: 0.7; }
-
-        /* The Big Red Block (Content Display) */
-        .main-display {
-            grid-column: 1;
-            grid-row: 1;
-            background-color: var(--red);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            cursor: default;
-            font-size: 1.5rem;
-        }
-
-        /* Secondary Grid Elements */
-        .yellow-1 { grid-column: 2 / span 2; grid-row: 1; background-color: var(--yellow); }
-        
-        /* The middle row blue/white split */
-        .blue-1 { grid-column: 1; grid-row: 2; background-color: var(--blue); }
-        .white-1 { grid-column: 2 / span 2; grid-row: 2; }
-
-        /* The bottom complex area (Nested Grid for precision) */
-        .bottom-complex {
-            grid-column: 1 / span 3;
-            grid-row: 3;
+        #grid-container {
             display: grid;
-            gap: var(--thickness);
-            grid-template-columns: 1fr 0.5fr 1.5fr;
+            gap: 20px;
+            width: 100%;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-auto-rows: 1fr;
         }
 
-        .red-small { background-color: var(--red); }
-        .blue-small { background-color: var(--blue); }
-        .yellow-small { background-color: var(--yellow); }
+        .card {
+            background: white;
+            border: var(--border-thick) solid black;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-height: 200px;
+        }
 
-        /* Responsive Mobile Layout */
-        @media (max-width: 600px) {
-            .mondrian-wrapper {
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: 1.5fr 0.5fr 1fr 1fr;
-            }
-            .main-display { grid-column: 1 / span 2; }
-            .yellow-1 { grid-column: 1 / span 2; }
+        .es {
+            color: black;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .pt {
+            color: #008000; /* Verde */
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+            font-weight: 300;
+        }
+
+        .de {
+            color: #ff0000; /* Rojo */
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .active {
+            background-color: var(--highlight-bg) !important;
+            transform: scale(1.08);
+            z-index: 100;
+            box-shadow: 15px 15px 0px black;
+        }
+
+        /* Responsive para TVs y Pantallas muy grandes */
+        @media (min-width: 2000px) {
+            #grid-container { grid-template-columns: repeat(5, 1fr); }
+            .es { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
 
-<div class="mondrian-wrapper">
-    <div class="block main-display" id="screen">
-        Select a block to see content
-    </div>
+    <div id="grid-container"></div>
 
-    <div class="block yellow-1" onclick="update('Top Yellow', 'Inspired by the 1921 sketch.')">1</div>
-    
-    <div class="block blue-1" onclick="update('Center Blue', 'Horizontal stability.')">2</div>
-    <div class="block white-1" onclick="update('Center White', 'Pure geometric space.')">3</div>
+    <script>
+        const allProverbs = [
+            {es: "Más vale pájaro en mano que ciento volando", pt: "Mais vale um pássaro na mão do que dois a voar", de: "Ein Spatz in der Hand ist besser als die Taube auf dem Dach"},
+            {es: "A caballo regalado no se le mira el dentado", pt: "A cavalo dado não se olha o dente", de: "Einem geschenkten Gaul schaut man nicht ins Maul"},
+            {es: "En el hablar está el arte", pt: "Na fala está a arte", de: "In der Rede liegt die Kunst"},
+            {es: "No hay mal que por bien no venga", pt: "Não há mal que para bem não venha", de: "In jedem Unglück steckt ein Glück"},
+            {es: "Perro que ladra no muerde", pt: "Cão que ladra não morde", de: "Hunde, die bellen, beißen nicht"},
+            {es: "Ojos que no ven, corazón que no siente", pt: "Olhos que não vêem, coração que não sente", de: "Aus den Augen, aus dem Sinn"},
+            {es: "Dime con quién andas y te diré quién eres", pt: "Diz-me com quem andas e dir-te-ei quem és", de: "Sag mir, mit wem du umgehst, und ich sage dir, wer du bist"},
+            {es: "Más vale tarde que nunca", pt: "Mais vale tarde do que nunca", de: "Besser spät als nie"},
+            {es: "Al que madruga, Dios lo ayuda", pt: "Deus ajuda quem cedo madruga", de: "Morgenstund hat Gold im Mund"},
+            {es: "Quien mucho abarca poco aprieta", pt: "Quem muito abarca pouco aperta", de: "Wer zu viel unternimmt, dem gelingt wenig"},
+            {es: "En boca cerrada no entran moscas", pt: "Em boca fechada não entra mosca", de: "Reden ist Silber, Schweigen ist Gold"},
+            {es: "Haz bien y no mires a quién", pt: "Faz o bem sem olhar a quem", de: "Tue Gutes und sprich nicht darüber"},
+            {es: "Lo que no mata engorda", pt: "O que não mata engorda", de: "Was dich nicht umbringt, macht dich stärker"},
+            {es: "A quien buen árbol se arrima, buena sombra le cobija", pt: "Quem a boa árvore se acolhe, boa sombra o cobre", de: "Wer sich an einen guten Baum lehnt, hat guten Schatten"},
+            {es: "Crea fama y échate a dormir", pt: "Cria fama e deita-te a dormir", de: "Ist der Ruf erst ruiniert, lebt es sich ganz ungeniert"},
+            {es: "Más sabe el diablo por viejo que por diablo", pt: "Mais sabe o diabo por ser velho do que por ser diabo", de: "Alter schützt vor Torheit nicht"},
+            {es: "Donde hubo fuego, cenizas quedan", pt: "Onde houve fogo, cinzas ficam", de: "Alte Liebe rostet nicht"},
+            {es: "El que la hace la paga", pt: "Aqui se faz, aqui se paga", de: "Wie man in den Wald hineinruft, so schallt es heraus"},
+            {es: "No dejes para mañana lo que puedas hacer hoy", pt: "Não deixes para amanhã o que podes fazer hoje", de: "Was du heute kannst besorgen, das verschiebe nicht auf morgen"},
+            {es: "Cría cuervos y te sacarán los ojos", pt: "Cria corvos e eles tirar-te-ão os olhos", de: "Undank es der Welt Lohn"},
+            {es: "El que busca encuentra", pt: "Quem procura acha", de: "Wer suchet, der findet"},
+            {es: "Cada loco con su tema", pt: "Cada louco com a sua mania", de: "Jedem Tierchen sein Plaisierchen"},
+            {es: "Mal de muchos, consuelo de tontos", pt: "Mal de muitos, consolo de tolos", de: "Geteiltes Leid ist halbes Leid"},
+            {es: "Quien ríe el último ríe mejor", pt: "Quem ri por último ri melhor", de: "Wer zuletzt lacht, lacht am besten"},
+            {es: "A palabras necias, oídos sordos", pt: "Para palavras loucas, orelhas moucas", de: "An dumme Sprüche verschwendet man kein Gehör"},
+            {es: "Sobre gustos no hay nada escrito", pt: "Gostos não se discutem", de: "Über Geschmack lässt sich nicht streiten"},
+            {es: "Mucho ruido y pocas nueces", pt: "Muito barulho por nada", de: "Viel Lärm um nichts"},
+            {es: "No todo lo que brilla es oro", pt: "Nem tudo o que luz é ouro", de: "Es ist nicht alles Gold, was glänzt"},
+            {es: "Camarón que se duerme se lo lleva la corriente", pt: "Camarão que dorme a onda leva", de: "Wer rastet, der rostet"},
+            {es: "Cada oveja con su pareja", pt: "Cada ovelha com a sua parelha", de: "Gleich und Gleich gesellt sich gern"},
+            {es: "Hierba mala nunca muere", pt: "Erva ruim nunca morre", de: "Unkraut vergeht nicht"},
+            {es: "A falta de pan, buenas son tortas", pt: "Na falta de pão, bolos são bons", de: "In der Not frisst der Teufel Fliegen"},
+            {es: "El hábito no hace al monje", pt: "O hábito não faz o monge", de: "Kleider machen Leute"},
+            {es: "A la tercera va la vencida", pt: "À terceira é de vez", de: "Aller guten Dinge sind drei"},
+            {es: "Contigo pan y cebolla", pt: "Contigo pão e cebola", de: "In guten wie in schlechten Zeiten"},
+            {es: "Zapatero a tus zapatos", pt: "Sapateiro, não vás além do chinelo", de: "Schuster, bleib bei deinen Leisten"},
+            {es: "Del dicho al hecho hay un buen trecho", pt: "Do dito ao feito vai um grande eito", de: "Sagen und Tun sind zweierlei"},
+            {es: "Quien siembra vientos cosecha tempestades", pt: "Quem semeia ventos colhe tempestades", de: "Wer Wind sät, wird Sturm ernten"},
+            {es: "Poco a poco se va lejos", pt: "Grão a grão a galinha enche o papo", de: "Steter Tropfen höhlt den Stein"},
+            {es: "El que no corre, vuela", pt: "Quem não corre, voa", de: "Wer zuerst kommt, mahlt zuerst"},
+            {es: "De tal palo, tal astilla", pt: "Tal pai, tal filho", de: "Der Apfel fällt nicht weit vom Stamm"},
+            {es: "Más vale prevenir que curar", pt: "Mais vale prevenir do que remediar", de: "Vorsicht ist besser als Nachsicht"},
+            {es: "A grandes males, grandes remedios", pt: "Para grandes males, grandes remédios", de: "Gegen große Übel helfen nur große Mittel"},
+            {es: "La avaricia rompe el saco", pt: "A ganância rompe o saco", de: "Habgier zahlt sich nicht aus"},
+            {es: "Hombre precavido vale por dos", pt: "Hombre prevenido vale por dois", de: "Vorsicht ist die Mutter der Porzellankiste"},
+            {es: "Agua que no has de beber, déjala correr", pt: "Água que não tens de beber, deixa-a correr", de: "Kümmere dich um deine eigenen Angelegenheiten"},
+            {es: "Ladran, Sancho, señal que cabalgamos", pt: "Ladram, Sancho, sinal que cavalgamos", de: "Die Hunde bellen, aber die Karawane zieht weiter"},
+            {es: "Nadie es profeta en su tierra", pt: "Ninguém é profeta na sua terra", de: "Der Prophet gilt nichts im eigenen Land"},
+            {es: "La curiosidad mató al gato", pt: "A curiosidade matou o gato", de: "Neugier ist der Katzen Tod"},
+            {es: "Un lugar para cada cosa y cada cosa en su lugar", pt: "Um lugar para cada coisa e cada coisa no seu lugar", de: "Ordnung ist das halbe Leben"},
+            {es: "Dios aprieta pero no ahoga", pt: "Deus aperta, mas não enforca", de: "Wenn die Not am größten, ist Gottes Hilfe am nächsten"},
+            {es: "El que calla otorga", pt: "Quem cala consente", de: "Wer schweigt, stimmt zu"},
+            {es: "Gato con guantes no caza ratones", pt: "Gato de luvas não caça ratos", de: "Mit Samthandschuhen erreicht man nichts"},
+            {es: "Lo cortés no quita lo valiente", pt: "A cortesia não tira a coragem", de: "Höflichkeit kostet nichts"},
+            {es: "Aunque la mona se vista de seda, mona se queda", pt: "Ainda que a mona se vista de seda, mona fica", de: "Ein Esel bleibt ein Esel, auch wenn er eine goldene Decke trägt"},
+            {es: "No dejes camino viejo por sendero nuevo", pt: "Não deixes o caminho velho pelo novo", de: "Alte Wege soll man nicht verlassen"},
+            {es: "Más vale maña que fuerza", pt: "Mais vale jeito do que força", de: "List geht über Gewalt"},
+            {es: "Obras son amores y no buenas razones", pt: "Obras são amores e não boas razões", de: "Taten sagen mehr als Worte"},
+            {es: "A río revuelto, ganancia de pescadores", pt: "Em rio revolto, ganho de pescadores", de: "Im Trüben ist gut fischen"},
+            {es: "En casa del herrero, cuchillo de palo", pt: "Em casa de ferreiro, espeto de pau", de: "Des Schuhmachers Frau hat die schlechtesten Schuhe"},
+            {es: "Todo lo que sube tiene que bajar", pt: "Tudo o que sobe tem de descer", de: "Hochmut kommt vor dem Fall"},
+            {es: "La esperanza es lo último que se pierde", pt: "A esperança é a última a morrer", de: "Die Hoffnung stirbt zuletzt"},
+            {es: "Dios los cría y ellos se juntan", pt: "Deus os cria e eles se juntam", de: "Gleich und Gleich gesellt sich gern"},
+            {es: "Cría buena fama y échate a dormir", pt: "Cria boa fama e deita-te a dormir", de: "Ein guter Name ist viel wert"},
+            {es: "A Dios rogando y con el mazo dando", pt: "A Deus rogando e com o maço dando", de: "Hilf dir selbst, dann hilft dir Gott"},
+            {es: "Perro ladrador, poco mordedor", pt: "Cão que ladra não morde", de: "Bange Hunde bellen viel"},
+            {es: "Quien tiene boca se equivoca", pt: "Quem tem boca erra", de: "Irren ist menschlich"},
+            {es: "Sarna con gusto no pica", pt: "Quem corre por gosto não cansa", de: "Was man gerne tut, das fällt einem nicht schwer"},
+            {es: "Las palabras se las lleva el viento", pt: "As palavras o vento as leva", de: "Worte sind nur Schall und Rauch"},
+            {es: "El tiempo todo lo cura", pt: "O tempo cura tudo", de: "Zeit heilt alle Wunden"},
+            {es: "Quien busca peligro perece en él", pt: "Quem procura perigo nele perece", de: "Wer sich in Gefahr begibt, kommt darin um"},
+            {es: "Lo barato sale caro", pt: "O barato sai caro", de: "Wer billig kauft, kauft zweimal"},
+            {es: "Dando y dando, pajarito volando", pt: "Dando e dando, passarinho voando", de: "Geben und Nehmen"},
+            {es: "Donde manda capitán, no manda marinero", pt: "Onde manda o capitão, não manda o marinheiro", de: "Der Chef ist der Chef"},
+            {es: "A buen entendedor, pocas palabras bastan", pt: "A bom entendedor, meia palavra basta", de: "Einem klugen Kopf genügt ein Wort"},
+            {es: "Genio y figura hasta la sepultura", pt: "Gênio e figura até à sepultura", de: "Was das Häschen nicht lernt, lernt der Hase nimmermehr"},
+            {es: "Hacer de tripas corazón", pt: "Fazer das tripas coração", de: "Gute Miene zum bösen Spiel machen"},
+            {es: "La fe mueve montañas", pt: "A fé move montanhas", de: "Glaube versetzt Berge"},
+            {es: "Mucha mano en el plato hace mucho garabato", pt: "Muitas mãos no prato fazem o gato", de: "Viele Köche verderben den Brei"},
+            {es: "Piensa mal y acertarás", pt: "Pensa mal e acertarás", de: "Vorsicht ist besser als Nachsicht"},
+            {es: "Saber es poder", pt: "Saber é poder", de: "Wissen ist Macht"},
+            {es: "Unos nacen con estrella y otros nacen estrellados", pt: "Uns nascem com estrela, outros nascem estrelados", de: "Dem Glücklichen schlägt keine Stunde"},
+            {es: "Ver para creer", pt: "Ver para crer", de: "Erst sehen, dann glauben"},
+            {es: "Matar dos pájaros de un tiro", pt: "Matar dois coelhos de uma cajadada só", de: "Zwei Fliegen mit einer Klappe schlagen"},
+            {es: "Quien no arriesga, no gana", pt: "Quem não arrisca, não petisca", de: "Wer nicht wagt, der nicht gewinnt"},
+            {es: "La práctica hace al maestro", pt: "A prática faz o mestre", de: "Übung macht den Meister"},
+            {es: "Vale más una imagen que mil palabras", pt: "Uma imagem vale mais que mil palavras", de: "Ein Bild sagt mehr als tausend Worte"},
+            {es: "Las paredes oyen", pt: "As paredes têm ouvidos", de: "Die Wände haben Ohren"},
+            {es: "Estar en las nubes", pt: "Estar nas nuvens", de: "Auf Wolke sieben schweben"},
+            {es: "Poner los puntos sobre las íes", pt: "Pôr os pontos nos is", de: "Die Punkte auf das i setzen"},
+            {es: "Echar leña al fuego", pt: "Deitar lenha no fogo", de: "Öl ins Feuer gießen"},
+            {es: "Meter la pata", pt: "Meter a pata", de: "Ins Fettnäpfchen treten"},
+            {es: "Tirar la toalla", pt: "Atirar a toalha", de: "Die Flinte ins Korn werfen"},
+            {es: "Dar en el clavo", pt: "Dar no cravo", de: "Den Nagel auf den Kopf treffen"},
+            {es: "No tener pelos en la lengua", pt: "Não ter papas na língua", de: "Kein Blatt vor den Mund nehmen"},
+            {es: "Tomar el pelo", pt: "Cozinhar o galo", de: "Jemanden auf den Arm nehmen"},
+            {es: "Estar con la soga al cuello", pt: "Estar com a corda no pescoço", de: "Das Wasser steht ihm bis zum Hals"},
+            {es: "Empezar la casa por el tejado", pt: "Começar a casa pelo telhado", de: "Das Pferd von hinten aufzäumen"},
+            {es: "Sacar los trapos sucios", pt: "Lavar a roupa suja", de: "Schmutzige Wäsche waschen"},
+            {es: "Ser pan comido", pt: "Ser canja", de: "Ein Kinderspiel sein"},
+            {es: "No ver tres en un burro", pt: "Não ver um palmo à frente do nariz", de: "Blind wie ein Maulwurf sein"},
+            {es: "Tirarse de los pelos", pt: "Arrancar os cabelos", de: "Sich die Haare raufen"},
+            {es: "Caerse el mundo encima", pt: "Cair o mundo sobre a cabeça", de: "Die Welt bricht zusammen"},
+            {es: "Estar hecho un flan", pt: "Estar tremendo como vara verde", de: "Zittern wie Espenlaub"},
+            {es: "Cruzar los dedos", pt: "Cruzar os dedos", de: "Die Daumen drücken"},
+            {es: "Tener la cabeza en los pies", pt: "Estar com a cabeça noutro lugar", de: "Den Kopf verlieren"},
+            {es: "Dormir a pierna suelta", pt: "Dormir a sono solto", de: "Wie ein Murmeltier schlafen"},
+            {es: "Llover a cántaros", pt: "Chover a potes", de: "Es regnet Bindfäden"},
+            {es: "Perder la cabeza", pt: "Perder a cabeça", de: "Den Kopf verlieren"},
+            {es: "Dar la cara", pt: "Dar a cara", de: "Den Kopf hinhalten"},
+            {es: "Tener mala pata", pt: "Ter azar", de: "Pech haben"},
+            {es: "Estar a dos velas", pt: "Estar sem um tostão", de: "Pleite sein"},
+            {es: "Quedarse de piedra", pt: "Ficar de pedra", de: "Wie versteinert sein"},
+            {es: "Estar hasta la coronilla", pt: "Estar farto", de: "Die Nase voll haben"},
+            {es: "No pegar ojo", pt: "Não pregar olho", de: "Kein Auge zugetan"},
+            {es: "Ser un pez gordo", pt: "Ser um figurão", de: "Ein hohes Tier sein"},
+            {es: "Llevarse el gato al agua", pt: "Levar a melhor", de: "Den Sieg davontragen"},
+            {es: "Tirar la casa por la ventana", pt: "Gastar o que não tem", de: "Geld zum Fenster rauswerfen"},
+            {es: "No hay rosa sin espinas", pt: "Não há rosa sem espinhos", de: "Keine Rose ohne Dornen"},
+            {es: "Hablando del rey de Roma, por la puerta asoma", pt: "Falando no diabo, ele aparece", de: "Wenn man vom Teufel spricht"}
+        ];
 
-    <div class="bottom-complex">
-        <div class="block red-small" onclick="update('Lower Red', 'Asymmetrical accent.')">4</div>
-        <div class="block" onclick="update('Lower White', 'Balance.')">5</div>
-        <div class="block blue-small" onclick="update('Bottom Blue', 'Foundation color.')">6</div>
-    </div>
-</div>
+        const container = document.getElementById('grid-container');
 
-<script>
-    function update(title, text) {
-        const screen = document.getElementById('screen');
-        screen.innerHTML = `
-            <div style="animation: fadeIn 0.3s ease;">
-                <h1 style="margin:0;">${title}</h1>
-                <p>${text}</p>
-            </div>
-        `;
-    }
-</script>
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
 
-<style>
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
+        function renderGrid() {
+            // Estimamos cuántas celdas caben (400px de ancho aprox por celda)
+            const cols = Math.floor(window.innerWidth / 380);
+            const rows = Math.floor(window.innerHeight / 250);
+            let displayLimit = Math.max(cols * rows, 6);
+            
+            const selected = shuffle([...allProverbs]).slice(0, displayLimit);
+            
+            container.innerHTML = '';
+            selected.forEach((p, i) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = `card-${i}`;
+                card.innerHTML = `
+                    <div class="es">${p.es}</div>
+                    <div class="pt">${p.pt}</div>
+                    <div class="de">${p.de}</div>
+                `;
+                container.appendChild(card);
+            });
 
+            startAnimationCycle(displayLimit);
+        }
+
+        let animationTimeout;
+        function startAnimationCycle(limit) {
+            let currentIndex = 0;
+
+            function next() {
+                // Limpiar activos
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+
+                if (currentIndex >= limit) {
+                    renderGrid(); // Reiniciar con nuevos refranes aleatorios
+                    return;
+                }
+
+                const currentCard = document.getElementById(`card-${currentIndex}`);
+                if (currentCard) {
+                    currentCard.classList.add('active');
+                    currentIndex++;
+                    animationTimeout = setTimeout(next, 3000);
+                }
+            }
+            next();
+        }
+
+        // Manejo de resize para no romper la estética
+        let resizeTimer;
+        window.onresize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(renderGrid, 500);
+        };
+
+        renderGrid();
+    </script>
 </body>
 </html>
