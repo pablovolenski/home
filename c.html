@@ -13,7 +13,7 @@
 
         body {
             margin: 0;
-            padding: 30px;
+            padding: 20px;
             background-color: #ffffff;
             font-family: 'Montserrat', sans-serif;
             min-height: 100vh;
@@ -24,55 +24,57 @@
 
         #grid-container {
             display: grid;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            grid-auto-rows: 1fr;
+            /* Adaptativo: columnas de mínimo 320px */
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-auto-rows: auto;
         }
 
         .card {
             background: white;
             border: var(--border-thick) solid black;
-            padding: 25px;
+            /* Ajuste de márgenes internos reducidos */
+            padding: 15px 20px; 
             display: flex;
             flex-direction: column;
             justify-content: center;
-            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            min-height: 200px;
+            transition: all 0.5s ease-in-out;
+            min-height: 140px; /* Altura mínima reducida */
         }
 
         .es {
             color: black;
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 700;
-            margin-bottom: 12px;
-            line-height: 1.2;
+            margin-bottom: 6px; /* Menos margen */
+            line-height: 1.1;
         }
 
         .pt {
-            color: #008000; /* Verde */
-            font-size: 1.1rem;
-            margin-bottom: 6px;
+            color: #008000;
+            font-size: 1rem;
+            margin-bottom: 3px; /* Menos margen */
             font-weight: 300;
         }
 
         .de {
-            color: #ff0000; /* Rojo */
-            font-size: 1.1rem;
+            color: #ff0000;
+            font-size: 1rem;
             font-weight: 300;
+            line-height: 1.1;
         }
 
+        /* Resaltado sin sombra negra */
         .active {
             background-color: var(--highlight-bg) !important;
-            transform: scale(1.08);
-            z-index: 100;
-            box-shadow: 15px 15px 0px black;
+            transform: scale(1.04);
+            z-index: 10;
         }
 
-        /* Responsive para TVs y Pantallas muy grandes */
         @media (min-width: 2000px) {
-            #grid-container { grid-template-columns: repeat(5, 1fr); }
-            .es { font-size: 2rem; }
+            #grid-container { grid-template-columns: repeat(6, 1fr); }
+            .es { font-size: 1.6rem; }
         }
     </style>
 </head>
@@ -101,7 +103,7 @@
             {es: "Donde hubo fuego, cenizas quedan", pt: "Onde houve fogo, cinzas ficam", de: "Alte Liebe rostet nicht"},
             {es: "El que la hace la paga", pt: "Aqui se faz, aqui se paga", de: "Wie man in den Wald hineinruft, so schallt es heraus"},
             {es: "No dejes para mañana lo que puedas hacer hoy", pt: "Não deixes para amanhã o que podes fazer hoje", de: "Was du heute kannst besorgen, das verschiebe nicht auf morgen"},
-            {es: "Cría cuervos y te sacarán los ojos", pt: "Cria corvos e eles tirar-te-ão os olhos", de: "Undank es der Welt Lohn"},
+            {es: "Cría cuervos y te sacarán los ojos", pt: "Cria corvos e eles tirar-te-ão os olhos", de: "Undank ist der Welt Lohn"},
             {es: "El que busca encuentra", pt: "Quem procura acha", de: "Wer suchet, der findet"},
             {es: "Cada loco con su tema", pt: "Cada louco com a sua mania", de: "Jedem Tierchen sein Plaisierchen"},
             {es: "Mal de muchos, consuelo de tontos", pt: "Mal de muitos, consolo de tolos", de: "Geteiltes Leid ist halbes Leid"},
@@ -145,7 +147,6 @@
             {es: "Todo lo que sube tiene que bajar", pt: "Tudo o que sobe tem de descer", de: "Hochmut kommt vor dem Fall"},
             {es: "La esperanza es lo último que se pierde", pt: "A esperança é a última a morrer", de: "Die Hoffnung stirbt zuletzt"},
             {es: "Dios los cría y ellos se juntan", pt: "Deus os cria e eles se juntam", de: "Gleich und Gleich gesellt sich gern"},
-            {es: "Cría buena fama y échate a dormir", pt: "Cria boa fama e deita-te a dormir", de: "Ein guter Name ist viel wert"},
             {es: "A Dios rogando y con el mazo dando", pt: "A Deus rogando e com o maço dando", de: "Hilf dir selbst, dann hilft dir Gott"},
             {es: "Perro ladrador, poco mordedor", pt: "Cão que ladra não morde", de: "Bange Hunde bellen viel"},
             {es: "Quien tiene boca se equivoca", pt: "Quem tem boca erra", de: "Irren ist menschlich"},
@@ -161,14 +162,12 @@
             {es: "Hacer de tripas corazón", pt: "Fazer das tripas coração", de: "Gute Miene zum bösen Spiel machen"},
             {es: "La fe mueve montañas", pt: "A fé move montanhas", de: "Glaube versetzt Berge"},
             {es: "Mucha mano en el plato hace mucho garabato", pt: "Muitas mãos no prato fazem o gato", de: "Viele Köche verderben den Brei"},
-            {es: "Piensa mal y acertarás", pt: "Pensa mal e acertarás", de: "Vorsicht ist besser als Nachsicht"},
             {es: "Saber es poder", pt: "Saber é poder", de: "Wissen ist Macht"},
-            {es: "Unos nacen con estrella y otros nacen estrellados", pt: "Uns nascem com estrela, outros nascem estrelados", de: "Dem Glücklichen schlägt keine Stunde"},
             {es: "Ver para creer", pt: "Ver para crer", de: "Erst sehen, dann glauben"},
             {es: "Matar dos pájaros de un tiro", pt: "Matar dois coelhos de uma cajadada só", de: "Zwei Fliegen mit einer Klappe schlagen"},
             {es: "Quien no arriesga, no gana", pt: "Quem não arrisca, não petisca", de: "Wer nicht wagt, der nicht gewinnt"},
             {es: "La práctica hace al maestro", pt: "A prática faz o mestre", de: "Übung macht den Meister"},
-            {es: "Vale más una imagen que mil palabras", pt: "Uma imagem vale mais que mil palavras", de: "Ein Bild sagt mehr als tausend Worte"},
+            {es: "Vale más una imagen que mil palabras", pt: "Uma imagen vale mais que mil palavras", de: "Ein Bild sagt mehr als tausend Worte"},
             {es: "Las paredes oyen", pt: "As paredes têm ouvidos", de: "Die Wände haben Ohren"},
             {es: "Estar en las nubes", pt: "Estar nas nuvens", de: "Auf Wolke sieben schweben"},
             {es: "Poner los puntos sobre las íes", pt: "Pôr os pontos nos is", de: "Die Punkte auf das i setzen"},
@@ -184,10 +183,8 @@
             {es: "Ser pan comido", pt: "Ser canja", de: "Ein Kinderspiel sein"},
             {es: "No ver tres en un burro", pt: "Não ver um palmo à frente do nariz", de: "Blind wie ein Maulwurf sein"},
             {es: "Tirarse de los pelos", pt: "Arrancar os cabelos", de: "Sich die Haare raufen"},
-            {es: "Caerse el mundo encima", pt: "Cair o mundo sobre a cabeça", de: "Die Welt bricht zusammen"},
             {es: "Estar hecho un flan", pt: "Estar tremendo como vara verde", de: "Zittern wie Espenlaub"},
             {es: "Cruzar los dedos", pt: "Cruzar os dedos", de: "Die Daumen drücken"},
-            {es: "Tener la cabeza en los pies", pt: "Estar com a cabeça noutro lugar", de: "Den Kopf verlieren"},
             {es: "Dormir a pierna suelta", pt: "Dormir a sono solto", de: "Wie ein Murmeltier schlafen"},
             {es: "Llover a cántaros", pt: "Chover a potes", de: "Es regnet Bindfäden"},
             {es: "Perder la cabeza", pt: "Perder a cabeça", de: "Den Kopf verlieren"},
@@ -198,10 +195,15 @@
             {es: "Estar hasta la coronilla", pt: "Estar farto", de: "Die Nase voll haben"},
             {es: "No pegar ojo", pt: "Não pregar olho", de: "Kein Auge zugetan"},
             {es: "Ser un pez gordo", pt: "Ser um figurão", de: "Ein hohes Tier sein"},
-            {es: "Llevarse el gato al agua", pt: "Levar a melhor", de: "Den Sieg davontragen"},
             {es: "Tirar la casa por la ventana", pt: "Gastar o que não tem", de: "Geld zum Fenster rauswerfen"},
             {es: "No hay rosa sin espinas", pt: "Não há rosa sem espinhos", de: "Keine Rose ohne Dornen"},
-            {es: "Hablando del rey de Roma, por la puerta asoma", pt: "Falando no diabo, ele aparece", de: "Wenn man vom Teufel spricht"}
+            {es: "Hablando del rey de Roma, por la puerta asoma", pt: "Falando no diabo, ele aparece", de: "Wenn man vom Teufel spricht"},
+            {es: "Cría buena fama y échate a dormir", pt: "Cria boa fama e deita-te a dormir", de: "Ist der Ruf erst ruiniert, lebt es sich ganz ungeniert"},
+            {es: "Quien busca encuentra", pt: "Quem procura acha", de: "Wer suchet, der findet"},
+            {es: "Cada oveja con su pareja", pt: "Cada ovelha com a sua parelha", de: "Gleich und Gleich gesellt sich gern"},
+            {es: "Agua pasada no mueve molino", pt: "Águas passadas não movem moinho", de: "Was geschehen ist, ist geschehen"},
+            {es: "El que siembra cosecha", pt: "Quem semeia colhe", de: "Man erntet, was man sät"},
+            {es: "Un clavo saca otro clavo", pt: "Um cravo tira outro cravo", de: "Ein Dorn vertreibt den anderen"}
         ];
 
         const container = document.getElementById('grid-container');
@@ -211,10 +213,10 @@
         }
 
         function renderGrid() {
-            // Estimamos cuántas celdas caben (400px de ancho aprox por celda)
-            const cols = Math.floor(window.innerWidth / 380);
-            const rows = Math.floor(window.innerHeight / 250);
-            let displayLimit = Math.max(cols * rows, 6);
+            // Calculamos capacidad visual
+            const cols = Math.floor(window.innerWidth / 350);
+            const rows = Math.floor(window.innerHeight / 180);
+            let displayLimit = Math.max(cols * rows, 4);
             
             const selected = shuffle([...allProverbs]).slice(0, displayLimit);
             
@@ -239,11 +241,10 @@
             let currentIndex = 0;
 
             function next() {
-                // Limpiar activos
                 document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
 
                 if (currentIndex >= limit) {
-                    renderGrid(); // Reiniciar con nuevos refranes aleatorios
+                    renderGrid();
                     return;
                 }
 
@@ -257,10 +258,10 @@
             next();
         }
 
-        // Manejo de resize para no romper la estética
         let resizeTimer;
         window.onresize = () => {
             clearTimeout(resizeTimer);
+            clearTimeout(animationTimeout);
             resizeTimer = setTimeout(renderGrid, 500);
         };
 
