@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mosaico B - Caos Dinámico</title>
+    <title>refranes</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap" rel="stylesheet">
     <style>
         :root { --border-tk: 5px; --bg-high: #ffffcc; }
@@ -14,8 +14,8 @@
         #grid { 
             display: grid; 
             width: 100%; height: 100%; 
-            padding: 2vh; 
-            gap: 1.5vh;
+            padding: 1.5vh; 
+            gap: 1vh;
         }
         .card {
             border: var(--border-tk) solid black;
@@ -23,11 +23,13 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            transition: all 0.5s ease;
+            transition: background-color 0.4s ease, transform 0.4s ease;
+            overflow: hidden;
+            text-align: left;
         }
-        .es { font-weight: 700; color: black; line-height: 1.1; margin-bottom: 0.5vh; }
-        .pt { font-weight: 300; color: green; margin-bottom: 0.3vh; }
-        .de { font-weight: 300; color: red; line-height: 1.1; }
+        .es { font-weight: 700; color: black; line-height: 1.1; margin-bottom: 0.4vh; }
+        .pt { font-weight: 300; color: #008000; margin-bottom: 0.2vh; }
+        .de { font-weight: 300; color: #ff0000; line-height: 1.1; }
         .active { background-color: var(--bg-high) !important; transform: scale(1.02); z-index: 10; }
     </style>
 </head>
@@ -40,17 +42,17 @@
             {es: "A Dios rogando y con el mazo dando.", de: "Hilf dir selbst, dann hilft dir Gott.", pt: "A Deus rogando e com o maço dando."},
             {es: "A falta de pan, buenas son tortas.", de: "In der Not frisst der Teufel Fliegen.", pt: "Na falta de pão, bolos são bons."},
             {es: "A grandes males, grandes remedios.", de: "Gegen große Übel helfen nur große Mittel.", pt: "Para grandes males, grandes remédios."},
-            {es: "A la tercera va la vencida.", de: "Aller guten Dinge sind drei.", pt: "À tercera é de vez."},
+            {es: "A la tercera va la vencida.", de: "Aller guten Dinge sind drei.", pt: "À terceira é de vez."},
             {es: "A palabras necias, oídos sordos.", de: "An dumme Sprüche verschwendet man kein Gehör.", pt: "Para palabras loucas, orelhas moucas."},
             {es: "A quien buen árbol se arrima, buena sombra le cobija.", de: "Wer sich an einen guten Baum lehnt, hat guten Schatten.", pt: "Quem a boa árvore se acolhe, boa sombra o cobre."},
             {es: "A río revuelto, ganancia de pescadores.", de: "Im Trüben ist gut fischen.", pt: "Em rio revolto, ganho de pescadores."},
             {es: "Agua pasada no mueve molino.", de: "Was geschehen ist, ist geschehen.", pt: "Águas passadas não movem moinho."},
             {es: "Agua que no has de beber, déjala correr.", de: "Kümmere dich um deine eigenen Angelegenheiten.", pt: "Água que não tens de beber, deixa-a correr."},
-            {es: "Al que madruga, Dios lo ayuda.", de: "Morgenstund hat Gold im Mund.", pt: "Deus ayuda quem cedo madruga."},
+            {es: "Al que madruga, Dios lo ayuda.", de: "Morgenstund hat Gold im Mund.", pt: "Deus ajuda quem cedo madruga."},
             {es: "Aunque la mona se vista de seda, mona se queda.", de: "Ein Esel bleibt ein Esel, auch wenn er eine goldene Decke trägt.", pt: "Ainda que a mona se vista de seda, mona fica."},
             {es: "Cada loco con su tema.", de: "Jedem Tierchen sein Plaisierchen.", pt: "Cada louco com a sua mania."},
             {es: "Cada oveja con su pareja.", de: "Gleich und Gleich gesellt sich gern.", pt: "Cada ovelha com a sua parelha."},
-            {es: "Caerse el mundo encima.", de: "Die Welt bricht zusammen.", pt: "Cair o mundo sobre a cabeza."},
+            {es: "Caerse el mundo encima.", de: "Die Welt bricht zusammen.", pt: "Cair o mundo sobre a cabeça."},
             {es: "Camarón que se duerme se lo lleva la corriente.", de: "Wer rastet, der rostet.", pt: "Camarão que dorme a onda leva."},
             {es: "Contigo pan y cebolla.", de: "In guten wie in schlechten Zeiten.", pt: "Contigo pão e cebola."},
             {es: "Crea fama y échate a dormir.", de: "Ist der Ruf erst ruiniert, lebt es sich ganz ungeniert.", pt: "Cria fama e deita-te a dormir."},
@@ -86,15 +88,15 @@
             {es: "Estar hasta la coronilla.", de: "Die Nase voll haben.", pt: "Estar farto."},
             {es: "Estar hecho un flan.", de: "Zittern wie Espenlaub.", pt: "Estar tremendo como vara verde."},
             {es: "Gato con guantes no caza ratones.", de: "Mit Samthandschuhen erreicht man nichts.", pt: "Gato de luvas não caça ratos."},
-            {es: "Genio y figura hasta la sepultura.", de: "Was das Häschen nicht lernt, lernt der Hase nimmermehr.", pt: "Gênio e figura até à sepultura."},
+            {es: "Genio y figura hasta la sepultura.", de: "Was das Häschen nicht lernt, lernt der Hase nimmermehr.", pt: "Gênio e figura hasta la sepultura."},
             {es: "Hablando del rey de Roma, por la puerta asoma.", de: "Wenn man vom Teufel spricht.", pt: "Falando no diabo, ele aparece."},
             {es: "Hacer de tripas corazón.", de: "Gute Miene zum bösen Spiel machen.", pt: "Fazer das tripas coração."},
-            {es: "Haz bien y no mires a quién.", de: "Tue Gutes und sprich nicht darüber.", pt: "Faz o bien sem olhar a quem."},
+            {es: "Haz bien y no mires a quién.", de: "Tue Gutes und sprich nicht darüber.", pt: "Faz o bem sem olhar a quem."},
             {es: "Hierba mala nunca muere.", de: "Unkraut vergeht nicht.", pt: "Erva ruim nunca morre."},
             {es: "Hombre precavido vale por dos.", de: "Vorsicht ist die Mutter der Porzellankiste.", pt: "Hombre prevenido vale por dois."},
             {es: "La avaricia rompe el saco.", de: "Habgier zahlt sich nicht aus.", pt: "A ganância rompe o saco."},
             {es: "La curiosidad mató al gato.", de: "Neugier ist der Katzen Tod.", pt: "A curiosidade matou o gato."},
-            {es: "La esperanza es lo último que se pierde.", de: "Die Hoffnung stirbt zuletzt.", pt: "A esperança é a última a morrer."},
+            {es: "La esperanza es lo último que se pierde.", de: "Die Hoffnung stirbt zuletzt.", pt: "A esperança é a última a morir."},
             {es: "La fe mueve montañas.", de: "Glaube versetzt Berge.", pt: "A fé move montanhas."},
             {es: "La práctica hace al maestro.", de: "Übung macht den Meister.", pt: "A práctica faz o mestre."},
             {es: "Ladran, Sancho, señal que cabalgamos.", de: "Die Hunde bellen, aber die Karawane zieht weiter.", pt: "Ladram, Sancho, sinal que cavalgamos."},
@@ -104,8 +106,8 @@
             {es: "Llover a cántaros.", de: "Es regnet Bindfäden.", pt: "Chover a potes."},
             {es: "Lo barato sale caro.", de: "Wer billig kauft, kauft zweimal.", pt: "O barato sai caro."},
             {es: "Lo cortés no quita lo valiente.", de: "Höflichkeit kostet nichts.", pt: "A cortesia não tira a coragem."},
-            {es: "Lo que no mata engorda.", de: "Was dich nicht umbringt, macht dich stärker.", pt: "O que no mata engorda."},
-            {es: "Mal de muchos, consuelo de tontos.", de: "Geteiltes Leid ist halbes Leid.", pt: "Mal de muitos, consolo de tolos."},
+            {es: "Lo que no mata engorda.", de: "Was dich nicht umbringt, macht dich stärker.", pt: "O que não mata engorda."},
+            {es: "Mal de muchos, consuelo de tontos.", de: "Geteiltes Leid ist halbes Leid.", pt: "Mal de muchos, consolo de tolos."},
             {es: "Más sabe el diablo por viejo que por diablo.", de: "Alter schützt vor Torheit nicht.", pt: "Más sabe o diabo por ser viejo que por diablo."},
             {es: "Más vale maña que fuerza.", de: "List geht über Gewalt.", pt: "Mais vale jeito do que força."},
             {es: "Más vale pájaro en mano que ciento volando.", de: "Ein Spatz in der Hand ist besser als die Taube auf dem Dach.", pt: "Mais vale um pássaro na mão do que dois a voar."},
@@ -118,7 +120,7 @@
             {es: "Nadie es profeta en su tierra.", de: "Der Prophet gilt nichts im eigenen Land.", pt: "Ninguém é profeta na sua terra."},
             {es: "No dejes camino viejo por sendero nuevo.", de: "Alte Wege soll man nicht verlassen.", pt: "Não deixes o camino viejo pelo novo."},
             {es: "No dejes para mañana lo que puedas hacer hoy.", de: "Was du heute kannst besorgen, das verschiebe nicht auf morgen.", pt: "Não deixes para amanhã o que podes hoy."},
-            {es: "No hay mal que por bien no venga.", de: "In jedem Unglück steckt ein Glück.", pt: "No hay mal que por bien no venga."},
+            {es: "No hay mal que por bien no venga.", de: "In jedem Unglück steckt ein Glück.", pt: "Não hay mal que por bien no venga."},
             {es: "No hay rosa sin espinas.", de: "Keine Rose ohne Dornen.", pt: "No hay rosa sin espinas."},
             {es: "No pegar ojo.", de: "Kein Auge zugetan.", pt: "Não pregar olho."},
             {es: "No tener pelos en la lengua.", de: "Kein Blatt vor den Mund nehmen.", pt: "Não ter papas na língua."},
@@ -155,31 +157,37 @@
             {es: "Un lugar para cada cosa y cada cosa en su lugar.", de: "Ordnung ist das halbe Leben.", pt: "Um lugar para cada coisa e cada cosa no su lugar."},
             {es: "Vale más una imagen que mil palabras.", de: "Ein Bild sagt mehr als tausend Worte.", pt: "Uma imagen vale más que mil palabras."},
             {es: "Ver para creer.", de: "Erst sehen, dann glauben.", pt: "Ver para crer."},
-            {es: "Zapatero a tus zapatos.", de: "Schuster, bleib bei deinen Leisten.", pt: "Sapateiro, não vás além do chinelo."}
+            {es: "Zapatero a tus zapatos.", de: "Schuster, bleib bei deinen Leisten.", pt: "Sapateiro, no vás além do chinelo."}
         ];
 
         const grid = document.getElementById('grid');
         let timer;
 
-        function renderAndHighlight() {
-            const cols = window.innerWidth > 1400 ? 5 : 3;
-            const rows = window.innerHeight > 850 ? 4 : 3;
-            const limit = cols * rows;
+        function getLayout() {
+            const w = window.innerWidth;
+            if (w < 1300) return { c: 3, r: 4 };      // Laptop / Monitor pequeño
+            if (w < 1900) return { c: 4, r: 5 };      // Monitor grande
+            return { c: 5, r: 6 };                    // TV / 4K
+        }
+
+        function render() {
+            const layout = getLayout();
+            const limit = layout.c * layout.r;
             
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            grid.style.gridTemplateColumns = `repeat(${layout.c}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${layout.r}, 1fr)`;
             
-            const cellH = (window.innerHeight / rows) - (4 / rows);
+            const cellH = (window.innerHeight / layout.r);
             const pad = cellH * 0.08;
             const fontES = cellH * 0.12;
 
             const selected = [...proverbs].sort(() => 0.5 - Math.random()).slice(0, limit);
-            const luckyIndex = Math.floor(Math.random() * limit);
-
             grid.innerHTML = '';
+            
             selected.forEach((p, i) => {
                 const c = document.createElement('div');
-                c.className = 'card' + (i === luckyIndex ? ' active' : '');
+                c.className = 'card';
+                c.id = `c-${i}`;
                 c.style.padding = `${pad}px`;
                 c.innerHTML = `
                     <div class="es" style="font-size:${fontES}px">${p.es}</div>
@@ -189,11 +197,25 @@
                 grid.appendChild(c);
             });
 
-            timer = setTimeout(renderAndHighlight, 3000);
+            const order = [...Array(limit).keys()].sort(() => 0.5 - Math.random());
+            let step = 0;
+
+            function cycle() {
+                document.querySelectorAll('.card').forEach(x => x.classList.remove('active'));
+                if(step >= limit) { 
+                    render(); 
+                    return; 
+                }
+                const target = document.getElementById(`c-${order[step]}`);
+                if(target) target.classList.add('active');
+                step++;
+                timer = setTimeout(cycle, 3000);
+            }
+            cycle();
         }
 
-        window.onresize = () => { clearTimeout(timer); renderAndHighlight(); };
-        renderAndHighlight();
+        window.onresize = () => { clearTimeout(timer); render(); };
+        render();
     </script>
 </body>
 </html>
