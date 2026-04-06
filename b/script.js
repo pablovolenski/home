@@ -133,35 +133,33 @@ async function openPost(id) {
         const slug     = post.slug || post.id;
         const url      = `https://pablovolenski.com/b/p/${slug}.html`; // permalink with baked OG tags
 
-        // Parse body to extract first image + text description
+        // Extract first image + description for meta/featured
         const tmp = document.createElement('div');
         tmp.innerHTML = post.body || '';
         const firstImg   = tmp.querySelector('img');
+        const imageUrl   = firstImg ? firstImg.src : '';
         const firstPText = (tmp.querySelector('p, h1, h2, h3')?.textContent || '').slice(0, 160);
 
-        // Featured image
+        // Featured image: extract from body so it doesn't duplicate
         const featImg = document.getElementById('postFeaturedImg');
         if (firstImg) {
-            featImg.src          = firstImg.src;
-            featImg.alt          = firstImg.alt || post.title;
+            featImg.src           = firstImg.src;
+            featImg.alt           = firstImg.alt || post.title;
             featImg.style.display = 'block';
+            firstImg.remove(); // prevent duplication in body
         } else {
             featImg.style.display = 'none';
         }
 
         document.getElementById('postTitle').textContent = post.title || 'Untitled';
         document.getElementById('postDate').textContent  = fmtDate(post.date);
-        document.getElementById('postBody').innerHTML    = post.body || '';
+        document.getElementById('postBody').innerHTML    = tmp.innerHTML; // body without featured img
 
-        setMeta({
-            title:       post.title || 'Untitled',
-            description: firstPText,
-            imageUrl:    firstImg ? firstImg.src : '',
-            postUrl:     url
-        });
-
+        setMeta({ title: post.title || 'Untitled', description: firstPText, imageUrl, postUrl: url });
         buildShareBar(post.title || 'Untitled', url);
-        history.replaceState(null, '', '#' + slug);
+
+        // Use permalink as browser URL — so copying the address bar gives a Facebook-friendly URL
+        history.pushState(null, '', `/b/p/${slug}.html`);
         showView('postView');
     } catch(e) {
         console.warn('Failed to open post:', e);
@@ -175,14 +173,14 @@ async function openPostBySlug(slug) {
 
 // --- EVENT LISTENERS ---
 document.getElementById('backFromPost').addEventListener('click', () => {
-    history.replaceState(null, '', location.pathname);
+    history.pushState(null, '', '/b/');
     resetMeta();
     showView('listView');
 });
 
 window.addEventListener('popstate', () => {
-    const slug = location.hash.slice(1);
-    if (slug) openPostBySlug(slug);
+    const m = location.pathname.match(/\/b\/p\/(.+)\.html$/);
+    if (m) openPostBySlug(decodeURIComponent(m[1]));
     else { resetMeta(); showView('listView'); }
 });
 
@@ -190,7 +188,10 @@ window.addEventListener('popstate', () => {
 window.onload = async () => {
     await loadPosts();
     renderList();
-    const slug = location.hash.slice(1);
-    if (slug) await openPostBySlug(slug);
+    // Support both permalink path (/b/p/slug.html) and legacy hash (#slug)
+    const m    = location.pathname.match(/\/b\/p\/(.+)\.html$/);
+    const hash = location.hash.slice(1);
+    if (m)    await openPostBySlug(decodeURIComponent(m[1]));
+    else if (hash) await openPostBySlug(hash);
     else showView('listView');
 };
