@@ -162,20 +162,45 @@ function renderList() {
     });
 }
 
+// --- SLUG ---
+let slugManuallyEdited = false;
+
+function titleToSlug(title) {
+    return title.toLowerCase().trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+
+document.getElementById('editorTitle').addEventListener('input', e => {
+    if (!slugManuallyEdited) {
+        document.getElementById('editorSlug').value = titleToSlug(e.target.value);
+    }
+});
+
+document.getElementById('editorSlug').addEventListener('input', () => {
+    slugManuallyEdited = true;
+});
+
 // --- EDITOR ---
 async function openEditor(id = null) {
     editingId = id;
+    slugManuallyEdited = false;
     if (id) {
         try {
             const result = await ghRead(`${POSTS_PATH}/${id}.json`);
             const post = result ? JSON.parse(result.content) : {};
             document.getElementById('editorTitle').value = post.title || '';
+            document.getElementById('editorSlug').value  = post.slug  || titleToSlug(post.title || '');
             document.getElementById('editorBody').value  = post.body  || '';
+            slugManuallyEdited = true; // editing existing — don't overwrite slug on title change
         } catch(e) {
             console.warn('Failed to load post for editing:', e);
         }
     } else {
         document.getElementById('editorTitle').value = '';
+        document.getElementById('editorSlug').value  = '';
         document.getElementById('editorBody').value  = '';
     }
     document.getElementById('publishBtn').disabled  = false;
@@ -188,6 +213,7 @@ async function openEditor(id = null) {
 // --- PUBLISH ---
 async function publishPost() {
     const title = document.getElementById('editorTitle').value.trim();
+    const slug  = document.getElementById('editorSlug').value.trim() || titleToSlug(title);
     const body  = document.getElementById('editorBody').value;
     if (!title) { document.getElementById('editorTitle').focus(); return; }
 
@@ -198,7 +224,7 @@ async function publishPost() {
     try {
         const id   = editingId || Date.now().toString();
         const date = editingId ? (posts.find(p => p.id === id)?.date || Date.now()) : Date.now();
-        const post = { id, title, body, date };
+        const post = { id, title, slug, body, date };
 
         const existing = await ghRead(`${POSTS_PATH}/${id}.json`);
         await ghWrite(
@@ -245,7 +271,7 @@ async function upsertIndex(post, action) {
     let entries   = result ? JSON.parse(result.content) : [];
     if (action === 'upsert') {
         const idx   = entries.findIndex(e => e.id === post.id);
-        const entry = { id: post.id, title: post.title, date: post.date };
+        const entry = { id: post.id, title: post.title, slug: post.slug, date: post.date };
         if (idx > -1) entries[idx] = entry; else entries.push(entry);
     } else if (action === 'delete') {
         entries = entries.filter(e => e.id !== post.id);

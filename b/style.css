@@ -66,6 +66,19 @@ body, html {
 .post-body blockquote { border-left: 3px solid var(--border); margin-left: 0; padding-left: 16px; color: #666; }
 .post-body img { max-width: 100%; }
 
+/* SHARE BAR */
+.share-bar {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border);
+}
+.share-label { font-size: 12px; color: #aaa; text-transform: uppercase; letter-spacing: .05em; }
+.share-btn {
+    display: flex; color: #bbb; transition: color 0.15s;
+    text-decoration: none;
+}
+.share-btn svg { width: 20px; height: 20px; }
+.share-btn:hover { color: var(--brand); }
+
 @media (max-width: 600px) {
     .content { padding: 20px 15px; }
     .post-item { flex-direction: column; gap: 4px; }
