@@ -732,12 +732,3 @@ async function connectWithToken() {
     }
 }
 
-// Gear icon: disconnect
-document.getElementById('settingsBtn').addEventListener('click', () => {
-    if (!confirm('Disconnect sync?')) return;
-    localStorage.removeItem(GIST_TOKEN_KEY);
-    localStorage.removeItem(GIST_ID_KEY);
-    gistToken = ''; gistId = '';
-    updateSyncIndicator('idle');
-    showTokenPrompt();
-});

@@ -188,7 +188,7 @@ body, html {
 .sync-indicator {
     font-size: 13px; width: 20px; height: 20px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-weight: bold; cursor: default; flex-shrink: 0;
+    font-weight: bold; cursor: default; flex-shrink: 0; user-select: none;
 }
 .sync-indicator.idle { color: #bbb; }
 .sync-indicator.syncing { color: #f0a500; animation: spin 1s linear infinite; }
