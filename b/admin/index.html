@@ -35,15 +35,25 @@
             <div class="editor-form">
                 <input type="text" id="editorTitle" placeholder="Title" class="editor-title">
                 <div class="toolbar">
-                    <button class="tb-btn" data-action="bold"    title="Bold">B</button>
-                    <button class="tb-btn italic" data-action="italic"  title="Italic">I</button>
-                    <button class="tb-btn" data-action="heading" title="Heading">H</button>
-                    <button class="tb-btn" data-action="quote"   title="Blockquote">"</button>
-                    <button class="tb-btn" data-action="link"    title="Link">&#x1F517;</button>
-                    <button class="tb-btn" data-action="image"   title="Upload image">&#x1F5BC;</button>
+                    <button class="tb-btn tb-bold"   data-action="bold"      title="Bold">B</button>
+                    <button class="tb-btn tb-italic" data-action="italic"    title="Italic">I</button>
+                    <span class="tb-sep"></span>
+                    <button class="tb-btn" data-action="h1" title="Heading 1">H1</button>
+                    <button class="tb-btn" data-action="h2" title="Heading 2">H2</button>
+                    <button class="tb-btn" data-action="h3" title="Heading 3">H3</button>
+                    <span class="tb-sep"></span>
+                    <button class="tb-btn" data-action="quote"     title="Blockquote">"</button>
+                    <button class="tb-btn tb-mono"   data-action="code"      title="Inline code">`</button>
+                    <button class="tb-btn tb-mono"   data-action="codeblock" title="Code block">```</button>
+                    <span class="tb-sep"></span>
+                    <button class="tb-btn" data-action="link"  title="Insert link">&#x1F517;</button>
+                    <button class="tb-btn" data-action="image" title="Upload image">&#x1F5BC;</button>
                     <input type="file" id="imageFileInput" accept="image/*" style="display:none">
+                    <span class="tb-spacer"></span>
+                    <button class="tb-btn" id="previewToggle" data-action="preview" title="Toggle preview">Preview</button>
                 </div>
                 <textarea id="editorBody" placeholder="Write in markdown…" class="editor-body"></textarea>
+                <div id="editorPreview" class="editor-preview" style="display:none"></div>
                 <div class="editor-actions">
                     <button class="btn" id="publishBtn">Publish</button>
                     <button class="btn secondary" id="cancelBtn">Cancel</button>

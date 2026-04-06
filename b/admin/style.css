@@ -102,7 +102,7 @@ body, html {
 
 /* TOOLBAR */
 .toolbar {
-    display: flex; gap: 4px; flex-wrap: wrap;
+    display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
 }
 .tb-btn {
     background: none; border: 1px solid var(--border); padding: 5px 10px;
@@ -110,8 +110,13 @@ body, html {
     font-family: var(--font-main); color: var(--text);
     transition: background 0.15s;
 }
-.tb-btn:hover { background: var(--accent); }
-.tb-btn.italic { font-style: italic; }
+.tb-btn:hover  { background: var(--accent); }
+.tb-btn.active { background: var(--text); color: var(--bg); }
+.tb-bold       { font-weight: bold; }
+.tb-italic     { font-style: italic; }
+.tb-mono       { font-family: var(--font-code); font-size: 12px; }
+.tb-sep   { width: 1px; height: 18px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+.tb-spacer { flex: 1; }
 
 .editor-body {
     border: 1px solid var(--border); border-radius: 4px; outline: none;
@@ -120,6 +125,21 @@ body, html {
     min-height: 320px; line-height: 1.6; box-sizing: border-box;
 }
 .editor-body:focus { border-color: #999; }
+
+/* PREVIEW */
+.editor-preview {
+    border: 1px solid var(--border); border-radius: 4px; padding: 12px 16px;
+    min-height: 320px; box-sizing: border-box; line-height: 1.7; font-size: 15px;
+}
+.editor-preview h1, .editor-preview h2, .editor-preview h3 { margin-top: 1.4em; }
+.editor-preview p  { margin: 0.8em 0; }
+.editor-preview pre { background: var(--accent); padding: 12px; border-radius: 4px; overflow-x: auto; }
+.editor-preview code { font-family: var(--font-code); font-size: 13px; }
+.editor-preview p code { background: var(--accent); padding: 1px 5px; border-radius: 3px; }
+.editor-preview a  { color: #0070f3; }
+.editor-preview blockquote { border-left: 3px solid var(--border); margin-left: 0; padding-left: 16px; color: #666; }
+.editor-preview img { max-width: 100%; }
+
 .editor-actions { display: flex; gap: 8px; }
 
 @media (max-width: 600px) {
