@@ -100,6 +100,19 @@ body, html {
 }
 .editor-title:focus { border-bottom-color: #999; }
 
+/* SLUG ROW */
+.slug-row {
+    display: flex; align-items: baseline; gap: 0;
+    border-bottom: 1px solid var(--border); padding-bottom: 4px;
+}
+.slug-prefix { font-size: 12px; color: #aaa; white-space: nowrap; font-family: var(--font-code); }
+.slug-input {
+    border: none; outline: none; font-size: 12px; font-family: var(--font-code);
+    color: #555; background: transparent; flex: 1; padding: 0 0 0 1px;
+}
+.slug-input:focus { color: var(--text); }
+.slug-input::placeholder { color: #ccc; }
+
 /* TOOLBAR */
 .toolbar {
     display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
@@ -111,9 +124,8 @@ body, html {
     transition: background 0.15s;
 }
 .tb-btn:hover  { background: var(--accent); }
-.tb-bold       { font-weight: bold; }
-.tb-italic     { font-style: italic; }
-.tb-mono       { font-family: var(--font-code); font-size: 12px; }
+.tb-btn svg    { display: block; }
+.tb-h          { font-size: 12px; font-weight: bold; letter-spacing: -.02em; }
 .tb-sep        { width: 1px; height: 18px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 .tb-spacer     { flex: 1; }
 
