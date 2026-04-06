@@ -131,8 +131,12 @@ const boardViewport = document.getElementById('boardViewport');
 const boardCanvas = document.getElementById('boardCanvas');
 
 window.onload = async () => {
-    await loadFromGist();
-    renderFileList();
+    if (!gistToken) {
+        showTokenPrompt();
+    } else {
+        await loadFromGist();
+        renderFileList();
+    }
     boardViewport.scrollLeft = 0;
     boardViewport.scrollTop = 0;
 };
@@ -688,74 +692,52 @@ document.getElementById('addNoteBtn').addEventListener('click', () => createNote
 document.getElementById('addTableBtn').addEventListener('click', () => createTable());
 document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
 
-// --- SETTINGS MODAL ---
-const settingsModal = document.getElementById('settingsModal');
-const patInput = document.getElementById('patInput');
-const gistIdInput = document.getElementById('gistIdInput');
-const settingsStatus = document.getElementById('settingsStatus');
+// --- TOKEN PROMPT ---
+const tokenPrompt = document.getElementById('tokenPrompt');
+const tokenInput = document.getElementById('tokenInput');
+const tokenStatus = document.getElementById('tokenStatus');
 
-document.getElementById('settingsBtn').addEventListener('click', () => {
-    patInput.value = gistToken;
-    gistIdInput.value = gistId;
-    settingsStatus.textContent = '';
-    settingsStatus.style.color = '';
-    settingsModal.classList.add('open');
+function showTokenPrompt() {
+    tokenInput.value = '';
+    tokenStatus.textContent = '';
+    tokenStatus.style.color = '#aaa';
+    tokenPrompt.classList.add('visible');
+    setTimeout(() => tokenInput.focus(), 50);
+}
+
+function hideTokenPrompt() {
+    tokenPrompt.classList.remove('visible');
+}
+
+tokenInput.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') await connectWithToken();
 });
 
-document.getElementById('settingsCancelBtn').addEventListener('click', () => {
-    settingsModal.classList.remove('open');
-});
-
-settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) settingsModal.classList.remove('open');
-});
-
-document.getElementById('settingsSaveBtn').addEventListener('click', async () => {
-    const token = patInput.value.trim();
-    const idInput = gistIdInput.value.trim();
-    if (!token) { settingsStatus.style.color = '#d9534f'; settingsStatus.textContent = 'Token is required.'; return; }
-
-    const btn = document.getElementById('settingsSaveBtn');
-    btn.textContent = 'Connecting…'; btn.disabled = true;
-    settingsStatus.textContent = '';
-
+async function connectWithToken() {
+    const token = tokenInput.value.trim();
+    if (!token) return;
+    tokenStatus.textContent = '…';
     try {
-        let resolvedId = idInput;
-        if (!resolvedId) {
-            settingsStatus.style.color = '#888'; settingsStatus.textContent = 'Searching for existing Workspace Gist…';
-            resolvedId = await findExistingGist(token);
-            if (resolvedId) {
-                settingsStatus.textContent = 'Found existing Workspace Gist.';
-            } else {
-                settingsStatus.textContent = 'No existing Gist found — creating one…';
-                resolvedId = await createGist(token);
-            }
-        } else {
-            // Verify the gist is accessible
-            const check = await fetch(`https://api.github.com/gists/${resolvedId}`, {
-                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (!check.ok) throw new Error(`Cannot access Gist (${check.status}). Check the ID and token.`);
-        }
-
-        // Persist
+        let id = await findExistingGist(token);
+        if (!id) id = await createGist(token);
         localStorage.setItem(GIST_TOKEN_KEY, token);
-        localStorage.setItem(GIST_ID_KEY, resolvedId);
-        gistToken = token; gistId = resolvedId;
-        gistIdInput.value = resolvedId;
-
-        settingsStatus.style.color = '#4caf50';
-        settingsStatus.textContent = 'Connected! Loading your notes…';
-        updateSyncIndicator('ok');
-
-        // Always pull latest after connecting
-        await loadFromGist(); renderFileList();
-
+        localStorage.setItem(GIST_ID_KEY, id);
+        gistToken = token; gistId = id;
+        await loadFromGist();
+        renderFileList();
+        hideTokenPrompt();
     } catch(e) {
-        settingsStatus.style.color = '#d9534f';
-        settingsStatus.textContent = e.message || 'Connection failed.';
-        updateSyncIndicator('error');
+        tokenStatus.style.color = '#d9534f';
+        tokenStatus.textContent = 'Invalid token.';
     }
+}
 
-    btn.textContent = 'Connect'; btn.disabled = false;
+// Gear icon: disconnect
+document.getElementById('settingsBtn').addEventListener('click', () => {
+    if (!confirm('Disconnect sync?')) return;
+    localStorage.removeItem(GIST_TOKEN_KEY);
+    localStorage.removeItem(GIST_ID_KEY);
+    gistToken = ''; gistId = '';
+    updateSyncIndicator('idle');
+    showTokenPrompt();
 });
