@@ -180,6 +180,7 @@ async function openEditor(id = null) {
     }
     document.getElementById('publishBtn').disabled  = false;
     document.getElementById('publishBtn').textContent = 'Publish';
+    setPreviewMode(false);
     showView('editorView');
     document.getElementById('editorTitle').focus();
 }
@@ -276,15 +277,48 @@ function insertLinePrefix(ta, prefix) {
     ta.focus();
 }
 
+// --- PREVIEW TOGGLE ---
+let previewMode = false;
+
+function setPreviewMode(on) {
+    previewMode = on;
+    const ta      = document.getElementById('editorBody');
+    const preview = document.getElementById('editorPreview');
+    const toggle  = document.getElementById('previewToggle');
+    if (on) {
+        preview.innerHTML = marked.parse(ta.value || '');
+        ta.style.display      = 'none';
+        preview.style.display = 'block';
+        toggle.textContent    = 'Markdown';
+        toggle.classList.add('active');
+    } else {
+        ta.style.display      = '';
+        preview.style.display = 'none';
+        toggle.textContent    = 'Preview';
+        toggle.classList.remove('active');
+        ta.focus();
+    }
+}
+
 document.querySelector('.toolbar').addEventListener('click', async e => {
     const btn = e.target.closest('.tb-btn');
     if (!btn) return;
-    const ta     = document.getElementById('editorBody');
     const action = btn.dataset.action;
-    if (action === 'bold')    insertAtCursor(ta, '**', '**');
-    if (action === 'italic')  insertAtCursor(ta, '*', '*');
-    if (action === 'heading') insertLinePrefix(ta, '## ');
-    if (action === 'quote')   insertLinePrefix(ta, '> ');
+
+    if (action === 'preview') { setPreviewMode(!previewMode); return; }
+
+    // editing actions only work in markdown mode
+    if (previewMode) { setPreviewMode(false); return; }
+
+    const ta = document.getElementById('editorBody');
+    if (action === 'bold')      insertAtCursor(ta, '**', '**');
+    if (action === 'italic')    insertAtCursor(ta, '*', '*');
+    if (action === 'h1')        insertLinePrefix(ta, '# ');
+    if (action === 'h2')        insertLinePrefix(ta, '## ');
+    if (action === 'h3')        insertLinePrefix(ta, '### ');
+    if (action === 'quote')     insertLinePrefix(ta, '> ');
+    if (action === 'code')      insertAtCursor(ta, '`', '`');
+    if (action === 'codeblock') insertAtCursor(ta, '```\n', '\n```');
     if (action === 'link') {
         const url = prompt('URL:');
         if (url) insertAtCursor(ta, '[', `](${url})`);
