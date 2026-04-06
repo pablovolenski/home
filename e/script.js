@@ -68,6 +68,16 @@ async function pushToGist() {
     isSyncing = false;
 }
 
+async function findExistingGist(token) {
+    const res = await fetch('https://api.github.com/gists?per_page=100', {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!res.ok) return null;
+    const gists = await res.json();
+    const found = gists.find(g => g.description === 'Workspace App Data' && g.files['text_files.json']);
+    return found ? found.id : null;
+}
+
 async function createGist(token) {
     const res = await fetch('https://api.github.com/gists', {
         method: 'POST',
@@ -712,8 +722,14 @@ document.getElementById('settingsSaveBtn').addEventListener('click', async () =>
     try {
         let resolvedId = idInput;
         if (!resolvedId) {
-            settingsStatus.style.color = '#888'; settingsStatus.textContent = 'Creating new private Gist…';
-            resolvedId = await createGist(token);
+            settingsStatus.style.color = '#888'; settingsStatus.textContent = 'Searching for existing Workspace Gist…';
+            resolvedId = await findExistingGist(token);
+            if (resolvedId) {
+                settingsStatus.textContent = 'Found existing Workspace Gist.';
+            } else {
+                settingsStatus.textContent = 'No existing Gist found — creating one…';
+                resolvedId = await createGist(token);
+            }
         } else {
             // Verify the gist is accessible
             const check = await fetch(`https://api.github.com/gists/${resolvedId}`, {
@@ -729,11 +745,11 @@ document.getElementById('settingsSaveBtn').addEventListener('click', async () =>
         gistIdInput.value = resolvedId;
 
         settingsStatus.style.color = '#4caf50';
-        settingsStatus.textContent = `Connected! Gist ID: ${resolvedId}`;
+        settingsStatus.textContent = 'Connected! Loading your notes…';
         updateSyncIndicator('ok');
 
-        // Pull latest data if connecting to an existing gist
-        if (idInput) { await loadFromGist(); renderFileList(); }
+        // Always pull latest after connecting
+        await loadFromGist(); renderFileList();
 
     } catch(e) {
         settingsStatus.style.color = '#d9534f';
