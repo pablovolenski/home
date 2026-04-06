@@ -75,7 +75,7 @@ async function openPost(id) {
         const post = JSON.parse(result.content);
         document.getElementById('postTitle').textContent = post.title || 'Untitled';
         document.getElementById('postDate').textContent  = fmtDate(post.date);
-        document.getElementById('postBody').innerHTML    = marked.parse(post.body || '');
+        document.getElementById('postBody').innerHTML    = post.body || '';
         showView('postView');
     } catch(e) {
         console.warn('Failed to open post:', e);
