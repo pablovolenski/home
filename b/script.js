@@ -79,7 +79,9 @@ function renderList() {
     sorted.forEach(p => {
         const item = document.createElement('div');
         item.className = 'post-item';
+        const thumb = p.image ? `<img src="${escHtml(p.image)}" class="post-thumb" alt="">` : '';
         item.innerHTML = `
+            ${thumb}
             <span class="post-item-title">${escHtml(p.title || 'Untitled')}</span>
             <span class="post-item-date">${fmtDate(p.date)}</span>`;
         item.addEventListener('click', () => openPost(p.id));

@@ -258,7 +258,7 @@ async function publishPost() {
     try {
         const id   = editingId || Date.now().toString();
         const date = editingId ? (posts.find(p => p.id === id)?.date || Date.now()) : Date.now();
-        const post = { id, title, slug, body, date };
+        const post = { id, title, slug, body, date, image: imageUrl };
 
         // Extract first image URL and description for OG tags
         const tmp         = document.createElement('div');
@@ -327,7 +327,7 @@ async function upsertIndex(post, action) {
     let entries   = result ? JSON.parse(result.content) : [];
     if (action === 'upsert') {
         const idx   = entries.findIndex(e => e.id === post.id);
-        const entry = { id: post.id, title: post.title, slug: post.slug, date: post.date };
+        const entry = { id: post.id, title: post.title, slug: post.slug, date: post.date, image: post.image || '' };
         if (idx > -1) entries[idx] = entry; else entries.push(entry);
     } else if (action === 'delete') {
         entries = entries.filter(e => e.id !== post.id);
@@ -433,7 +433,9 @@ function compressImage(file) {
 }
 
 async function uploadImage(file) {
-    const ta = document.getElementById('editorBody');
+    const ta      = document.getElementById('editorBody');
+    const preview = document.getElementById('editorPreview');
+    const inView  = preview.style.display !== 'none';
     setSyncState('syncing');
     try {
         const b64      = await compressImage(file);
@@ -441,7 +443,27 @@ async function uploadImage(file) {
         const path     = `${POSTS_PATH}/images/${filename}`;
         await ghWriteRaw(path, b64, `blog: add image ${filename}`);
         const rawUrl = `${RAW_BASE}/${path}`;
-        insertAtCursor(ta, `<img src="${rawUrl}" alt="" style="max-width:100%">`);
+
+        if (inView) {
+            // Insert at cursor inside the contenteditable preview
+            preview.focus();
+            const sel = window.getSelection();
+            const img = document.createElement('img');
+            img.src = rawUrl; img.alt = ''; img.style.maxWidth = '100%';
+            if (sel && sel.rangeCount) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(img);
+                range.setStartAfter(img);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } else {
+                preview.appendChild(img);
+            }
+        } else {
+            insertAtCursor(ta, `<img src="${rawUrl}" alt="" style="max-width:100%">`);
+        }
         setSyncState('ok');
     } catch(e) {
         setSyncState('error');
