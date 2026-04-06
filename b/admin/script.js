@@ -278,37 +278,34 @@ function insertLinePrefix(ta, prefix) {
 }
 
 // --- PREVIEW TOGGLE ---
-let previewMode = false;
-
 function setPreviewMode(on) {
-    previewMode = on;
-    const ta      = document.getElementById('editorBody');
-    const preview = document.getElementById('editorPreview');
-    const toggle  = document.getElementById('previewToggle');
+    const ta       = document.getElementById('editorBody');
+    const preview  = document.getElementById('editorPreview');
+    const checkbox = document.getElementById('previewCheckbox');
     if (on) {
-        preview.innerHTML = ta.value || '';
+        preview.innerHTML     = ta.value || '';
         ta.style.display      = 'none';
         preview.style.display = 'block';
-        toggle.textContent    = 'Markdown';
-        toggle.classList.add('active');
+        checkbox.checked      = true;
+        preview.focus();
     } else {
+        // sync edits made in preview back to source
+        if (preview.style.display !== 'none') ta.value = preview.innerHTML;
         ta.style.display      = '';
         preview.style.display = 'none';
-        toggle.textContent    = 'Preview';
-        toggle.classList.remove('active');
+        checkbox.checked      = false;
         ta.focus();
     }
 }
+
+document.getElementById('previewCheckbox').addEventListener('change', e => {
+    setPreviewMode(e.target.checked);
+});
 
 document.querySelector('.toolbar').addEventListener('click', async e => {
     const btn = e.target.closest('.tb-btn');
     if (!btn) return;
     const action = btn.dataset.action;
-
-    if (action === 'preview') { setPreviewMode(!previewMode); return; }
-
-    // editing actions only work in markdown mode
-    if (previewMode) { setPreviewMode(false); return; }
 
     const ta = document.getElementById('editorBody');
     if (action === 'bold')      insertAtCursor(ta, '<strong>', '</strong>');

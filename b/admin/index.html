@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>blog · admin</title>
     <link rel="stylesheet" href="style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -50,10 +49,15 @@
                     <button class="tb-btn" data-action="image" title="Upload image">&#x1F5BC;</button>
                     <input type="file" id="imageFileInput" accept="image/*" style="display:none">
                     <span class="tb-spacer"></span>
-                    <button class="tb-btn" id="previewToggle" data-action="preview" title="Toggle preview">Preview</button>
+                    <label class="view-toggle" title="Toggle preview">
+                        <span class="vt-label">code</span>
+                        <input type="checkbox" id="previewCheckbox">
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                        <span class="vt-label">view</span>
+                    </label>
                 </div>
                 <textarea id="editorBody" placeholder="Write HTML…" class="editor-body"></textarea>
-                <div id="editorPreview" class="editor-preview" style="display:none"></div>
+                <div id="editorPreview" class="editor-preview" contenteditable="true" style="display:none"></div>
                 <div class="editor-actions">
                     <button class="btn" id="publishBtn">Publish</button>
                     <button class="btn secondary" id="cancelBtn">Cancel</button>
