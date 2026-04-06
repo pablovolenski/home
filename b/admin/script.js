@@ -286,7 +286,7 @@ function setPreviewMode(on) {
     const preview = document.getElementById('editorPreview');
     const toggle  = document.getElementById('previewToggle');
     if (on) {
-        preview.innerHTML = marked.parse(ta.value || '');
+        preview.innerHTML = ta.value || '';
         ta.style.display      = 'none';
         preview.style.display = 'block';
         toggle.textContent    = 'Markdown';
@@ -311,17 +311,17 @@ document.querySelector('.toolbar').addEventListener('click', async e => {
     if (previewMode) { setPreviewMode(false); return; }
 
     const ta = document.getElementById('editorBody');
-    if (action === 'bold')      insertAtCursor(ta, '**', '**');
-    if (action === 'italic')    insertAtCursor(ta, '*', '*');
-    if (action === 'h1')        insertLinePrefix(ta, '# ');
-    if (action === 'h2')        insertLinePrefix(ta, '## ');
-    if (action === 'h3')        insertLinePrefix(ta, '### ');
-    if (action === 'quote')     insertLinePrefix(ta, '> ');
-    if (action === 'code')      insertAtCursor(ta, '`', '`');
-    if (action === 'codeblock') insertAtCursor(ta, '```\n', '\n```');
+    if (action === 'bold')      insertAtCursor(ta, '<strong>', '</strong>');
+    if (action === 'italic')    insertAtCursor(ta, '<em>', '</em>');
+    if (action === 'h1')        insertAtCursor(ta, '<h1>', '</h1>');
+    if (action === 'h2')        insertAtCursor(ta, '<h2>', '</h2>');
+    if (action === 'h3')        insertAtCursor(ta, '<h3>', '</h3>');
+    if (action === 'quote')     insertAtCursor(ta, '<blockquote>', '</blockquote>');
+    if (action === 'code')      insertAtCursor(ta, '<code>', '</code>');
+    if (action === 'codeblock') insertAtCursor(ta, '<pre><code>', '</code></pre>');
     if (action === 'link') {
         const url = prompt('URL:');
-        if (url) insertAtCursor(ta, '[', `](${url})`);
+        if (url) insertAtCursor(ta, `<a href="${url}">`, '</a>');
     }
     if (action === 'image') {
         document.getElementById('imageFileInput').click();
