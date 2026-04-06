@@ -214,6 +214,36 @@ async function openEditor(id = null) {
     document.getElementById('editorTitle').focus();
 }
 
+// --- PERMALINK HTML ---
+function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function buildPermalinkHtml(post, imageUrl, description) {
+    const slug     = post.slug || post.id;
+    const spaUrl   = `https://pablovolenski.com/b/#${slug}`;
+    const selfUrl  = `https://pablovolenski.com/b/p/${slug}.html`;
+    const title    = post.title || 'Untitled';
+    const card     = imageUrl ? 'summary_large_image' : 'summary';
+    return `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escAttr(title)} · blog</title>
+<meta property="og:type"        content="article">
+<meta property="og:site_name"   content="blog">
+<meta property="og:title"       content="${escAttr(title)}">
+<meta property="og:description" content="${escAttr(description)}">
+<meta property="og:image"       content="${escAttr(imageUrl)}">
+<meta property="og:url"         content="${escAttr(selfUrl)}">
+<meta name="twitter:card"        content="${card}">
+<meta name="twitter:title"       content="${escAttr(title)}">
+<meta name="twitter:description" content="${escAttr(description)}">
+<meta name="twitter:image"       content="${escAttr(imageUrl)}">
+<link rel="canonical" href="${escAttr(selfUrl)}">
+<meta http-equiv="refresh" content="0;url=${escAttr(spaUrl)}">
+</head><body>
+<script>location.replace(${JSON.stringify(spaUrl)})</script>
+</body></html>`;
+}
+
 // --- PUBLISH ---
 async function publishPost() {
     const title = document.getElementById('editorTitle').value.trim();
@@ -230,12 +260,30 @@ async function publishPost() {
         const date = editingId ? (posts.find(p => p.id === id)?.date || Date.now()) : Date.now();
         const post = { id, title, slug, body, date };
 
+        // Extract first image URL and description for OG tags
+        const tmp         = document.createElement('div');
+        tmp.innerHTML     = body;
+        const firstImg    = tmp.querySelector('img');
+        const imageUrl    = firstImg ? firstImg.src : '';
+        const description = (tmp.querySelector('p, h1, h2, h3')?.textContent || '').slice(0, 160);
+
+        // Write post JSON
         const existing = await ghRead(`${POSTS_PATH}/${id}.json`);
         await ghWrite(
             `${POSTS_PATH}/${id}.json`,
             JSON.stringify(post, null, 2),
             `blog: ${editingId ? 'update' : 'add'} "${title}"`,
             existing?.sha
+        );
+
+        // Write/update permalink HTML (for Facebook OG tags)
+        const permalinkPath = `b/p/${slug}.html`;
+        const existingPermalink = await ghRead(permalinkPath);
+        await ghWrite(
+            permalinkPath,
+            buildPermalinkHtml(post, imageUrl, description),
+            `blog: permalink for "${title}"`,
+            existingPermalink?.sha
         );
 
         await upsertIndex(post, 'upsert');
@@ -258,6 +306,10 @@ async function deletePost(id) {
         if (existing) {
             const post = JSON.parse(existing.content);
             await ghDelete(`${POSTS_PATH}/${id}.json`, `blog: delete "${post.title}"`, existing.sha);
+            // delete permalink HTML if it exists
+            const slug = post.slug || post.id;
+            const pl   = await ghRead(`b/p/${slug}.html`);
+            if (pl) await ghDelete(`b/p/${slug}.html`, `blog: remove permalink for "${post.title}"`, pl.sha);
         }
         await upsertIndex({ id }, 'delete');
         setSyncState('ok');
@@ -389,7 +441,7 @@ async function uploadImage(file) {
         const path     = `${POSTS_PATH}/images/${filename}`;
         await ghWriteRaw(path, b64, `blog: add image ${filename}`);
         const rawUrl = `${RAW_BASE}/${path}`;
-        insertAtCursor(ta, `![](${rawUrl})`);
+        insertAtCursor(ta, `<img src="${rawUrl}" alt="" style="max-width:100%">`);
         setSyncState('ok');
     } catch(e) {
         setSyncState('error');
