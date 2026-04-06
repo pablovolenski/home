@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blog · admin</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+    <div id="tokenPrompt" class="token-prompt">
+        <input type="password" id="tokenInput" placeholder="Paste your GitHub token" autocomplete="off" spellcheck="false">
+        <p id="tokenStatus"></p>
+    </div>
+
+    <div class="top-bar">
+        <a class="wordmark" href="/b/">blog</a>
+        <span class="top-bar-label">admin</span>
+        <span id="syncIndicator" class="sync-indicator idle"></span>
+    </div>
+
+    <div class="content">
+
+        <div class="view active" id="listView">
+            <div class="list-header">
+                <button class="btn" id="newPostBtn">+ New post</button>
+            </div>
+            <div id="postList"></div>
+            <p id="emptyState" class="empty-state" style="display:none">No posts yet.</p>
+        </div>
+
+        <div class="view" id="editorView">
+            <button class="back-btn" id="backFromEditor">← back</button>
+            <div class="editor-form">
+                <input type="text" id="editorTitle" placeholder="Title" class="editor-title">
+                <div class="toolbar">
+                    <button class="tb-btn" data-action="bold"    title="Bold">B</button>
+                    <button class="tb-btn italic" data-action="italic"  title="Italic">I</button>
+                    <button class="tb-btn" data-action="heading" title="Heading">H</button>
+                    <button class="tb-btn" data-action="quote"   title="Blockquote">"</button>
+                    <button class="tb-btn" data-action="link"    title="Link">&#x1F517;</button>
+                    <button class="tb-btn" data-action="image"   title="Upload image">&#x1F5BC;</button>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display:none">
+                </div>
+                <textarea id="editorBody" placeholder="Write in markdown…" class="editor-body"></textarea>
+                <div class="editor-actions">
+                    <button class="btn" id="publishBtn">Publish</button>
+                    <button class="btn secondary" id="cancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
