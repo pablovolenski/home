@@ -1,3 +1,94 @@
+// --- GIST SYNC ---
+const GIST_TOKEN_KEY = 'gistToken';
+const GIST_ID_KEY = 'gistId';
+
+let gistToken = localStorage.getItem(GIST_TOKEN_KEY) || '';
+let gistId = localStorage.getItem(GIST_ID_KEY) || '';
+let gistSaveTimer = null;
+let isSyncing = false;
+
+function updateSyncIndicator(state) {
+    const el = document.getElementById('syncIndicator');
+    if (!el) return;
+    el.className = 'sync-indicator ' + state;
+    const labels = { idle: '○', syncing: '↻', ok: '✓', error: '!' };
+    const titles = { idle: 'Gist sync not configured', syncing: 'Syncing…', ok: 'Synced to Gist', error: 'Sync failed — check settings' };
+    el.textContent = labels[state] || '';
+    el.title = titles[state] || '';
+}
+
+async function loadFromGist() {
+    if (!gistToken || !gistId) { updateSyncIndicator('idle'); return; }
+    updateSyncIndicator('syncing');
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { 'Authorization': `token ${gistToken}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (!res.ok) { updateSyncIndicator('error'); return; }
+        const data = await res.json();
+        if (data.files['text_files.json'])
+            localStorage.setItem('appTextFiles', data.files['text_files.json'].content);
+        if (data.files['board_files.json'])
+            localStorage.setItem('appBoardFiles', data.files['board_files.json'].content);
+        updateSyncIndicator('ok');
+    } catch(e) {
+        console.warn('Gist load failed:', e);
+        updateSyncIndicator('error');
+    }
+}
+
+function scheduleGistSave() {
+    if (!gistToken || !gistId) return;
+    clearTimeout(gistSaveTimer);
+    gistSaveTimer = setTimeout(pushToGist, 3000);
+}
+
+async function pushToGist() {
+    if (!gistToken || !gistId || isSyncing) return;
+    isSyncing = true;
+    updateSyncIndicator('syncing');
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${gistToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ files: {
+                'text_files.json': { content: localStorage.getItem('appTextFiles') || '[]' },
+                'board_files.json': { content: localStorage.getItem('appBoardFiles') || '[]' }
+            }})
+        });
+        updateSyncIndicator(res.ok ? 'ok' : 'error');
+    } catch(e) {
+        console.warn('Gist push failed:', e);
+        updateSyncIndicator('error');
+    }
+    isSyncing = false;
+}
+
+async function createGist(token) {
+    const res = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            description: 'Workspace App Data',
+            public: false,
+            files: {
+                'text_files.json': { content: localStorage.getItem('appTextFiles') || '[]' },
+                'board_files.json': { content: localStorage.getItem('appBoardFiles') || '[]' }
+            }
+        })
+    });
+    if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+    return (await res.json()).id;
+}
+
 // --- GLOBAL STATE ---
 let currentTab = 'text'; // 'text' or 'board'
 let currentTextId = null;
@@ -29,8 +120,9 @@ const codeHighlight = document.getElementById('codeHighlight');
 const boardViewport = document.getElementById('boardViewport');
 const boardCanvas = document.getElementById('boardCanvas');
 
-window.onload = () => { 
-    renderFileList(); 
+window.onload = async () => {
+    await loadFromGist();
+    renderFileList();
     boardViewport.scrollLeft = 0;
     boardViewport.scrollTop = 0;
 };
@@ -188,6 +280,7 @@ function saveTextFile(visualFeedback = false) {
         files.push({ id: currentTextId, content: content, lastSaved: Date.now() });
     }
     localStorage.setItem('appTextFiles', JSON.stringify(files));
+    scheduleGistSave();
     if (visualFeedback) triggerSaveAnimation();
     renderFileList();
 }
@@ -279,8 +372,9 @@ function saveBoardFile(visualFeedback = false) {
 
     try {
         localStorage.setItem('appBoardFiles', JSON.stringify(boards));
+        scheduleGistSave();
         if (visualFeedback) triggerSaveAnimation();
-        renderFileList(); 
+        renderFileList();
     } catch(e) {
         console.warn("Storage full! Couldn't save board state.");
     }
@@ -583,3 +677,69 @@ document.addEventListener('paste', (e) => {
 document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
 document.getElementById('addTableBtn').addEventListener('click', () => createTable());
 document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
+
+// --- SETTINGS MODAL ---
+const settingsModal = document.getElementById('settingsModal');
+const patInput = document.getElementById('patInput');
+const gistIdInput = document.getElementById('gistIdInput');
+const settingsStatus = document.getElementById('settingsStatus');
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+    patInput.value = gistToken;
+    gistIdInput.value = gistId;
+    settingsStatus.textContent = '';
+    settingsStatus.style.color = '';
+    settingsModal.classList.add('open');
+});
+
+document.getElementById('settingsCancelBtn').addEventListener('click', () => {
+    settingsModal.classList.remove('open');
+});
+
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) settingsModal.classList.remove('open');
+});
+
+document.getElementById('settingsSaveBtn').addEventListener('click', async () => {
+    const token = patInput.value.trim();
+    const idInput = gistIdInput.value.trim();
+    if (!token) { settingsStatus.style.color = '#d9534f'; settingsStatus.textContent = 'Token is required.'; return; }
+
+    const btn = document.getElementById('settingsSaveBtn');
+    btn.textContent = 'Connecting…'; btn.disabled = true;
+    settingsStatus.textContent = '';
+
+    try {
+        let resolvedId = idInput;
+        if (!resolvedId) {
+            settingsStatus.style.color = '#888'; settingsStatus.textContent = 'Creating new private Gist…';
+            resolvedId = await createGist(token);
+        } else {
+            // Verify the gist is accessible
+            const check = await fetch(`https://api.github.com/gists/${resolvedId}`, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!check.ok) throw new Error(`Cannot access Gist (${check.status}). Check the ID and token.`);
+        }
+
+        // Persist
+        localStorage.setItem(GIST_TOKEN_KEY, token);
+        localStorage.setItem(GIST_ID_KEY, resolvedId);
+        gistToken = token; gistId = resolvedId;
+        gistIdInput.value = resolvedId;
+
+        settingsStatus.style.color = '#4caf50';
+        settingsStatus.textContent = `Connected! Gist ID: ${resolvedId}`;
+        updateSyncIndicator('ok');
+
+        // Pull latest data if connecting to an existing gist
+        if (idInput) { await loadFromGist(); renderFileList(); }
+
+    } catch(e) {
+        settingsStatus.style.color = '#d9534f';
+        settingsStatus.textContent = e.message || 'Connection failed.';
+        updateSyncIndicator('error');
+    }
+
+    btn.textContent = 'Connect'; btn.disabled = false;
+});

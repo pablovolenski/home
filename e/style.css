@@ -183,3 +183,41 @@ body, html {
     padding: 2px 6px; border-bottom-left-radius: 4px; z-index: 5;
 }
 .img-close-btn:hover { background: rgba(255,255,255,1); color: #d9534f; }
+
+/* Sync indicator */
+.sync-indicator {
+    font-size: 13px; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; cursor: default; flex-shrink: 0;
+}
+.sync-indicator.idle { color: #bbb; }
+.sync-indicator.syncing { color: #f0a500; animation: spin 1s linear infinite; }
+.sync-indicator.ok { color: #4caf50; }
+.sync-indicator.error { color: #d9534f; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Settings modal */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+    background: #fff; border-radius: 8px; padding: 24px 28px;
+    max-width: 420px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+.modal h3 { margin: 0 0 6px; font-size: 16px; }
+.modal p { font-size: 13px; color: #666; margin: 0 0 16px; }
+.modal label { display: block; font-size: 12px; font-weight: bold; color: #444; margin-bottom: 4px; }
+.modal label small { font-weight: normal; color: #888; }
+.modal label small a { color: #0070f3; }
+.modal input[type="password"], .modal input[type="text"] {
+    width: 100%; box-sizing: border-box; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 4px; font-size: 13px;
+    font-family: var(--font-code); margin-bottom: 14px;
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+.modal-actions button { padding: 8px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); background: #fff; }
+.btn-primary { background: #111 !important; color: #fff !important; border-color: #111 !important; }
+#settingsStatus { font-size: 12px; margin: 10px 0 0; min-height: 16px; }
