@@ -1,0 +1,128 @@
+:root {
+    --bg: #fcfcfc;
+    --text: #333;
+    --border: #ddd;
+    --accent: #eee;
+    --top-bar: #fff;
+    --font-main: 'Segoe UI', system-ui, sans-serif;
+    --font-code: 'Courier New', Courier, monospace;
+}
+
+body, html {
+    margin: 0; padding: 0; min-height: 100%;
+    font-family: var(--font-main);
+    background: var(--bg); color: var(--text);
+}
+
+/* TOKEN PROMPT */
+.token-prompt {
+    display: none; position: fixed; inset: 0; background: var(--bg);
+    flex-direction: column; align-items: center; justify-content: center; z-index: 300;
+}
+.token-prompt.visible { display: flex; }
+.token-prompt input {
+    border: none; border-bottom: 1px solid #ccc; outline: none;
+    font-size: 16px; padding: 8px 0; width: 300px; max-width: 80vw;
+    text-align: center; background: transparent; font-family: var(--font-code);
+}
+#tokenStatus { font-size: 12px; color: #aaa; margin-top: 14px; min-height: 16px; }
+
+/* TOP BAR */
+.top-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 15px; background: var(--top-bar);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+}
+.wordmark {
+    font-weight: bold; font-size: 16px; color: var(--text);
+    text-decoration: none;
+}
+.top-bar-label { font-size: 13px; color: #aaa; }
+.sync-indicator {
+    margin-left: auto;
+    font-size: 13px; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; cursor: default; flex-shrink: 0; user-select: none;
+}
+.sync-indicator.idle    { color: #bbb; }
+.sync-indicator.syncing { color: #f0a500; animation: spin 1s linear infinite; }
+.sync-indicator.ok      { color: #4caf50; }
+.sync-indicator.error   { color: #d9534f; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* CONTENT */
+.content { max-width: 680px; margin: 0 auto; padding: 30px 20px; box-sizing: border-box; }
+
+.view { display: none; flex-direction: column; }
+.view.active { display: flex; }
+
+/* BUTTONS */
+.btn {
+    background: var(--text); color: var(--bg);
+    border: 1px solid var(--text); padding: 7px 14px;
+    cursor: pointer; border-radius: 4px; font-size: 13px;
+    font-family: var(--font-main); transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.8; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn.secondary { background: transparent; color: var(--text); }
+.btn.danger { background: transparent; color: #d9534f; border-color: #d9534f; }
+.btn.danger:hover { background: #fdf0f0; }
+
+/* LIST */
+.list-header { margin-bottom: 20px; }
+#postList { display: flex; flex-direction: column; }
+.post-item {
+    display: flex; align-items: baseline;
+    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px;
+}
+.post-item-title { font-weight: bold; font-size: 15px; flex: 1; }
+.post-item-date  { font-size: 12px; color: #888; flex-shrink: 0; }
+.post-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.empty-state { color: #aaa; font-size: 14px; padding: 40px 0; text-align: center; }
+
+/* BACK BUTTON */
+.back-btn {
+    background: none; border: none; padding: 0; margin-bottom: 24px;
+    cursor: pointer; font-size: 13px; color: #888;
+    font-family: var(--font-main); align-self: flex-start;
+}
+.back-btn:hover { color: var(--text); }
+
+/* EDITOR */
+.editor-form { display: flex; flex-direction: column; gap: 14px; }
+.editor-title {
+    border: none; border-bottom: 1px solid var(--border); outline: none;
+    font-size: 20px; padding: 6px 0; background: transparent;
+    font-family: var(--font-main); color: var(--text); width: 100%;
+}
+.editor-title:focus { border-bottom-color: #999; }
+
+/* TOOLBAR */
+.toolbar {
+    display: flex; gap: 4px; flex-wrap: wrap;
+}
+.tb-btn {
+    background: none; border: 1px solid var(--border); padding: 5px 10px;
+    cursor: pointer; border-radius: 4px; font-size: 13px; line-height: 1;
+    font-family: var(--font-main); color: var(--text);
+    transition: background 0.15s;
+}
+.tb-btn:hover { background: var(--accent); }
+.tb-btn.italic { font-style: italic; }
+
+.editor-body {
+    border: 1px solid var(--border); border-radius: 4px; outline: none;
+    font-size: 14px; font-family: var(--font-code); padding: 12px;
+    background: transparent; color: var(--text); resize: vertical;
+    min-height: 320px; line-height: 1.6; box-sizing: border-box;
+}
+.editor-body:focus { border-color: #999; }
+.editor-actions { display: flex; gap: 8px; }
+
+@media (max-width: 600px) {
+    .content { padding: 20px 15px; }
+    .post-item { flex-wrap: wrap; }
+}

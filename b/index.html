@@ -11,17 +11,6 @@
 
     <div class="top-bar">
         <a class="wordmark" href="/b/">blog</a>
-        <div class="controls">
-            <button class="icon-btn admin-only" id="newPostBtn" title="New post" style="display:none">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            </button>
-            <span id="syncIndicator" class="sync-indicator"></span>
-        </div>
-    </div>
-
-    <div id="tokenPrompt" class="token-prompt">
-        <input type="password" id="tokenInput" placeholder="Paste your GitHub token" autocomplete="off" spellcheck="false">
-        <p id="tokenStatus"></p>
     </div>
 
     <div class="content">
@@ -38,21 +27,6 @@
                 <div class="post-meta" id="postDate"></div>
                 <div class="post-body" id="postBody"></div>
             </article>
-            <div class="post-admin-bar admin-only" id="postAdminBar" style="display:none">
-                <button class="icon-btn" id="editPostBtn">Edit</button>
-                <button class="icon-btn danger" id="deletePostBtn">Delete</button>
-            </div>
-        </div>
-
-        <div class="view" id="editorView">
-            <button class="back-btn" id="backFromEditor">← back</button>
-            <div class="editor-form">
-                <input type="text" id="editorTitle" placeholder="Title" class="editor-title">
-                <textarea id="editorBody" placeholder="Write in markdown…" class="editor-body"></textarea>
-                <div class="editor-actions">
-                    <button class="icon-btn" id="publishBtn">Publish</button>
-                </div>
-            </div>
         </div>
 
     </div>

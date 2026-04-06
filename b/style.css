@@ -16,7 +16,7 @@ body, html {
 
 /* TOP BAR */
 .top-bar {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; align-items: center;
     padding: 10px 15px; background: var(--top-bar);
     border-bottom: 1px solid var(--border);
     position: sticky; top: 0; z-index: 100;
@@ -25,44 +25,6 @@ body, html {
     font-weight: bold; font-size: 16px; color: var(--text);
     text-decoration: none;
 }
-.controls { display: flex; gap: 8px; align-items: center; }
-
-.icon-btn {
-    background: none; border: 1px solid var(--border); padding: 6px 10px;
-    cursor: pointer; border-radius: 4px; font-size: 14px;
-    display: flex; align-items: center; gap: 5px;
-    transition: background 0.2s; font-family: var(--font-main);
-}
-.icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
-.icon-btn:hover { background: var(--accent); }
-.icon-btn.danger { color: #d9534f; border-color: #d9534f; }
-.icon-btn.danger:hover { background: #fdf0f0; }
-.icon-btn:disabled { opacity: 0.5; cursor: default; }
-
-/* SYNC INDICATOR */
-.sync-indicator {
-    font-size: 13px; width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: bold; cursor: default; flex-shrink: 0; user-select: none;
-}
-.sync-indicator.idle { color: #bbb; }
-.sync-indicator.syncing { color: #f0a500; animation: spin 1s linear infinite; }
-.sync-indicator.ok { color: #4caf50; }
-.sync-indicator.error { color: #d9534f; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-/* TOKEN PROMPT */
-.token-prompt {
-    display: none; position: fixed; inset: 0; background: var(--bg);
-    flex-direction: column; align-items: center; justify-content: center; z-index: 300;
-}
-.token-prompt.visible { display: flex; }
-.token-prompt input {
-    border: none; border-bottom: 1px solid #ccc; outline: none;
-    font-size: 16px; padding: 8px 0; width: 300px; max-width: 80vw;
-    text-align: center; background: transparent; font-family: var(--font-code);
-}
-#tokenStatus { font-size: 12px; color: #aaa; margin-top: 14px; min-height: 16px; }
 
 /* CONTENT */
 .content { max-width: 680px; margin: 0 auto; padding: 30px 20px; box-sizing: border-box; }
@@ -79,14 +41,7 @@ body, html {
 }
 .post-item:hover .post-item-title { text-decoration: underline; }
 .post-item-title { font-weight: bold; font-size: 15px; }
-.post-item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.post-item-date { font-size: 12px; color: #888; }
-.item-delete-btn {
-    background: none; border: none; font-size: 12px;
-    color: #ccc; cursor: pointer; padding: 0; display: none;
-}
-.item-delete-btn:hover { color: #d9534f; }
-body.admin .item-delete-btn { display: inline; }
+.post-item-date { font-size: 12px; color: #888; flex-shrink: 0; }
 
 .empty-state { color: #aaa; font-size: 14px; padding: 40px 0; text-align: center; }
 
@@ -110,24 +65,6 @@ body.admin .item-delete-btn { display: inline; }
 .post-body a { color: #0070f3; }
 .post-body blockquote { border-left: 3px solid var(--border); margin-left: 0; padding-left: 16px; color: #666; }
 .post-body img { max-width: 100%; }
-.post-admin-bar { display: flex; gap: 10px; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
-
-/* EDITOR */
-.editor-form { display: flex; flex-direction: column; gap: 14px; }
-.editor-title {
-    border: none; border-bottom: 1px solid var(--border); outline: none;
-    font-size: 20px; padding: 6px 0; background: transparent;
-    font-family: var(--font-main); color: var(--text); width: 100%;
-}
-.editor-title:focus { border-bottom-color: #999; }
-.editor-body {
-    border: 1px solid var(--border); border-radius: 4px; outline: none;
-    font-size: 14px; font-family: var(--font-code); padding: 12px;
-    background: transparent; color: var(--text); resize: vertical;
-    min-height: 320px; line-height: 1.6; box-sizing: border-box;
-}
-.editor-body:focus { border-color: #999; }
-.editor-actions { display: flex; }
 
 @media (max-width: 600px) {
     .content { padding: 20px 15px; }
