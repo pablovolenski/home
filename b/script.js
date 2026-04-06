@@ -130,8 +130,8 @@ async function openPost(id) {
         const result = await ghRead(`${POSTS_PATH}/${id}.json`);
         if (!result) return;
         const post = JSON.parse(result.content);
-        const slug = post.slug || post.id;
-        const url  = SITE_BASE + '#' + slug;
+        const slug     = post.slug || post.id;
+        const url      = `https://pablovolenski.com/b/p/${slug}.html`; // permalink with baked OG tags
 
         // Parse body to extract first image + text description
         const tmp = document.createElement('div');
