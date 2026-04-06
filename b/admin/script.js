@@ -167,6 +167,10 @@ let slugManuallyEdited = false;
 
 function titleToSlug(title) {
     return title.toLowerCase().trim()
+        .replace(/[àáäâã]/g, 'a').replace(/[èéëê]/g, 'e')
+        .replace(/[ìíïî]/g, 'i').replace(/[òóöôõ]/g, 'o')
+        .replace(/[ùúüû]/g, 'u').replace(/ñ/g, 'n')
+        .replace(/ç/g, 'c').replace(/ß/g, 'ss')
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')

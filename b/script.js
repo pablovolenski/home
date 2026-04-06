@@ -36,6 +36,25 @@ function escHtml(s) {
     return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// --- META TAGS ---
+function setMeta({ title, description, imageUrl, postUrl }) {
+    document.title = title ? title + ' · blog' : 'blog';
+    const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.setAttribute('content', val || ''); };
+    set('meta[property="og:title"]',       title || 'blog');
+    set('meta[property="og:description"]', description);
+    set('meta[property="og:image"]',       imageUrl);
+    set('meta[property="og:url"]',         postUrl);
+    set('meta[name="twitter:card"]',       imageUrl ? 'summary_large_image' : 'summary');
+    set('meta[name="twitter:title"]',      title || 'blog');
+    set('meta[name="twitter:description"]',description);
+    set('meta[name="twitter:image"]',      imageUrl);
+}
+
+function resetMeta() {
+    document.title = 'blog';
+    setMeta({ title: '', description: '', imageUrl: '', postUrl: SITE_BASE });
+}
+
 // --- LOAD POSTS ---
 let posts = [];
 
@@ -110,15 +129,38 @@ async function openPost(id) {
     try {
         const result = await ghRead(`${POSTS_PATH}/${id}.json`);
         if (!result) return;
-        const post  = JSON.parse(result.content);
-        const slug  = post.slug || post.id;
-        const url   = SITE_BASE + '#' + slug;
+        const post = JSON.parse(result.content);
+        const slug = post.slug || post.id;
+        const url  = SITE_BASE + '#' + slug;
+
+        // Parse body to extract first image + text description
+        const tmp = document.createElement('div');
+        tmp.innerHTML = post.body || '';
+        const firstImg   = tmp.querySelector('img');
+        const firstPText = (tmp.querySelector('p, h1, h2, h3')?.textContent || '').slice(0, 160);
+
+        // Featured image
+        const featImg = document.getElementById('postFeaturedImg');
+        if (firstImg) {
+            featImg.src          = firstImg.src;
+            featImg.alt          = firstImg.alt || post.title;
+            featImg.style.display = 'block';
+        } else {
+            featImg.style.display = 'none';
+        }
 
         document.getElementById('postTitle').textContent = post.title || 'Untitled';
         document.getElementById('postDate').textContent  = fmtDate(post.date);
         document.getElementById('postBody').innerHTML    = post.body || '';
-        buildShareBar(post.title || 'Untitled', url);
 
+        setMeta({
+            title:       post.title || 'Untitled',
+            description: firstPText,
+            imageUrl:    firstImg ? firstImg.src : '',
+            postUrl:     url
+        });
+
+        buildShareBar(post.title || 'Untitled', url);
         history.replaceState(null, '', '#' + slug);
         showView('postView');
     } catch(e) {
@@ -134,13 +176,14 @@ async function openPostBySlug(slug) {
 // --- EVENT LISTENERS ---
 document.getElementById('backFromPost').addEventListener('click', () => {
     history.replaceState(null, '', location.pathname);
+    resetMeta();
     showView('listView');
 });
 
 window.addEventListener('popstate', () => {
     const slug = location.hash.slice(1);
     if (slug) openPostBySlug(slug);
-    else showView('listView');
+    else { resetMeta(); showView('listView'); }
 });
 
 // --- INIT ---
