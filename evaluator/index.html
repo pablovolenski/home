@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Evaluator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="back-link" title="Back to portfolio">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </a>
+      <div class="app-brand">
+        <span class="brand-icon">◈</span>
+        <span class="brand-name">Project Evaluator</span>
+      </div>
+    </div>
+    <nav class="topbar-nav" id="topNav">
+      <button class="nav-btn active" data-view="listView" id="navList">Projects</button>
+      <button class="nav-btn" data-view="editView" id="navEdit" disabled>Edit</button>
+      <button class="nav-btn" data-view="resultsView" id="navResults" disabled>Results</button>
+    </nav>
+    <div class="topbar-right">
+      <span class="save-badge" id="saveBadge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Saved
+      </span>
+      <button class="btn-primary" id="btnNew">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Project
+      </button>
+      <button class="btn-ghost btn-danger" id="btnDelete" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete
+      </button>
+      <button class="btn-accent" id="btnEvaluate" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Evaluate
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════ VIEW: PROJECT LIST ═══════════════ -->
+  <main class="view active" id="listView">
+    <div class="list-hero">
+      <h1 class="hero-title">Financial Evaluator</h1>
+      <p class="hero-sub">Model investments, costs, and revenues to assess economic viability.</p>
+    </div>
+    <div class="project-grid" id="projectGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">◈</div>
+      <p class="empty-title">No projects yet</p>
+      <p class="empty-sub">Create your first project to start evaluating financial viability.</p>
+      <button class="btn-primary" id="btnNewEmpty">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Project
+      </button>
+    </div>
+  </main>
+
+  <!-- ═══════════════ VIEW: EDIT ═══════════════ -->
+  <main class="view" id="editView">
+    <div class="edit-container">
+
+      <!-- Project Header -->
+      <div class="edit-header-card">
+        <div class="edit-header-top">
+          <div class="edit-name-wrap">
+            <input class="edit-name-input" id="projName" placeholder="Project name…" autocomplete="off">
+            <div class="edit-name-underline"></div>
+          </div>
+          <div class="completion-wrap" title="Form completion">
+            <svg class="completion-ring" viewBox="0 0 36 36" width="48" height="48">
+              <circle class="ring-bg" cx="18" cy="18" r="14" fill="none" stroke-width="3"/>
+              <circle class="ring-fill" id="completionRing" cx="18" cy="18" r="14" fill="none" stroke-width="3" stroke-dasharray="88 88" stroke-dashoffset="88" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+            </svg>
+            <span class="completion-pct" id="completionPct">0%</span>
+          </div>
+        </div>
+        <textarea class="edit-desc-input" id="projDesc" placeholder="Project description…" rows="2"></textarea>
+        <div class="edit-meta-row">
+          <label class="meta-field">
+            <span class="meta-label">Evaluation Horizon</span>
+            <div class="meta-input-wrap">
+              <input type="number" id="projYears" min="1" max="50" value="5" class="meta-input">
+              <span class="meta-unit">years</span>
+            </div>
+          </label>
+          <label class="meta-field">
+            <span class="meta-label">Discount Rate</span>
+            <div class="meta-input-wrap">
+              <input type="number" id="projRate" min="0" max="100" step="0.1" value="10" class="meta-input">
+              <span class="meta-unit">% / yr</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section: Initial Investment -->
+      <div class="section" id="secInvestment" data-color="var(--blue)">
+        <button class="section-header" data-target="bodyInvestment">
+          <div class="section-header-left">
+            <span class="section-dot" style="background:var(--blue)"></span>
+            <span class="section-title">Initial Investment</span>
+            <span class="section-count" id="cntInvestment">0 items</span>
+          </div>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="section-body" id="bodyInvestment">
+          <div class="section-col-labels investment-cols">
+            <span>Name</span><span>Amount ($)</span><span></span>
+          </div>
+          <div class="line-items" id="listInvestment"></div>
+          <button class="add-row-btn" data-list="investment">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add item
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: Recurring Expenses -->
+      <div class="section" id="secRecurring" data-color="var(--red)">
+        <button class="section-header" data-target="bodyRecurring">
+          <div class="section-header-left">
+            <span class="section-dot" style="background:var(--red)"></span>
+            <span class="section-title">Recurring Expenses</span>
+            <span class="section-count" id="cntRecurring">0 items</span>
+          </div>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="section-body" id="bodyRecurring">
+          <div class="section-col-labels recurring-cols">
+            <span>Name</span><span>$ / year</span><span>Growth % / yr</span><span></span>
+          </div>
+          <div class="line-items" id="listRecurring"></div>
+          <button class="add-row-btn" data-list="recurring">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add item
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: Production Costs -->
+      <div class="section" id="secProduction" data-color="var(--orange)">
+        <button class="section-header" data-target="bodyProduction">
+          <div class="section-header-left">
+            <span class="section-dot" style="background:var(--orange)"></span>
+            <span class="section-title">Production Costs</span>
+            <span class="section-count" id="cntProduction">0 items</span>
+          </div>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="section-body" id="bodyProduction">
+          <div class="section-col-labels production-cols">
+            <span>Name</span><span>$ / unit</span><span>Units / year</span><span>Growth % / yr</span><span></span>
+          </div>
+          <div class="line-items" id="listProduction"></div>
+          <button class="add-row-btn" data-list="production">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add item
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: Revenue -->
+      <div class="section" id="secRevenue" data-color="var(--green)">
+        <button class="section-header" data-target="bodyRevenue">
+          <div class="section-header-left">
+            <span class="section-dot" style="background:var(--green)"></span>
+            <span class="section-title">Revenue Estimator</span>
+            <span class="section-count" id="cntRevenue">0 items</span>
+          </div>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="section-body" id="bodyRevenue">
+          <div class="section-col-labels revenue-cols">
+            <span>Name</span><span>$ / unit</span><span>Units / year</span><span>Growth % / yr</span><span></span>
+          </div>
+          <div class="line-items" id="listRevenue"></div>
+          <button class="add-row-btn" data-list="revenue">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add item
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /edit-container -->
+  </main>
+
+  <!-- ═══════════════ VIEW: RESULTS ═══════════════ -->
+  <main class="view" id="resultsView">
+    <div class="results-container">
+
+      <!-- Hero Score -->
+      <div class="score-hero">
+        <div class="score-ring-wrap">
+          <svg class="score-svg" viewBox="0 0 120 120" width="160" height="160">
+            <circle class="score-track" cx="60" cy="60" r="50" fill="none" stroke-width="8"/>
+            <circle class="score-arc" id="scoreArc" cx="60" cy="60" r="50" fill="none" stroke-width="8"
+              stroke-dasharray="314 314" stroke-dashoffset="314" stroke-linecap="round"
+              transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="score-inner">
+            <span class="score-number" id="scoreNumber">—</span>
+            <span class="score-label">score</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <div class="viability-badge" id="viabilityBadge">—</div>
+          <h2 class="results-proj-name" id="resultsProjName">—</h2>
+          <p class="results-proj-desc" id="resultsProjDesc"></p>
+          <div class="results-meta-chips">
+            <span class="chip" id="rChipYears">— years</span>
+            <span class="chip" id="rChipRate">— % rate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card" id="kpiInvestment">
+          <div class="kpi-icon" style="background:rgba(79,70,229,.12);color:var(--indigo)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-label">Total Investment</span>
+            <span class="kpi-value" data-target="0">$0</span>
+          </div>
+        </div>
+        <div class="kpi-card" id="kpiCashflow">
+          <div class="kpi-icon" style="background:rgba(16,185,129,.12);color:var(--green)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-label">Year 1 Net CF</span>
+            <span class="kpi-value" data-target="0">$0</span>
+          </div>
+        </div>
+        <div class="kpi-card" id="kpiNpv">
+          <div class="kpi-icon" style="background:rgba(99,102,241,.12);color:var(--indigo)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-label">Net Present Value</span>
+            <span class="kpi-value" data-target="0">$0</span>
+          </div>
+        </div>
+        <div class="kpi-card" id="kpiRoi">
+          <div class="kpi-icon" style="background:rgba(245,158,11,.12);color:var(--orange)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-label">ROI</span>
+            <span class="kpi-value" data-target="0">0%</span>
+          </div>
+        </div>
+        <div class="kpi-card" id="kpiPayback">
+          <div class="kpi-icon" style="background:rgba(16,185,129,.12);color:var(--green)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-label">Payback Period</span>
+            <span class="kpi-value">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Net Cash Flow by Year</h3>
+          <div class="chart-legend">
+            <span class="legend-dot positive"></span><span>Positive</span>
+            <span class="legend-dot negative"></span><span>Negative</span>
+          </div>
+        </div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+
+      <!-- Year-by-year table -->
+      <div class="table-card">
+        <h3 class="chart-title">Year-by-Year Breakdown</h3>
+        <div class="table-scroll">
+          <table class="cf-table">
+            <thead>
+              <tr>
+                <th>Yr</th>
+                <th>Revenue</th>
+                <th>Prod. Cost</th>
+                <th>Recurring</th>
+                <th>Net CF</th>
+                <th>Cumulative CF</th>
+                <th>Discounted CF</th>
+              </tr>
+            </thead>
+            <tbody id="cfBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /results-container -->
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
