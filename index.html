@@ -9,6 +9,7 @@
             --thick-border: 6px solid black;
             --color-a: #ff5f56; --color-b: #ffbd2e; --color-c: #27c93f;
             --color-d: #007aff; --color-e: #af52de; --color-f: #ff9500;
+            --color-g: #00bcd4;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,6 +54,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
+            grid-auto-rows: 1fr;
         }
 
         .square {
@@ -77,6 +79,7 @@
         .d { background-color: var(--color-d); color: white; }
         .e { background-color: var(--color-e); color: white; }
         .f { background-color: var(--color-f); color: white; }
+        .g { background-color: var(--color-g); color: white; }
 
         /* Hover Effect */
         .square:hover { 
@@ -89,6 +92,7 @@
         .d:hover { color: var(--color-d); }
         .e:hover { color: var(--color-e); }
         .f:hover { color: var(--color-f); }
+        .g:hover { color: var(--color-g); }
 
         /* Mobile adjustments for vertical height */
         @media (max-width: 600px) {
@@ -111,6 +115,7 @@
         <a href="/d.html" class="square d">d</a>
         <a href="/e" class="square e">e</a>
         <a href="/f" class="square f">f</a>
+        <a href="/evaluator/" class="square g">g</a>
     </div>
 
 </body>
