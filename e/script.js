@@ -115,9 +115,12 @@ const toggleCodeBtn = document.getElementById('toggleCodeBtn');
 const saveBtn = document.getElementById('saveBtn');
 const filesBtn = document.getElementById('filesBtn');
 const deleteCurrentBtn = document.getElementById('deleteCurrentBtn');
-const fileDropdown = document.getElementById('fileDropdown');
+const filePanel = document.getElementById('filePanel');
+const panelOverlay = document.getElementById('panelOverlay');
+const panelSearch = document.getElementById('panelSearch');
 const fileList = document.getElementById('fileList');
 const newFileBtn = document.getElementById('newFileBtn');
+const collapsedGroups = {};
 
 // Text Elements
 const mainEditor = document.getElementById('mainEditor');
@@ -168,35 +171,80 @@ function renderFileList() {
     fileList.innerHTML = '';
     const storageKey = currentTab === 'text' ? 'appTextFiles' : 'appBoardFiles';
     const files = JSON.parse(localStorage.getItem(storageKey)) || [];
-    
-    files.sort((a,b) => b.lastSaved - a.lastSaved).forEach(file => {
-        const li = document.createElement('li');
-        let title = "Untitled";
-        if (currentTab === 'text') {
-            title = file.content.split('\n')[0].trim() || 'Untitled';
-        } else {
-            title = file.title || 'Untitled Board';
+    const query = panelSearch.value.toLowerCase().trim();
+
+    const items = files.map(file => {
+        const rawTitle = currentTab === 'text'
+            ? (file.content.split('\n')[0].trim() || 'Untitled')
+            : (file.title || 'Untitled Board');
+        const slash = rawTitle.indexOf('/');
+        const group = slash > 0 ? rawTitle.slice(0, slash).trim() : '';
+        const displayTitle = slash > 0 ? (rawTitle.slice(slash + 1).trim() || rawTitle) : rawTitle;
+        return { file, rawTitle, group, displayTitle };
+    }).filter(({ rawTitle }) => !query || rawTitle.toLowerCase().includes(query));
+
+    items.sort((a, b) => b.file.lastSaved - a.file.lastSaved);
+
+    if (items.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'file-empty';
+        empty.textContent = query ? 'No matches' : 'No files yet';
+        fileList.appendChild(empty);
+        return;
+    }
+
+    const groups = {};
+    items.forEach(item => {
+        if (!groups[item.group]) groups[item.group] = [];
+        groups[item.group].push(item);
+    });
+
+    const groupKeys = Object.keys(groups).sort((a, b) => {
+        if (a === '') return 1;
+        if (b === '') return -1;
+        return a.localeCompare(b);
+    });
+
+    const onlyUngrouped = groupKeys.length === 1 && groupKeys[0] === '';
+
+    groupKeys.forEach(groupKey => {
+        const stateKey = `${currentTab}:${groupKey}`;
+        const isCollapsed = collapsedGroups[stateKey];
+
+        if (!onlyUngrouped && groupKey !== '') {
+            const header = document.createElement('div');
+            header.className = 'file-group-header';
+            header.innerHTML = `<span>${groupKey}</span><span>${isCollapsed ? '▶' : '▼'}</span>`;
+            header.addEventListener('click', () => {
+                collapsedGroups[stateKey] = !collapsedGroups[stateKey];
+                renderFileList();
+            });
+            fileList.appendChild(header);
+            if (isCollapsed) return;
         }
 
-        li.innerHTML = `
-            <span class="file-title">${title}</span> 
-            <div class="file-right-panel">
-                <button class="list-delete-btn" data-id="${file.id}">✕</button>
-                <span class="file-date">${formatDate(file.lastSaved)}</span>
-            </div>
-        `;
-
-        li.onclick = (e) => {
-            if (e.target.classList.contains('list-delete-btn')) {
-                e.stopPropagation(); // Don't open the file, just delete it
-                deleteFile(file.id);
-            } else {
-                if (currentTab === 'text') openTextFile(file.id);
-                else openBoardFile(file.id);
-                fileDropdown.classList.remove('open');
-            }
-        };
-        fileList.appendChild(li);
+        groups[groupKey].forEach(({ file, displayTitle }) => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <span class="file-title">${displayTitle}</span>
+                <div class="file-right-panel">
+                    <button class="list-delete-btn" data-id="${file.id}">✕</button>
+                    <span class="file-date">${formatDate(file.lastSaved)}</span>
+                </div>
+            `;
+            item.addEventListener('click', (e) => {
+                if (e.target.classList.contains('list-delete-btn')) {
+                    e.stopPropagation();
+                    deleteFile(file.id);
+                } else {
+                    if (currentTab === 'text') openTextFile(file.id);
+                    else openBoardFile(file.id);
+                    closePanel();
+                }
+            });
+            fileList.appendChild(item);
+        });
     });
 }
 
@@ -223,7 +271,23 @@ deleteCurrentBtn.addEventListener('click', () => {
     deleteFile(idToDelete);
 });
 
-filesBtn.addEventListener('click', () => fileDropdown.classList.toggle('open'));
+function openPanel() {
+    renderFileList();
+    filePanel.classList.add('open');
+    panelOverlay.classList.add('open');
+    panelSearch.focus();
+}
+
+function closePanel() {
+    filePanel.classList.remove('open');
+    panelOverlay.classList.remove('open');
+    panelSearch.value = '';
+}
+
+filesBtn.addEventListener('click', () => filePanel.classList.contains('open') ? closePanel() : openPanel());
+document.getElementById('panelClose').addEventListener('click', closePanel);
+panelOverlay.addEventListener('click', closePanel);
+panelSearch.addEventListener('input', renderFileList);
 
 newFileBtn.addEventListener('click', () => {
     if (currentTab === 'text') {
@@ -232,7 +296,7 @@ newFileBtn.addEventListener('click', () => {
     } else {
         currentBoardId = null; boardCanvas.innerHTML = ''; zIndexCounter = 10;
     }
-    fileDropdown.classList.remove('open');
+    closePanel();
 });
 
 saveBtn.addEventListener('click', () => {
