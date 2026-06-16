@@ -11,8 +11,8 @@ function updateSyncIndicator(state) {
     const el = document.getElementById('syncIndicator');
     if (!el) return;
     el.className = 'sync-indicator ' + state;
-    const labels = { idle: '○', syncing: '↻', ok: '✓', error: '!' };
-    const titles = { idle: 'Gist sync not configured', syncing: 'Syncing…', ok: 'Synced to Gist', error: 'Sync failed — check settings' };
+    const labels = { idle: '○', dirty: '●', syncing: '↻', ok: '✓', error: '!' };
+    const titles = { idle: 'No Gist sync', dirty: 'Unsaved — click to sync now', syncing: 'Syncing…', ok: 'Synced', error: 'Sync failed — click to retry' };
     el.textContent = labels[state] || '';
     el.title = titles[state] || '';
 }
@@ -309,6 +309,17 @@ function triggerSaveAnimation() {
     setTimeout(() => saveBtn.style.backgroundColor = "transparent", 800);
 }
 
+document.getElementById('syncIndicator').addEventListener('click', () => {
+    if (gistToken && gistId) pushToGist();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (!confirm('Disconnect Gist sync? Your local files are kept.')) return;
+    localStorage.removeItem(GIST_TOKEN_KEY);
+    localStorage.removeItem(GIST_ID_KEY);
+    location.reload();
+});
+
 // --- TEXT EDITOR LOGIC ---
 function updateStats() {
     const text = mainEditor.value;
@@ -358,6 +369,7 @@ function saveTextFile(visualFeedback = false) {
         files.push({ id: currentTextId, content: content, lastSaved: Date.now() });
     }
     localStorage.setItem('appTextFiles', JSON.stringify(files));
+    updateSyncIndicator('dirty');
     scheduleGistSave();
     if (visualFeedback) triggerSaveAnimation();
     renderFileList();
@@ -450,6 +462,7 @@ function saveBoardFile(visualFeedback = false) {
 
     try {
         localStorage.setItem('appBoardFiles', JSON.stringify(boards));
+        updateSyncIndicator('dirty');
         scheduleGistSave();
         if (visualFeedback) triggerSaveAnimation();
         renderFileList();
@@ -776,6 +789,7 @@ function hideTokenPrompt() {
 tokenInput.addEventListener('keydown', async (e) => {
     if (e.key === 'Enter') await connectWithToken();
 });
+document.getElementById('tokenSubmitBtn').addEventListener('click', () => connectWithToken());
 
 async function connectWithToken() {
     const token = tokenInput.value.trim();
