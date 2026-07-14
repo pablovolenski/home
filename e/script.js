@@ -26,10 +26,15 @@ async function loadFromGist() {
         });
         if (!res.ok) { updateSyncIndicator('error'); return; }
         const data = await res.json();
-        if (data.files['text_files.json'])
-            localStorage.setItem('appTextFiles', data.files['text_files.json'].content);
-        if (data.files['board_files.json'])
-            localStorage.setItem('appBoardFiles', data.files['board_files.json'].content);
+        const textFile = data.files['text_files.json'];
+        if (textFile) {
+            let content = textFile.content;
+            if (textFile.truncated && textFile.raw_url) {
+                const rawRes = await fetch(textFile.raw_url);
+                if (rawRes.ok) content = await rawRes.text();
+            }
+            localStorage.setItem('appTextFiles', content);
+        }
         updateSyncIndicator('ok');
     } catch(e) {
         console.warn('Gist load failed:', e);
@@ -56,8 +61,7 @@ async function pushToGist() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ files: {
-                'text_files.json': { content: localStorage.getItem('appTextFiles') || '[]' },
-                'board_files.json': { content: localStorage.getItem('appBoardFiles') || '[]' }
+                'text_files.json': { content: localStorage.getItem('appTextFiles') || '[]' }
             }})
         });
         updateSyncIndicator(res.ok ? 'ok' : 'error');
@@ -90,8 +94,7 @@ async function createGist(token) {
             description: 'Workspace App Data',
             public: false,
             files: {
-                'text_files.json': { content: localStorage.getItem('appTextFiles') || '[]' },
-                'board_files.json': { content: localStorage.getItem('appBoardFiles') || '[]' }
+                'text_files.json': { content: localStorage.getItem('appTextFiles') || '[]' }
             }
         })
     });
@@ -100,19 +103,13 @@ async function createGist(token) {
 }
 
 // --- GLOBAL STATE ---
-let currentTab = 'text'; // 'text' or 'board'
 let currentTextId = null;
-let currentBoardId = null;
-let isCodeMode = false;
-let zIndexCounter = 10;
+let currentMode = 'plain'; // 'plain' | 'code' | 'rich'
+let pasteAsPlainNext = false;
+const collapsedGroups = {};
 
 // --- DOM ELEMENTS ---
-const tabText = document.getElementById('tabText');
-const tabBoard = document.getElementById('tabBoard');
-const textView = document.getElementById('textView');
-const boardView = document.getElementById('boardView');
-const toggleCodeBtn = document.getElementById('toggleCodeBtn');
-const saveBtn = document.getElementById('saveBtn');
+const modeSwitch = document.getElementById('modeSwitch');
 const filesBtn = document.getElementById('filesBtn');
 const deleteCurrentBtn = document.getElementById('deleteCurrentBtn');
 const filePanel = document.getElementById('filePanel');
@@ -120,18 +117,22 @@ const panelOverlay = document.getElementById('panelOverlay');
 const panelSearch = document.getElementById('panelSearch');
 const fileList = document.getElementById('fileList');
 const newFileBtn = document.getElementById('newFileBtn');
-const collapsedGroups = {};
 
-// Text Elements
+// Plain/Code editor elements
 const mainEditor = document.getElementById('mainEditor');
 const textStats = document.getElementById('textStats');
 const editorWrapper = document.getElementById('editorWrapper');
 const lineNumbers = document.getElementById('lineNumbers');
 const codeHighlight = document.getElementById('codeHighlight');
 
-// Board Elements
-const boardViewport = document.getElementById('boardViewport');
-const boardCanvas = document.getElementById('boardCanvas');
+// Rich editor elements
+const richWrapper = document.getElementById('richWrapper');
+const richToolbar = document.getElementById('richToolbar');
+const richEditor = document.getElementById('richEditor');
+const richImageUpload = document.getElementById('richImageUpload');
+
+document.execCommand('defaultParagraphSeparator', false, 'p');
+setEditorMode('plain');
 
 window.onload = async () => {
     if (!gistToken) {
@@ -140,25 +141,33 @@ window.onload = async () => {
         await loadFromGist();
         renderFileList();
     }
-    boardViewport.scrollLeft = 0;
-    boardViewport.scrollTop = 0;
 };
 
-// --- NAVIGATION ---
-tabText.addEventListener('click', () => {
-    currentTab = 'text';
-    tabText.classList.add('active'); tabBoard.classList.remove('active');
-    textView.classList.add('active'); boardView.classList.remove('active');
-    toggleCodeBtn.style.display = 'flex';
-    renderFileList();
-});
+// --- MODE SWITCHING ---
+function setEditorMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+    const isRich = mode === 'rich';
+    editorWrapper.classList.toggle('active', !isRich);
+    editorWrapper.classList.toggle('code-mode', mode === 'code');
+    richWrapper.classList.toggle('active', isRich);
+}
 
-tabBoard.addEventListener('click', () => {
-    currentTab = 'board';
-    tabBoard.classList.add('active'); tabText.classList.remove('active');
-    boardView.classList.add('active'); textView.classList.remove('active');
-    toggleCodeBtn.style.display = 'none';
-    renderFileList();
+modeSwitch.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mode-btn');
+    if (!btn) return;
+    const mode = btn.dataset.mode;
+    if (mode === currentMode) return;
+
+    // Any mode switch starts a fresh file — never silently append onto or
+    // reinterpret content the user is already looking at.
+    currentTextId = null;
+    mainEditor.value = '';
+    richEditor.innerHTML = '';
+    setEditorMode(mode);
+    updateStats();
+    updateLineNumbersAndCode();
+    closePanel();
 });
 
 function formatDate(ms) {
@@ -166,21 +175,31 @@ function formatDate(ms) {
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
 }
 
+function escHtml(s) {
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // --- FILE SYSTEM & DELETION ---
 function renderFileList() {
     fileList.innerHTML = '';
-    const storageKey = currentTab === 'text' ? 'appTextFiles' : 'appBoardFiles';
-    const files = JSON.parse(localStorage.getItem(storageKey)) || [];
+    const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
     const query = panelSearch.value.toLowerCase().trim();
+    const badges = { plain: 'Aa', code: '<>', rich: '¶' };
 
     const items = files.map(file => {
-        const rawTitle = currentTab === 'text'
-            ? (file.content.split('\n')[0].trim() || 'Untitled')
-            : (file.title || 'Untitled Board');
+        const type = file.type || 'plain';
+        let rawTitle;
+        if (type === 'rich') {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = file.content || '';
+            rawTitle = (tmp.textContent || '').trim() || 'Untitled';
+        } else {
+            rawTitle = (file.content || '').split('\n')[0].trim() || 'Untitled';
+        }
         const slash = rawTitle.indexOf('/');
         const group = slash > 0 ? rawTitle.slice(0, slash).trim() : '';
         const displayTitle = slash > 0 ? (rawTitle.slice(slash + 1).trim() || rawTitle) : rawTitle;
-        return { file, rawTitle, group, displayTitle };
+        return { file, type, rawTitle, group, displayTitle };
     }).filter(({ rawTitle }) => !query || rawTitle.toLowerCase().includes(query));
 
     items.sort((a, b) => b.file.lastSaved - a.file.lastSaved);
@@ -208,26 +227,26 @@ function renderFileList() {
     const onlyUngrouped = groupKeys.length === 1 && groupKeys[0] === '';
 
     groupKeys.forEach(groupKey => {
-        const stateKey = `${currentTab}:${groupKey}`;
-        const isCollapsed = collapsedGroups[stateKey];
+        const isCollapsed = collapsedGroups[groupKey];
 
         if (!onlyUngrouped && groupKey !== '') {
             const header = document.createElement('div');
             header.className = 'file-group-header';
-            header.innerHTML = `<span>${groupKey}</span><span>${isCollapsed ? '▶' : '▼'}</span>`;
+            header.innerHTML = `<span>${escHtml(groupKey)}</span><span>${isCollapsed ? '▶' : '▼'}</span>`;
             header.addEventListener('click', () => {
-                collapsedGroups[stateKey] = !collapsedGroups[stateKey];
+                collapsedGroups[groupKey] = !collapsedGroups[groupKey];
                 renderFileList();
             });
             fileList.appendChild(header);
             if (isCollapsed) return;
         }
 
-        groups[groupKey].forEach(({ file, displayTitle }) => {
+        groups[groupKey].forEach(({ file, type, displayTitle }) => {
             const item = document.createElement('div');
             item.className = 'file-item';
             item.innerHTML = `
-                <span class="file-title">${displayTitle}</span>
+                <span class="file-type-badge">${badges[type] || 'Aa'}</span>
+                <span class="file-title">${escHtml(displayTitle)}</span>
                 <div class="file-right-panel">
                     <button class="list-delete-btn" data-id="${file.id}">✕</button>
                     <span class="file-date">${formatDate(file.lastSaved)}</span>
@@ -238,8 +257,7 @@ function renderFileList() {
                     e.stopPropagation();
                     deleteFile(file.id);
                 } else {
-                    if (currentTab === 'text') openTextFile(file.id);
-                    else openBoardFile(file.id);
+                    openTextFile(file.id);
                     closePanel();
                 }
             });
@@ -249,26 +267,26 @@ function renderFileList() {
 }
 
 function deleteFile(id) {
-    if(!confirm("Are you sure you want to delete this file?")) return;
-    
-    const storageKey = currentTab === 'text' ? 'appTextFiles' : 'appBoardFiles';
-    let files = JSON.parse(localStorage.getItem(storageKey)) || [];
-    files = files.filter(f => f.id !== id);
-    localStorage.setItem(storageKey, JSON.stringify(files));
+    if (!confirm("Are you sure you want to delete this file?")) return;
 
-    // Clear canvas/editor if the deleted file is currently open
-    if (currentTab === 'text' && currentTextId === id) {
-        currentTextId = null; mainEditor.value = ''; updateStats(); updateLineNumbersAndCode();
-    } else if (currentTab === 'board' && currentBoardId === id) {
-        currentBoardId = null; boardCanvas.innerHTML = ''; zIndexCounter = 10;
+    let files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
+    files = files.filter(f => f.id !== id);
+    localStorage.setItem('appTextFiles', JSON.stringify(files));
+
+    if (currentTextId === id) {
+        currentTextId = null;
+        mainEditor.value = '';
+        richEditor.innerHTML = '';
+        updateStats(); updateLineNumbersAndCode();
     }
+    updateSyncIndicator('dirty');
+    scheduleGistSave();
     renderFileList();
 }
 
 deleteCurrentBtn.addEventListener('click', () => {
-    const idToDelete = currentTab === 'text' ? currentTextId : currentBoardId;
-    if (!idToDelete) return alert("No saved file is currently open.");
-    deleteFile(idToDelete);
+    if (!currentTextId) return alert("No saved file is currently open.");
+    deleteFile(currentTextId);
 });
 
 function openPanel() {
@@ -290,24 +308,12 @@ panelOverlay.addEventListener('click', closePanel);
 panelSearch.addEventListener('input', renderFileList);
 
 newFileBtn.addEventListener('click', () => {
-    if (currentTab === 'text') {
-        currentTextId = null; mainEditor.value = '';
-        updateStats(); updateLineNumbersAndCode();
-    } else {
-        currentBoardId = null; boardCanvas.innerHTML = ''; zIndexCounter = 10;
-    }
+    currentTextId = null;
+    mainEditor.value = '';
+    richEditor.innerHTML = '';
+    updateStats(); updateLineNumbersAndCode();
     closePanel();
 });
-
-saveBtn.addEventListener('click', () => {
-    if (currentTab === 'text') saveTextFile(true);
-    else saveBoardFile(true);
-});
-
-function triggerSaveAnimation() {
-    saveBtn.style.backgroundColor = "#d4edda";
-    setTimeout(() => saveBtn.style.backgroundColor = "transparent", 800);
-}
 
 document.getElementById('syncIndicator').addEventListener('click', () => {
     if (gistToken && gistId) pushToGist();
@@ -320,9 +326,39 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     location.reload();
 });
 
-// --- TEXT EDITOR LOGIC ---
+// --- INVISIBLE / HIDDEN CHARACTER STRIPPING (plain text mode) ---
+// Strips zero-width chars, bidi control/override marks, BOM, soft hyphen, and the
+// Unicode Tag block (U+E0000-U+E007F, used by some LLM-output steganographic
+// watermarking) — all referenced by numeric code point rather than literal
+// characters so this stays correct and auditable no matter how it round-trips.
+const INVISIBLE_CODE_POINTS = [
+    0x200B, 0x200C, 0x200D, 0x200E, 0x200F, // zero-width space/joiners, bidi marks
+    0x202A, 0x202B, 0x202C, 0x202D, 0x202E, // bidi embedding/override controls
+    0x2060, 0x2061, 0x2062, 0x2063, 0x2064, // word joiner, invisible operators
+    0xFEFF, // byte order mark
+    0x00AD  // soft hyphen
+];
+const INVISIBLE_CHARS_RE = new RegExp(
+    INVISIBLE_CODE_POINTS.map(cp => String.fromCharCode(cp)).join('|'),
+    'g'
+);
+// Unicode Tag block U+E0000-U+E007F, encoded as its UTF-16 surrogate pair range.
+const UNICODE_TAG_RE = /\uDB40[\uDC00-\uDC7F]/g;
+
+function stripInvisibleChars(text) {
+    return (text || '').replace(INVISIBLE_CHARS_RE, '').replace(UNICODE_TAG_RE, '');
+}
+
+// --- TEXT EDITOR LOGIC (shared textarea for Plain + Code) ---
+function isContentEmpty() {
+    if (currentMode === 'rich') {
+        return richEditor.innerText.trim() === '' && !richEditor.querySelector('img, table');
+    }
+    return mainEditor.value.trim() === '';
+}
+
 function updateStats() {
-    const text = mainEditor.value;
+    const text = currentMode === 'rich' ? richEditor.innerText : mainEditor.value;
     const chars = text.length;
     const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
     textStats.textContent = `${words} words | ${chars} chars`;
@@ -331,9 +367,9 @@ function updateStats() {
 function updateLineNumbersAndCode() {
     const lines = mainEditor.value.split('\n');
     lineNumbers.innerHTML = lines.map((_, i) => i + 1).join('<br>');
-    if (isCodeMode) {
+    if (currentMode === 'code' && typeof Prism !== 'undefined') {
         let text = mainEditor.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        if(text[text.length-1] === '\n') text += ' '; 
+        if (text[text.length-1] === '\n') text += ' ';
         codeHighlight.innerHTML = text;
         Prism.highlightElement(codeHighlight);
     }
@@ -346,428 +382,262 @@ mainEditor.addEventListener('scroll', () => {
 });
 
 mainEditor.addEventListener('input', () => {
-    updateStats(); updateLineNumbersAndCode(); saveTextFile(false); 
+    updateStats(); updateLineNumbersAndCode(); saveTextFile();
 });
 
-toggleCodeBtn.addEventListener('click', () => {
-    isCodeMode = !isCodeMode;
-    editorWrapper.classList.toggle('code-mode');
-    toggleCodeBtn.classList.toggle('active-invert'); // Changes color visually
-    updateLineNumbersAndCode();
+mainEditor.addEventListener('paste', (e) => {
+    if (currentMode !== 'plain') return;
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, stripInvisibleChars(text));
 });
 
-function saveTextFile(visualFeedback = false) {
-    const content = mainEditor.value;
-    if (!content.trim() && !currentTextId) return;
+function saveTextFile() {
+    if (isContentEmpty() && !currentTextId) return;
+    let content = currentMode === 'rich' ? richEditor.innerHTML : mainEditor.value;
+    if (currentMode === 'plain') content = stripInvisibleChars(content);
+
     let files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
-    
+
     if (currentTextId) {
         const idx = files.findIndex(f => f.id === currentTextId);
-        if (idx > -1) { files[idx].content = content; files[idx].lastSaved = Date.now(); }
+        if (idx > -1) { files[idx].content = content; files[idx].lastSaved = Date.now(); files[idx].type = currentMode; }
     } else {
         currentTextId = Date.now().toString();
-        files.push({ id: currentTextId, content: content, lastSaved: Date.now() });
+        files.push({ id: currentTextId, content, type: currentMode, lastSaved: Date.now() });
     }
-    localStorage.setItem('appTextFiles', JSON.stringify(files));
+
+    try {
+        localStorage.setItem('appTextFiles', JSON.stringify(files));
+    } catch(e) {
+        console.warn("Storage full! Couldn't save file:", e);
+        alert("Couldn't save — local storage is full. Try removing some files or images.");
+        return;
+    }
     updateSyncIndicator('dirty');
     scheduleGistSave();
-    if (visualFeedback) triggerSaveAnimation();
     renderFileList();
 }
 
 function openTextFile(id) {
     const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
     const file = files.find(f => f.id === id);
-    if (file) {
-        currentTextId = file.id; mainEditor.value = file.content;
-        updateStats(); updateLineNumbersAndCode();
-    }
-}
-// --- BOARD LOGIC & PERSISTENCE ---
-
-let isPanning = false, startPanX, startPanY, scrollLeft, scrollTop;
-boardViewport.addEventListener('mousedown', (e) => {
-    if (e.target === boardViewport || e.target === boardCanvas) {
-        isPanning = true; startPanX = e.pageX; startPanY = e.pageY;
-        scrollLeft = boardViewport.scrollLeft; scrollTop = boardViewport.scrollTop;
-        boardViewport.style.cursor = 'grabbing';
-    }
-});
-window.addEventListener('mousemove', (e) => {
-    if (!isPanning) return;
-    boardViewport.scrollLeft = scrollLeft - (e.pageX - startPanX);
-    boardViewport.scrollTop = scrollTop - (e.pageY - startPanY);
-});
-window.addEventListener('mouseup', () => {
-    isPanning = false; boardViewport.style.cursor = 'default';
-});
-
-function getSpawnCoords() {
-    return {
-        x: boardViewport.scrollLeft + 50,
-        y: boardViewport.scrollTop + 50
-    };
-}
-
-function extractBoardTitle(elementsData) {
-    const firstNote = elementsData.find(e => e.type === 'note');
-    if (firstNote && firstNote.text.trim()) {
-        return firstNote.text.trim().substring(0, 15) + '...';
-    }
-    return 'Untitled Board';
-}
-
-function saveBoardFile(visualFeedback = false) {
-    const elements = document.querySelectorAll('.draggable');
-    if (elements.length === 0 && !currentBoardId) return; 
-
-    const elementsData = [];
-    elements.forEach(el => {
-        const type = el.dataset.type;
-        const data = { type: type, left: el.style.left, top: el.style.top, zIndex: el.style.zIndex, width: el.style.width, height: el.style.height };
-        
-        if (type === 'note') {
-            const textarea = el.querySelector('.note-body');
-            data.bgColor = el.style.backgroundColor;
-            data.text = textarea.value;
-            data.width = textarea.style.width; data.height = textarea.style.height;
-        } else if (type === 'table') {
-            data.html = el.querySelector('.board-table').innerHTML;
-        } else if (type === 'sketch') {
-            data.image = el.querySelector('canvas').toDataURL();
-        } else if (type === 'image') {
-            data.imgSrc = el.querySelector('img').src;
-        }
-        elementsData.push(data);
-    });
-
-    let boards = JSON.parse(localStorage.getItem('appBoardFiles')) || [];
-    
-    if (currentBoardId) {
-        const idx = boards.findIndex(b => b.id === currentBoardId);
-        if (idx > -1) {
-            boards[idx].elements = elementsData;
-            boards[idx].lastSaved = Date.now();
-            boards[idx].title = extractBoardTitle(elementsData);
-        }
+    if (!file) return;
+    currentTextId = file.id;
+    const type = file.type || 'plain';
+    setEditorMode(type);
+    if (type === 'rich') {
+        richEditor.innerHTML = file.content || '';
+        mainEditor.value = '';
     } else {
-        currentBoardId = Date.now().toString();
-        boards.push({ 
-            id: currentBoardId, 
-            title: extractBoardTitle(elementsData),
-            elements: elementsData, 
-            lastSaved: Date.now() 
-        });
+        mainEditor.value = file.content || '';
+        richEditor.innerHTML = '';
     }
-
-    try {
-        localStorage.setItem('appBoardFiles', JSON.stringify(boards));
-        updateSyncIndicator('dirty');
-        scheduleGistSave();
-        if (visualFeedback) triggerSaveAnimation();
-        renderFileList();
-    } catch(e) {
-        console.warn("Storage full! Couldn't save board state.");
-    }
+    updateStats();
+    updateLineNumbersAndCode();
 }
 
-function openBoardFile(id) {
-    const boards = JSON.parse(localStorage.getItem('appBoardFiles')) || [];
-    const board = boards.find(b => b.id === id);
-    if (board) {
-        currentBoardId = board.id;
-        boardCanvas.innerHTML = ''; 
-        zIndexCounter = 10; 
-        
-        board.elements.forEach(data => {
-            if (data.zIndex && parseInt(data.zIndex) > zIndexCounter) zIndexCounter = parseInt(data.zIndex);
-            if (data.type === 'note') createNote(data);
-            else if (data.type === 'table') createTable(data);
-            else if (data.type === 'sketch') createSketch(data);
-            else if (data.type === 'image') createImageWidget(data);
-        });
-    }
-}
+// --- RICH TEXT EDITOR ---
+const RICH_ALLOWED_TAGS = new Set(['P','BR','B','STRONG','I','EM','U','A','H1','H2','H3','UL','OL','LI','BLOCKQUOTE','PRE','CODE','IMG','TABLE','THEAD','TBODY','TR','TD','TH','SPAN','DIV']);
+const RICH_ALLOWED_ATTRS = { A: ['href'], IMG: ['src', 'alt'] };
+const DEFAULT_TABLE_HTML = '<table><tr><td><br></td><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td><td><br></td></tr></table>';
 
-function makeDraggable(element, handle) {
-    let isDragging = false, startX, startY, initialLeft, initialTop;
-    element.addEventListener('pointerdown', () => {
-        zIndexCounter++; element.style.zIndex = zIndexCounter; saveBoardFile();
-    });
-    handle.addEventListener('pointerdown', (e) => {
-        if(['BUTTON', 'DIV', 'SPAN'].includes(e.target.tagName) && e.target !== handle) return; 
-        isDragging = true; startX = e.clientX; startY = e.clientY;
-        initialLeft = element.offsetLeft; initialTop = element.offsetTop;
-        handle.setPointerCapture(e.pointerId); e.stopPropagation(); 
-    });
-    handle.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        element.style.left = `${initialLeft + (e.clientX - startX)}px`;
-        element.style.top = `${initialTop + (e.clientY - startY)}px`;
-    });
-    handle.addEventListener('pointerup', (e) => {
-        if (isDragging) { isDragging = false; handle.releasePointerCapture(e.pointerId); saveBoardFile(); }
-    });
-}
-// --- ELEMENT CREATORS ---
-const colors = ['#fff9c4', '#ffcdd2', '#c8e6c9', '#bbdefb', '#e1bee7'];
+function sanitizeRichHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
 
-function createNote(data = null) {
-    const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
-    const currentColor = data ? data.bgColor : colors[0];
-    
-    const note = document.createElement('div');
-    note.className = 'draggable'; note.dataset.type = 'note';
-    note.style.left = `${pos.x}px`; note.style.top = `${pos.y}px`;
-    if (data && data.zIndex) note.style.zIndex = data.zIndex;
-    note.style.backgroundColor = currentColor;
-
-    note.innerHTML = `
-        <div class="drag-handle">
-            <div class="palette-btn" style="background-color: ${currentColor};"></div>
-            <div class="color-dropdown">
-                ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
-            </div>
-            <button class="close-btn">✕</button>
-        </div>
-        <textarea class="note-body" placeholder="Write here..." style="background:transparent;"></textarea>
-    `;
-    boardCanvas.appendChild(note);
-    makeDraggable(note, note.querySelector('.drag-handle'));
-
-    const textarea = note.querySelector('.note-body');
-    if (data) {
-        textarea.value = data.text || '';
-        if (data.width) textarea.style.width = data.width;
-        if (data.height) textarea.style.height = data.height;
-    }
-
-    const paletteBtn = note.querySelector('.palette-btn');
-    const colorDropdown = note.querySelector('.color-dropdown');
-    paletteBtn.addEventListener('click', () => colorDropdown.classList.toggle('show'));
-    
-    note.querySelectorAll('.dot').forEach(dot => {
-        dot.addEventListener('click', (e) => {
-            const chosenColor = e.target.dataset.color;
-            note.style.backgroundColor = chosenColor;
-            paletteBtn.style.backgroundColor = chosenColor;
-            colorDropdown.classList.remove('show');
-            saveBoardFile();
-        });
-    });
-
-    textarea.addEventListener('input', () => saveBoardFile());
-    textarea.addEventListener('mouseup', () => saveBoardFile());
-    note.querySelector('.close-btn').addEventListener('click', () => { note.remove(); saveBoardFile(); });
-    if (!data) saveBoardFile();
-}
-
-function createTable(data = null) {
-    const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
-    const container = document.createElement('div');
-    container.className = 'draggable table-widget'; container.dataset.type = 'table';
-    container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
-    if (data && data.zIndex) container.style.zIndex = data.zIndex;
-    if (data && data.width) container.style.width = data.width;
-    if (data && data.height) container.style.height = data.height;
-
-    const defaultHTML = `
-        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-    `;
-
-    container.innerHTML = `
-        <div class="drag-handle">
-            <span style="font-size:12px; margin-left:5px; font-weight:bold;">Table</span>
-            <button class="close-btn">✕</button>
-        </div>
-        <table class="board-table">${data ? data.html : defaultHTML}</table>
-        <div class="table-controls">
-            <button class="add-col" title="Add Column">+ C</button>
-            <button class="del-col" title="Remove Column">- C</button>
-            <button class="add-row" title="Add Line/Row">+ L</button>
-            <button class="del-row" title="Remove Line/Row">- L</button>
-        </div>
-    `;
-    boardCanvas.appendChild(container);
-    makeDraggable(container, container.querySelector('.drag-handle'));
-
-    const table = container.querySelector('.board-table');
-    
-    container.querySelector('.add-col').addEventListener('click', () => {
-        table.querySelectorAll('tr').forEach(row => {
-            const td = document.createElement('td');
-            td.contentEditable = "true";
-            row.appendChild(td);
-        });
-        saveBoardFile();
-    });
-
-    container.querySelector('.del-col').addEventListener('click', () => {
-        table.querySelectorAll('tr').forEach(row => {
-            if (row.children.length > 1) row.lastElementChild.remove();
-        });
-        saveBoardFile();
-    });
-
-    container.querySelector('.add-row').addEventListener('click', () => {
-        const tr = document.createElement('tr');
-        const colCount = table.rows.length > 0 ? table.rows[0].children.length : 3;
-        for (let i = 0; i < colCount; i++) {
-            const td = document.createElement('td');
-            td.contentEditable = "true";
-            tr.appendChild(td);
+    Array.from(tmp.querySelectorAll('*')).forEach(el => {
+        if (!RICH_ALLOWED_TAGS.has(el.tagName)) {
+            if (['SCRIPT', 'STYLE', 'META', 'LINK'].includes(el.tagName)) {
+                el.remove();
+            } else {
+                while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+                el.remove();
+            }
+            return;
         }
-        table.appendChild(tr);
-        saveBoardFile();
+        const allowed = RICH_ALLOWED_ATTRS[el.tagName] || [];
+        Array.from(el.attributes).forEach(attr => {
+            if (!allowed.includes(attr.name)) el.removeAttribute(attr.name);
+        });
     });
 
-    container.querySelector('.del-row').addEventListener('click', () => {
-        if (table.rows.length > 1) { 
-            table.lastElementChild.remove();
-            saveBoardFile();
-        }
-    });
-
-    const resizeObserver = new MutationObserver(() => saveBoardFile());
-    resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
-
-    table.addEventListener('input', () => saveBoardFile());
-    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
-    if (!data) saveBoardFile();
+    return tmp.innerHTML;
 }
 
-function createSketch(data = null) {
-    const pos = data ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
-    const container = document.createElement('div');
-    container.className = 'draggable sketch-widget'; container.dataset.type = 'sketch';
-    container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
-    if (data && data.zIndex) container.style.zIndex = data.zIndex;
-    
-    if (data && data.width) container.style.width = data.width;
-    if (data && data.height) container.style.height = data.height;
-
-    container.innerHTML = `
-        <div class="drag-handle"><span style="font-size:12px; margin-left:5px; font-weight:bold;">Sketch</span><button class="close-btn">✕</button></div>
-        <canvas class="drawing-canvas" width="1000" height="1000"></canvas>
-    `;
-    boardCanvas.appendChild(container);
-    makeDraggable(container, container.querySelector('.drag-handle'));
-
-    const canvas = container.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 4;
-
-    if (data && data.image) {
-        const img = new Image(); img.src = data.image;
-        img.onload = () => ctx.drawImage(img, 0, 0);
+function insertHtmlAtCursor(html) {
+    richEditor.focus();
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !richEditor.contains(sel.anchorNode)) {
+        richEditor.insertAdjacentHTML('beforeend', html);
+        return;
     }
-
-    let isDrawing = false;
-    
-    function startDraw(e) { 
-        isDrawing = true; 
-        const rect = canvas.getBoundingClientRect(); 
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        ctx.beginPath(); 
-        ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY); 
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const frag = range.createContextualFragment(html);
+    const lastNode = frag.lastChild;
+    range.insertNode(frag);
+    if (lastNode) {
+        range.setStartAfter(lastNode);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
     }
-    function draw(e) { 
-        if (!isDrawing) return; 
-        const rect = canvas.getBoundingClientRect(); 
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY); 
-        ctx.stroke(); 
-    }
-    function stopDraw() { if (isDrawing) { isDrawing = false; saveBoardFile(); } }
-
-    canvas.addEventListener('pointerdown', (e) => { e.stopPropagation(); startDraw(e); canvas.setPointerCapture(e.pointerId); });
-    canvas.addEventListener('pointermove', (e) => { e.stopPropagation(); draw(e); });
-    canvas.addEventListener('pointerup', (e) => { stopDraw(); canvas.releasePointerCapture(e.pointerId); });
-
-    const resizeObserver = new MutationObserver(() => saveBoardFile());
-    resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
-
-    container.querySelector('.close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
-    if (!data) saveBoardFile();
 }
 
-// --- IMAGE PASTING & UPLOAD LOGIC ---
-function processImageFile(file) {
-    if (!file || !file.type.includes('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
+function compressImageToDataUrl(file, maxSize = 960, quality = 0.7) {
+    return new Promise((resolve, reject) => {
         const img = new Image();
+        const url = URL.createObjectURL(file);
         img.onload = () => {
+            URL.revokeObjectURL(url);
+            let { width, height } = img;
+            if (width > maxSize || height > maxSize) {
+                if (width >= height) { height = Math.round(height * maxSize / width); width = maxSize; }
+                else { width = Math.round(width * maxSize / height); height = maxSize; }
+            }
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800;
-            let width = img.width; let height = img.height;
-            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
             canvas.width = width; canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            createImageWidget({ imgSrc: canvas.toDataURL('image/jpeg', 0.6) });
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
         };
-        img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+        img.onerror = reject;
+        img.src = url;
+    });
 }
 
-function createImageWidget(data) {
-    const pos = data.left ? { x: parseInt(data.left), y: parseInt(data.top) } : getSpawnCoords();
-    const container = document.createElement('div');
-    container.className = 'draggable image-widget';
-    container.dataset.type = 'image';
-    container.style.left = `${pos.x}px`; container.style.top = `${pos.y}px`;
-    if (data.zIndex) container.style.zIndex = data.zIndex;
-    if (data.width) container.style.width = data.width;
-    if (data.height) container.style.height = data.height;
-
-    container.innerHTML = `
-        <button class="img-close-btn">✕</button>
-        <img src="${data.imgSrc}" draggable="false" />
-    `;
-    boardCanvas.appendChild(container);
-    
-    // The image itself is now the drag handle
-    makeDraggable(container, container.querySelector('img'));
-
-    const resizeObserver = new MutationObserver(() => saveBoardFile());
-    resizeObserver.observe(container, { attributes: true, attributeFilter: ['style'] });
-
-    container.querySelector('.img-close-btn').addEventListener('click', () => { container.remove(); saveBoardFile(); });
-    if (!data.left) saveBoardFile();
+async function insertImageFile(file) {
+    if (!file || !file.type.includes('image/')) return;
+    try {
+        const dataUrl = await compressImageToDataUrl(file);
+        insertHtmlAtCursor(`<img src="${dataUrl}" alt="">`);
+        saveTextFile();
+    } catch(e) {
+        console.warn('Image insert failed:', e);
+    }
 }
 
-// Handle native file picker (Mobile & Desktop)
-document.getElementById('addImgBtn').addEventListener('click', () => document.getElementById('imageUpload').click());
-document.getElementById('imageUpload').addEventListener('change', (e) => {
-    processImageFile(e.target.files[0]);
-    e.target.value = ''; // Reset input so you can upload the same image again if needed
+function getCurrentTable() {
+    const sel = window.getSelection();
+    if (!sel || !sel.anchorNode) return null;
+    let node = sel.anchorNode;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    return node ? node.closest('table') : null;
+}
+
+function tableAddCol() {
+    const table = getCurrentTable();
+    if (!table) return;
+    Array.from(table.rows).forEach(row => {
+        const td = document.createElement('td');
+        td.innerHTML = '<br>';
+        row.appendChild(td);
+    });
+}
+
+function tableDelCol() {
+    const table = getCurrentTable();
+    if (!table) return;
+    Array.from(table.rows).forEach(row => {
+        if (row.children.length > 1) row.lastElementChild.remove();
+    });
+}
+
+function tableAddRow() {
+    const table = getCurrentTable();
+    if (!table) return;
+    const colCount = table.rows.length > 0 ? table.rows[0].children.length : 3;
+    const tr = document.createElement('tr');
+    for (let i = 0; i < colCount; i++) {
+        const td = document.createElement('td');
+        td.innerHTML = '<br>';
+        tr.appendChild(td);
+    }
+    const lastRow = table.rows[table.rows.length - 1];
+    (lastRow ? lastRow.parentNode : table).appendChild(tr);
+}
+
+function tableDelRow() {
+    const table = getCurrentTable();
+    if (!table || table.rows.length <= 1) return;
+    table.rows[table.rows.length - 1].remove();
+}
+
+richToolbar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tb-btn');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === 'plain') {
+        pasteAsPlainNext = true;
+        btn.classList.add('active-invert');
+        setTimeout(() => btn.classList.remove('active-invert'), 1500);
+        return;
+    }
+    if (action === 'image') { richImageUpload.click(); return; }
+
+    richEditor.focus();
+    if (action === 'bold') document.execCommand('bold');
+    else if (action === 'italic') document.execCommand('italic');
+    else if (action === 'h1') document.execCommand('formatBlock', false, '<h1>');
+    else if (action === 'h2') document.execCommand('formatBlock', false, '<h2>');
+    else if (action === 'h3') document.execCommand('formatBlock', false, '<h3>');
+    else if (action === 'quote') document.execCommand('formatBlock', false, '<blockquote>');
+    else if (action === 'link') {
+        const url = prompt('URL:');
+        if (url) document.execCommand('createLink', false, url);
+    }
+    else if (action === 'table') insertHtmlAtCursor(DEFAULT_TABLE_HTML);
+    else if (action === 'addcol') tableAddCol();
+    else if (action === 'delcol') tableDelCol();
+    else if (action === 'addrow') tableAddRow();
+    else if (action === 'delrow') tableDelRow();
+    saveTextFile();
 });
 
-// Handle Ctrl+V / Cmd+V (Desktop power users)
-document.addEventListener('paste', (e) => {
-    if (currentTab !== 'board') return; 
-    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-    for (let index in items) {
-        if (items[index].kind === 'file') {
-            processImageFile(items[index].getAsFile());
-        }
+richImageUpload.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) await insertImageFile(file);
+});
+
+richEditor.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'v') {
+        pasteAsPlainNext = true;
     }
 });
 
-// Buttons
-document.getElementById('addNoteBtn').addEventListener('click', () => createNote());
-document.getElementById('addTableBtn').addEventListener('click', () => createTable());
-document.getElementById('addDrawBtn').addEventListener('click', () => createSketch());
+richEditor.addEventListener('paste', async (e) => {
+    e.preventDefault();
+    const cd = e.clipboardData || window.clipboardData;
+    const forcePlain = pasteAsPlainNext;
+    pasteAsPlainNext = false;
+
+    const items = cd.items || [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+            const file = items[i].getAsFile();
+            if (file) { await insertImageFile(file); return; }
+        }
+    }
+
+    if (!forcePlain) {
+        const html = cd.getData('text/html');
+        if (html) {
+            insertHtmlAtCursor(sanitizeRichHtml(html));
+            saveTextFile();
+            return;
+        }
+    }
+    const text = cd.getData('text/plain') || '';
+    document.execCommand('insertText', false, stripInvisibleChars(text));
+    saveTextFile();
+});
+
+richEditor.addEventListener('input', () => {
+    updateStats();
+    saveTextFile();
+});
 
 // --- TOKEN PROMPT ---
 const tokenPrompt = document.getElementById('tokenPrompt');
@@ -809,4 +679,3 @@ async function connectWithToken() {
         tokenStatus.textContent = 'Invalid token.';
     }
 }
-
