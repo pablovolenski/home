@@ -105,7 +105,6 @@ async function createGist(token) {
 // --- GLOBAL STATE ---
 let currentTextId = null;
 let currentMode = 'plain'; // 'plain' | 'code' | 'rich'
-let pasteAsPlainNext = false;
 
 // --- DOM ELEMENTS ---
 const modeSwitch = document.getElementById('modeSwitch');
@@ -129,6 +128,9 @@ const richWrapper = document.getElementById('richWrapper');
 const richToolbar = document.getElementById('richToolbar');
 const richEditor = document.getElementById('richEditor');
 const richImageUpload = document.getElementById('richImageUpload');
+const outlineOverlay = document.getElementById('outlineOverlay');
+const outlinePanel = document.getElementById('outlinePanel');
+const outlineBody = document.getElementById('outlineBody');
 
 document.execCommand('defaultParagraphSeparator', false, 'p');
 setEditorMode('plain');
@@ -160,6 +162,7 @@ modeSwitch.addEventListener('click', (e) => {
 
     // Any mode switch starts a fresh file — never silently append onto or
     // reinterpret content the user is already looking at.
+    closeOutline();
     currentTextId = null;
     mainEditor.value = '';
     richEditor.innerHTML = '';
@@ -262,6 +265,7 @@ function deleteFile(id) {
         currentTextId = null;
         mainEditor.value = '';
         richEditor.innerHTML = '';
+        closeOutline();
         updateStats(); updateLineNumbersAndCode();
     }
     updateSyncIndicator('dirty');
@@ -275,6 +279,7 @@ deleteCurrentBtn.addEventListener('click', () => {
 });
 
 function openPanel() {
+    closeOutline();
     renderFileList();
     filePanel.classList.add('open');
     panelOverlay.classList.add('open');
@@ -292,10 +297,58 @@ document.getElementById('panelClose').addEventListener('click', closePanel);
 panelOverlay.addEventListener('click', closePanel);
 panelSearch.addEventListener('input', renderFileList);
 
+// --- DOCUMENT OUTLINE (Rich mode) ---
+function renderOutline() {
+    outlineBody.innerHTML = '';
+    const headings = richEditor.querySelectorAll('h1, h2, h3');
+    if (headings.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'outline-empty';
+        empty.textContent = 'No headings yet';
+        outlineBody.appendChild(empty);
+        return;
+    }
+    headings.forEach(h => {
+        const item = document.createElement('div');
+        item.className = 'outline-item level-' + h.tagName.slice(1);
+        item.textContent = h.textContent.trim() || 'Untitled heading';
+        item.addEventListener('click', () => {
+            h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const range = document.createRange();
+            range.selectNodeContents(h);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            richEditor.focus();
+        });
+        outlineBody.appendChild(item);
+    });
+}
+
+function openOutline() {
+    closePanel();
+    renderOutline();
+    outlinePanel.classList.add('open');
+    outlineOverlay.classList.add('open');
+}
+
+function closeOutline() {
+    outlinePanel.classList.remove('open');
+    outlineOverlay.classList.remove('open');
+}
+
+function toggleOutline() {
+    outlinePanel.classList.contains('open') ? closeOutline() : openOutline();
+}
+
+outlineOverlay.addEventListener('click', closeOutline);
+
 newFileBtn.addEventListener('click', () => {
     currentTextId = null;
     mainEditor.value = '';
     richEditor.innerHTML = '';
+    closeOutline();
     updateStats(); updateLineNumbersAndCode();
     closePanel();
 });
@@ -415,9 +468,11 @@ function openTextFile(id) {
         richEditor.innerHTML = file.content || '';
         wrapAllBareImages();
         mainEditor.value = '';
+        if (outlinePanel.classList.contains('open')) renderOutline();
     } else {
         mainEditor.value = file.content || '';
         richEditor.innerHTML = '';
+        closeOutline();
     }
     updateStats();
     updateLineNumbersAndCode();
@@ -609,13 +664,8 @@ richToolbar.addEventListener('click', (e) => {
     if (!btn) return;
     const action = btn.dataset.action;
 
-    if (action === 'plain') {
-        pasteAsPlainNext = true;
-        btn.classList.add('active-invert');
-        setTimeout(() => btn.classList.remove('active-invert'), 1500);
-        return;
-    }
     if (action === 'image') { richImageUpload.click(); return; }
+    if (action === 'outline') { toggleOutline(); return; }
 
     richEditor.focus();
     if (action === 'bold') document.execCommand('bold');
@@ -642,17 +692,9 @@ richImageUpload.addEventListener('change', async (e) => {
     if (file) await insertImageFile(file);
 });
 
-richEditor.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'v') {
-        pasteAsPlainNext = true;
-    }
-});
-
 richEditor.addEventListener('paste', async (e) => {
     e.preventDefault();
     const cd = e.clipboardData || window.clipboardData;
-    const forcePlain = pasteAsPlainNext;
-    pasteAsPlainNext = false;
 
     const items = cd.items || [];
     for (let i = 0; i < items.length; i++) {
@@ -662,14 +704,12 @@ richEditor.addEventListener('paste', async (e) => {
         }
     }
 
-    if (!forcePlain) {
-        const html = cd.getData('text/html');
-        if (html) {
-            insertHtmlAtCursor(sanitizeRichHtml(html));
-            wrapAllBareImages();
-            saveTextFile();
-            return;
-        }
+    const html = cd.getData('text/html');
+    if (html) {
+        insertHtmlAtCursor(sanitizeRichHtml(html));
+        wrapAllBareImages();
+        saveTextFile();
+        return;
     }
     const text = cd.getData('text/plain') || '';
     document.execCommand('insertText', false, stripInvisibleChars(text));
@@ -679,6 +719,7 @@ richEditor.addEventListener('paste', async (e) => {
 richEditor.addEventListener('input', () => {
     updateStats();
     saveTextFile();
+    if (outlinePanel.classList.contains('open')) renderOutline();
 });
 
 // --- TOKEN PROMPT ---
