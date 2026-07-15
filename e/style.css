@@ -69,24 +69,13 @@ body, html {
 .panel-body { flex: 1; overflow-y: auto; }
 .panel-footer { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
 
-.file-group-header {
-    padding: 8px 16px 4px; font-size: 11px; font-weight: bold;
-    color: #aaa; letter-spacing: 0.05em; text-transform: uppercase;
-    cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-    user-select: none; background: var(--bg); sticky: top 0;
-}
-.file-group-header:hover { color: #888; }
-
 .file-item {
     padding: 10px 16px; border-bottom: 1px solid #f5f5f5;
     cursor: pointer; display: flex; align-items: center; gap: 8px;
 }
 .file-item:hover { background: var(--accent); }
-.file-type-badge {
-    font-size: 10px; font-weight: bold; color: #999; flex-shrink: 0;
-    border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px;
-    font-family: var(--font-code);
-}
+.file-type-icon { width: 15px; height: 15px; flex-shrink: 0; color: #999; }
+.file-type-icon svg { width: 100%; height: 100%; display: block; }
 .file-title { font-weight: bold; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-right-panel { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .file-date { font-size: 11px; color: #bbb; }
@@ -177,6 +166,14 @@ body, html {
 .rich-editor table td, .rich-editor table th {
     border: 1px solid #ccc; padding: 4px 8px; min-width: 10px; font-size: 14px;
 }
+
+.rich-editor .img-wrap {
+    display: inline-block; position: relative; resize: both; overflow: hidden;
+    max-width: 100%; min-width: 40px; min-height: 40px; vertical-align: bottom;
+    line-height: 0; border: 1px solid transparent;
+}
+.rich-editor .img-wrap:hover { border-color: var(--border); }
+.rich-editor .img-wrap img { width: 100%; height: 100%; object-fit: contain; max-width: none; }
 
 /* Sync indicator */
 .sync-indicator {

@@ -106,7 +106,6 @@ async function createGist(token) {
 let currentTextId = null;
 let currentMode = 'plain'; // 'plain' | 'code' | 'rich'
 let pasteAsPlainNext = false;
-const collapsedGroups = {};
 
 // --- DOM ELEMENTS ---
 const modeSwitch = document.getElementById('modeSwitch');
@@ -180,27 +179,43 @@ function escHtml(s) {
 }
 
 // --- FILE SYSTEM & DELETION ---
+
+// First real "line" of a rich note — the same first-line-of-content
+// semantics Plain/Code already use, but for HTML: walk block-level elements
+// in order, skip anything inside a table (so table cells never leak into
+// the title), and return the first one with visible text.
+function extractRichTitle(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    const blocks = tmp.querySelectorAll('p, h1, h2, h3, li, blockquote, div');
+    for (const el of blocks) {
+        if (el.closest('table')) continue;
+        const text = (el.textContent || '').trim();
+        if (text) return text;
+    }
+    const clone = tmp.cloneNode(true);
+    clone.querySelectorAll('table').forEach(t => t.remove());
+    return (clone.textContent || '').trim() || 'Untitled';
+}
+
+const TYPE_ICONS = {
+    plain: '<svg viewBox="0 0 24 24"><path d="M5 2h10l4 4v16H5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="14" x2="17" y2="14" stroke="currentColor" stroke-width="1.4"/><line x1="8" y1="18" x2="14" y2="18" stroke="currentColor" stroke-width="1.4"/></svg>',
+    rich: '<svg viewBox="0 0 24 24"><path d="M5 2h10l4 4v16H5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="8" y="9" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="15" y1="10.5" x2="17" y2="10.5" stroke="currentColor" stroke-width="1.3"/><line x1="15" y1="13" x2="17" y2="13" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="17" x2="17" y2="17" stroke="currentColor" stroke-width="1.3"/></svg>',
+    code: '<svg viewBox="0 0 24 24"><path d="M5 2h10l4 4v16H5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 10.5L7.5 13l2 2.5M14.5 10.5l2 2.5-2 2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
 function renderFileList() {
     fileList.innerHTML = '';
     const files = JSON.parse(localStorage.getItem('appTextFiles')) || [];
     const query = panelSearch.value.toLowerCase().trim();
-    const badges = { plain: 'Aa', code: '<>', rich: '¶' };
 
     const items = files.map(file => {
         const type = file.type || 'plain';
-        let rawTitle;
-        if (type === 'rich') {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = file.content || '';
-            rawTitle = (tmp.textContent || '').trim() || 'Untitled';
-        } else {
-            rawTitle = (file.content || '').split('\n')[0].trim() || 'Untitled';
-        }
-        const slash = rawTitle.indexOf('/');
-        const group = slash > 0 ? rawTitle.slice(0, slash).trim() : '';
-        const displayTitle = slash > 0 ? (rawTitle.slice(slash + 1).trim() || rawTitle) : rawTitle;
-        return { file, type, rawTitle, group, displayTitle };
-    }).filter(({ rawTitle }) => !query || rawTitle.toLowerCase().includes(query));
+        const title = type === 'rich'
+            ? extractRichTitle(file.content)
+            : ((file.content || '').split('\n')[0].trim() || 'Untitled');
+        return { file, type, title };
+    }).filter(({ title }) => !query || title.toLowerCase().includes(query));
 
     items.sort((a, b) => b.file.lastSaved - a.file.lastSaved);
 
@@ -212,57 +227,27 @@ function renderFileList() {
         return;
     }
 
-    const groups = {};
-    items.forEach(item => {
-        if (!groups[item.group]) groups[item.group] = [];
-        groups[item.group].push(item);
-    });
-
-    const groupKeys = Object.keys(groups).sort((a, b) => {
-        if (a === '') return 1;
-        if (b === '') return -1;
-        return a.localeCompare(b);
-    });
-
-    const onlyUngrouped = groupKeys.length === 1 && groupKeys[0] === '';
-
-    groupKeys.forEach(groupKey => {
-        const isCollapsed = collapsedGroups[groupKey];
-
-        if (!onlyUngrouped && groupKey !== '') {
-            const header = document.createElement('div');
-            header.className = 'file-group-header';
-            header.innerHTML = `<span>${escHtml(groupKey)}</span><span>${isCollapsed ? '▶' : '▼'}</span>`;
-            header.addEventListener('click', () => {
-                collapsedGroups[groupKey] = !collapsedGroups[groupKey];
-                renderFileList();
-            });
-            fileList.appendChild(header);
-            if (isCollapsed) return;
-        }
-
-        groups[groupKey].forEach(({ file, type, displayTitle }) => {
-            const item = document.createElement('div');
-            item.className = 'file-item';
-            item.innerHTML = `
-                <span class="file-type-badge">${badges[type] || 'Aa'}</span>
-                <span class="file-title">${escHtml(displayTitle)}</span>
-                <div class="file-right-panel">
-                    <button class="list-delete-btn" data-id="${file.id}">✕</button>
-                    <span class="file-date">${formatDate(file.lastSaved)}</span>
-                </div>
-            `;
-            item.addEventListener('click', (e) => {
-                if (e.target.classList.contains('list-delete-btn')) {
-                    e.stopPropagation();
-                    deleteFile(file.id);
-                } else {
-                    openTextFile(file.id);
-                    closePanel();
-                }
-            });
-            fileList.appendChild(item);
+    items.forEach(({ file, type, title }) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+            <span class="file-type-icon">${TYPE_ICONS[type] || TYPE_ICONS.plain}</span>
+            <span class="file-title">${escHtml(title)}</span>
+            <div class="file-right-panel">
+                <button class="list-delete-btn" data-id="${file.id}">✕</button>
+                <span class="file-date">${formatDate(file.lastSaved)}</span>
+            </div>
+        `;
+        item.addEventListener('click', (e) => {
+            if (e.target.classList.contains('list-delete-btn')) {
+                e.stopPropagation();
+                deleteFile(file.id);
+            } else {
+                openTextFile(file.id);
+                closePanel();
+            }
         });
+        fileList.appendChild(item);
     });
 }
 
@@ -428,6 +413,7 @@ function openTextFile(id) {
     setEditorMode(type);
     if (type === 'rich') {
         richEditor.innerHTML = file.content || '';
+        wrapAllBareImages();
         mainEditor.value = '';
     } else {
         mainEditor.value = file.content || '';
@@ -485,6 +471,59 @@ function insertHtmlAtCursor(html) {
     }
 }
 
+function insertNodeAtCursor(node) {
+    richEditor.focus();
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !richEditor.contains(sel.anchorNode)) {
+        richEditor.appendChild(node);
+        return;
+    }
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(node);
+    range.setStartAfter(node);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+// Wraps an <img> in a resizable container (native CSS drag-corner resize),
+// sized from its natural dimensions capped to maxWidth. If the image is
+// already attached to the DOM, the wrapper takes its exact place in place;
+// otherwise the wrapper is just returned, ready to insert fresh.
+function wrapImageForResize(img, maxWidth = 400) {
+    const wrap = document.createElement('span');
+    wrap.className = 'img-wrap';
+    wrap.contentEditable = 'false';
+
+    const originalParent = img.parentNode;
+    const nextSibling = img.nextSibling;
+    wrap.appendChild(img);
+    if (originalParent) originalParent.insertBefore(wrap, nextSibling);
+
+    const applySize = () => {
+        let w = img.naturalWidth || maxWidth;
+        let h = img.naturalHeight || maxWidth;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        wrap.style.width = w + 'px';
+        wrap.style.height = h + 'px';
+    };
+    if (img.complete && img.naturalWidth) applySize();
+    else img.addEventListener('load', applySize, { once: true });
+
+    return wrap;
+}
+
+// Wraps any <img> in the rich editor that isn't already inside a resize
+// wrapper — covers images arriving via pasted external HTML or loaded from
+// notes saved before image resizing existed.
+function wrapAllBareImages() {
+    richEditor.querySelectorAll('img').forEach(img => {
+        if (img.closest('.img-wrap')) return;
+        wrapImageForResize(img);
+    });
+}
+
 function compressImageToDataUrl(file, maxSize = 960, quality = 0.7) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -510,7 +549,9 @@ async function insertImageFile(file) {
     if (!file || !file.type.includes('image/')) return;
     try {
         const dataUrl = await compressImageToDataUrl(file);
-        insertHtmlAtCursor(`<img src="${dataUrl}" alt="">`);
+        const img = document.createElement('img');
+        img.src = dataUrl; img.alt = '';
+        insertNodeAtCursor(wrapImageForResize(img));
         saveTextFile();
     } catch(e) {
         console.warn('Image insert failed:', e);
@@ -625,6 +666,7 @@ richEditor.addEventListener('paste', async (e) => {
         const html = cd.getData('text/html');
         if (html) {
             insertHtmlAtCursor(sanitizeRichHtml(html));
+            wrapAllBareImages();
             saveTextFile();
             return;
         }
