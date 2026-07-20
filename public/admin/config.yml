@@ -1,0 +1,32 @@
+# Decap CMS scaffold — not wired up yet.
+#
+# To activate this later:
+#   1. Set up an OAuth provider for the "github" backend (e.g. a small serverless
+#      function such as https://github.com/sterlingwes/netlify-cms-oauth-provider-node,
+#      or use Netlify's built-in one if you ever move hosting there).
+#   2. Fill in `repo` below with `owner/repo-name`.
+#   3. Uncomment the `backend` block.
+#   4. Visit /admin/ on the deployed site and log in.
+#
+# backend:
+#   name: github
+#   repo: pablovolenski/home
+#   branch: main
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "blog"
+    label: "Blog"
+    folder: "src/content/blog"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "string", required: false }
+      - { label: "Publish Date", name: "pubDate", widget: "datetime" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false, required: false }
+      - { label: "Body", name: "body", widget: "markdown" }

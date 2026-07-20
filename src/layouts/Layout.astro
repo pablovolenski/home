@@ -1,0 +1,54 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const path = Astro.url.pathname.replace(/\/index\.html$/, '/');
+
+function isActive(href: string) {
+  if (href === '/') return path === '/';
+  return path.startsWith(href);
+}
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<meta name="description" content={description}>
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Pablo Volenski",
+  "jobTitle": "Independent digital marketing practitioner",
+  "description": "Web presence, marketing and collaborative work tools for freelancers, teams and communities, outside big tech."
+})} />
+</head>
+<body>
+<header>
+  <div class="logo">independent practice</div>
+  <nav class="main-nav">
+    <a href="/" class={isActive('/') ? 'active' : ''}>home</a>
+    <a href="/about" class={isActive('/about') ? 'active' : ''}>about</a>
+    <a href="/services" class={isActive('/services') ? 'active' : ''}>services</a>
+    <a href="/marketing" class={isActive('/marketing') ? 'active' : ''}>marketing</a>
+    <a href="/blog" class={isActive('/blog') ? 'active' : ''}>blog</a>
+    <a href="/contact" class={isActive('/contact') ? 'active' : ''}>contact</a>
+  </nav>
+  <a href="/contact" class="cta-btn">Get in touch</a>
+</header>
+
+<slot />
+
+<footer>
+  <div class="logo">independent practice</div>
+  <div>pablovolenski@gmail.com</div>
+  <div>© 2026</div>
+</footer>
+</body>
+</html>
