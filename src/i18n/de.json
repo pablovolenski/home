@@ -1,0 +1,101 @@
+{
+  "logo": "unabhängige praxis",
+  "brand": "Unabhängige Praxis",
+  "nav": {
+    "home": "start",
+    "about": "über mich",
+    "services": "leistungen",
+    "marketing": "marketing",
+    "blog": "blog",
+    "contact": "kontakt"
+  },
+  "getInTouch": "Kontakt aufnehmen",
+  "langLabel": "Sprache",
+  "footer": { "email": "pablovolenski@gmail.com", "copyright": "© 2026" },
+  "meta": {
+    "home": {
+      "title": "Unabhängige Praxis — Digitales Marketing & Web-Präsenz",
+      "description": "Ich führe eine unabhängige Praxis und baue Web-Präsenz, Marketing und Arbeits-Tools für Freelancer, Teams und Communitys — abseits der großen Tech-Konzerne."
+    },
+    "about": {
+      "title": "Über mich — Unabhängige Praxis",
+      "description": "Meine Geschichte — die Jobs, Umwege und Lektionen, die zu dieser unabhängigen Praxis für digitales Marketing geführt haben."
+    },
+    "services": {
+      "title": "Leistungen — Unabhängige Praxis",
+      "description": "Webdesign, WordPress-Umsetzungen, Wartung und Arbeits-Tools — Drives, Boards und Kollaborationsräume, die du wirklich kontrollierst."
+    },
+    "marketing": {
+      "title": "Marketing — Unabhängige Praxis",
+      "description": "SEO, GEO, Landingpages und interaktive Gadgets, die dich auffindbar machen und den Klick lohnenswert."
+    },
+    "contact": {
+      "title": "Kontakt — Unabhängige Praxis",
+      "description": "Nimm Kontakt auf — erzähl mir, was du baust."
+    },
+    "blog": {
+      "title": "Blog — Unabhängige Praxis",
+      "description": "Notizen zu Web-Präsenz, Marketing und dem Bau von Dingen, die deine bleiben."
+    }
+  },
+  "home": {
+    "eyebrow": "unabhängige praxis / gegründet jetzt",
+    "h1": ["MACH ES", "UNVERWECHSELBAR", "DEINS"],
+    "lead": "Eine Ein-Personen-Praxis für digitales Marketing — Web-Präsenz, Marketing und Kollaborations-Tools für Freelancer, Teams und Communitys, die lieber besitzen als mieten.",
+    "secondaryBtn": "Was ich mache →"
+  },
+  "about": {
+    "eyebrow": "// über mich",
+    "h2": "Meine Geschichte, kurz gefasst",
+    "intro": "[Schreib hier deine eigene Geschichte — die Jobs, Umwege und Lektionen, die zu dieser Praxis geführt haben. Bearbeite jede Karte unten direkt.]",
+    "cards": [
+      { "tag": "kapitel eins", "title": "Wo alles begann", "text": "Ergänze den ersten Funken — wie du dazu gekommen bist." },
+      { "tag": "kapitel zwei", "title": "Ein Wendepunkt", "text": "Ergänze den Moment, der deinen Ansatz geprägt hat." },
+      { "tag": "kapitel drei", "title": "Was ich gelernt habe", "text": "Ergänze die Erfahrung, die dir gezeigt hat, was funktioniert." },
+      { "tag": "kapitel vier", "title": "Heute", "text": "Ergänze, warum du das heute machst, für wen und wie." }
+    ]
+  },
+  "services": {
+    "s1": {
+      "eyebrow": "// leistungen",
+      "h2": "Webdesign, gemeinsam mit dir",
+      "intro": "Ich bin mehr als jemand, der dir eine Seite baut, und ich bin nicht Google oder Meta. Was ich mache, mache ich speziell für dich — ich bringe dir bei, es selbst zu betreiben, oder betreibe es für dich, ganz wie du willst.",
+      "cards": [
+        { "tag": "ab €200", "title": "Rohe Website", "text": "Sauber, schnell, einfach. Kein Ballast, keine Abos — einfach eine Seite, die funktioniert." },
+        { "tag": "ab €400", "title": "WordPress-Website", "text": "Dieselbe Einfachheit, plus ein echtes Backend — Blog, Forum, Magazin oder News-Feed, den du selbst bearbeiten kannst." },
+        { "title": "Basis-Wartung", "text": "Wöchentliche Backups. Ruhe im Kopf, nicht mehr und nicht weniger." },
+        { "title": "Erweiterte Wartung", "text": "Backups, Sicherheitschecks, Updates und monatliche Inhaltspflege — ich halte es am Laufen, damit du es nicht musst." }
+      ]
+    },
+    "s2": {
+      "eyebrow": "// arbeits-tools",
+      "h2": "Deine Drives, Boards & Räume — bleiben deine",
+      "intro": "Gemeinsame Drives, Planungs-Boards, ein privater Raum für dein Team oder deine Community — aufgesetzt auf Infrastruktur, die du wirklich kontrollierst, damit niemand dir über Nacht Preis oder Regeln ändern kann.",
+      "items": [
+        { "title": "Gemeinsame Drives", "text": "Team-Dateien, organisiert — gehostet auf Infrastruktur, die dir gehört, nicht auf einem gemieteten Konto." },
+        { "title": "Online-Boards", "text": "Planungs- und Community-Boards, eingerichtet so, wie deine Gruppe wirklich arbeitet." },
+        { "title": "Kollaborationsräume", "text": "Ein privater Hub für ein Team, einen Verein oder ein Kollektiv — Dokumente, Chat und Ressourcen an einem Ort." }
+      ]
+    }
+  },
+  "marketing": {
+    "eyebrow": "// marketing",
+    "h2": "Gefunden werden — und den Klick wert sein",
+    "items": [
+      { "title": "SEO / GEO", "text": "Text und Struktur, geprüft darauf, wie Menschen suchen — und wie KI antwortet. Ich bringe dir den Prozess bei, automatisiere die repetitiven Teile oder übernehme ihn für dich." },
+      { "title": "Landingpages", "text": "Einen Code scannen, einen Link klicken, irgendwo landen, das zum Konvertieren gebaut ist — für eine Kampagne oder als dauerhaftes Asset." },
+      { "title": "Gadgets & Artefakte", "text": "Quizze, Spiele, Drag-and-Drop-Tools — kleine interaktive Stücke, die Aufmerksamkeit verdienen, statt sie nur zu halten." }
+    ]
+  },
+  "contact": {
+    "h2": "Erzähl mir, was du baust.",
+    "lead": "Kein Formular, kein Gatekeeping — schreib mir direkt und ich melde mich persönlich bei dir.",
+    "cta": "Kontakt aufnehmen"
+  },
+  "blog": {
+    "eyebrow": "// blog",
+    "h2": "Notizen & Aufzeichnungen",
+    "empty": "Noch keine Beiträge — schau bald wieder vorbei.",
+    "back": "← zurück zum Blog"
+  }
+}

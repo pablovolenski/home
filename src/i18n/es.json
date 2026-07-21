@@ -1,0 +1,102 @@
+{
+  "_generated": "AUTO-GENERATED from src/i18n/de.json by scripts/translate.mjs — do not edit by hand. Manual fixes go in src/i18n/overrides/es.json.",
+  "logo": "práctica independiente",
+  "brand": "Práctica Independiente",
+  "nav": {
+    "home": "inicio",
+    "about": "sobre mí",
+    "services": "servicios",
+    "marketing": "marketing",
+    "blog": "blog",
+    "contact": "contacto"
+  },
+  "getInTouch": "Ponte en contacto",
+  "langLabel": "Idioma",
+  "footer": { "email": "pablovolenski@gmail.com", "copyright": "© 2026" },
+  "meta": {
+    "home": {
+      "title": "Práctica Independiente — Marketing Digital y Presencia Web",
+      "description": "Llevo una práctica independiente creando presencia web, marketing y herramientas de trabajo para autónomos, equipos y comunidades — fuera de las grandes tecnológicas."
+    },
+    "about": {
+      "title": "Sobre mí — Práctica Independiente",
+      "description": "Mi historia — los trabajos, desvíos y lecciones que llevaron a esta práctica independiente de marketing digital."
+    },
+    "services": {
+      "title": "Servicios — Práctica Independiente",
+      "description": "Diseño web, desarrollos WordPress, mantenimiento y herramientas de trabajo — drives, tableros y espacios de colaboración que realmente controlas."
+    },
+    "marketing": {
+      "title": "Marketing — Práctica Independiente",
+      "description": "SEO, GEO, páginas de aterrizaje y gadgets interactivos que te hacen visible y hacen que valga la pena el clic."
+    },
+    "contact": {
+      "title": "Contacto — Práctica Independiente",
+      "description": "Ponte en contacto — cuéntame qué estás construyendo."
+    },
+    "blog": {
+      "title": "Blog — Práctica Independiente",
+      "description": "Notas sobre presencia web, marketing y construir cosas que siguen siendo tuyas."
+    }
+  },
+  "home": {
+    "eyebrow": "práctica independiente / desde ahora",
+    "h1": ["HAZLO", "INCONFUNDIBLEMENTE", "TUYO"],
+    "lead": "Una práctica de marketing digital de una sola persona — presencia web, marketing y herramientas de colaboración para autónomos, equipos y comunidades que prefieren poseer en vez de alquilar.",
+    "secondaryBtn": "Qué hago →"
+  },
+  "about": {
+    "eyebrow": "// sobre mí",
+    "h2": "Mi historia, en breve",
+    "intro": "[Escribe aquí tu propia historia — los trabajos, desvíos y lecciones que te llevaron a esta práctica. Edita cada tarjeta abajo directamente.]",
+    "cards": [
+      { "tag": "capítulo uno", "title": "Dónde empezó", "text": "Añade la primera chispa — cómo llegaste a esto." },
+      { "tag": "capítulo dos", "title": "Un punto de inflexión", "text": "Añade el momento que moldeó tu enfoque." },
+      { "tag": "capítulo tres", "title": "Lo que aprendí", "text": "Añade la experiencia que te enseñó lo que funciona." },
+      { "tag": "capítulo cuatro", "title": "Hoy", "text": "Añade por qué haces esto ahora, para quién y cómo." }
+    ]
+  },
+  "services": {
+    "s1": {
+      "eyebrow": "// servicios",
+      "h2": "Diseño web, hecho contigo",
+      "intro": "Soy más que alguien que te construye una página, y no soy Google ni Meta. Lo que hago, lo hago para ti específicamente — te enseño a gestionarlo, o lo gestiono por ti, tú decides.",
+      "cards": [
+        { "tag": "desde €200", "title": "Sitio esencial", "text": "Limpio, rápido, sencillo. Sin excesos, sin suscripciones — solo un sitio que funciona." },
+        { "tag": "desde €400", "title": "Sitio WordPress", "text": "La misma sencillez, más un backend de verdad — blog, foro, revista o feed de noticias que puedes editar tú mismo." },
+        { "title": "Mantenimiento básico", "text": "Copias de seguridad semanales. Tranquilidad, ni más ni menos." },
+        { "title": "Mantenimiento avanzado", "text": "Copias, revisiones de seguridad, actualizaciones y ediciones de contenido mensuales — lo mantengo funcionando para que tú no tengas que hacerlo." }
+      ]
+    },
+    "s2": {
+      "eyebrow": "// herramientas de trabajo",
+      "h2": "Tus drives, tableros y espacios — siguen siendo tuyos",
+      "intro": "Drives compartidos, tableros de planificación, un espacio privado para tu equipo o comunidad — montados sobre infraestructura que realmente controlas, para que nadie pueda cambiarte el precio o las reglas de la noche a la mañana.",
+      "items": [
+        { "title": "Drives compartidos", "text": "Archivos del equipo, organizados — alojados en infraestructura tuya, no en una cuenta alquilada." },
+        { "title": "Tableros online", "text": "Tableros de planificación y comunidad configurados según cómo trabaja realmente tu grupo." },
+        { "title": "Espacios de colaboración", "text": "Un centro privado para un equipo, club o colectivo — documentos, chat y recursos en un solo lugar." }
+      ]
+    }
+  },
+  "marketing": {
+    "eyebrow": "// marketing",
+    "h2": "Que te encuentren, y que valga la pena el clic",
+    "items": [
+      { "title": "SEO / GEO", "text": "Texto y estructura revisados para cómo busca la gente — y cómo responde la IA. Te enseño el proceso, automatizo las partes repetitivas o lo llevo por ti." },
+      { "title": "Páginas de aterrizaje", "text": "Escanea un código, haz clic en un enlace, llega a un lugar construido para convertir — para una campaña o como activo permanente." },
+      { "title": "Gadgets y artefactos", "text": "Cuestionarios, juegos, herramientas de arrastrar y soltar — pequeñas piezas interactivas que se ganan la atención en vez de solo retenerla." }
+    ]
+  },
+  "contact": {
+    "h2": "Cuéntame qué estás construyendo.",
+    "lead": "Sin formularios, sin barreras — escríbeme directamente y te responderé yo mismo.",
+    "cta": "Ponte en contacto"
+  },
+  "blog": {
+    "eyebrow": "// blog",
+    "h2": "Notas y artículos",
+    "empty": "Aún no hay entradas — vuelve pronto.",
+    "back": "← volver al blog"
+  }
+}

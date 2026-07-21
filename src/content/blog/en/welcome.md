@@ -3,25 +3,23 @@ title: "Welcome"
 description: "The first post on the new blog."
 pubDate: 2026-07-20
 lang: "en"
-translationKey: "welcome"
 ---
 
-This is the first post. It's written in Markdown and lives in `src/content/blog/en/`.
+This is the first post. It's written in Markdown and lives in `src/content/blog/de/` — German is the source language of this site.
 
-## Adding a new post
+## How writing works here
 
-Drop a new `.md` file in this folder with frontmatter like:
+Posts are written **in German only** — either directly as an `.md` file or through the CMS at `/admin/`. The English and Spanish versions are created automatically: after publishing, a GitHub Action translates the post and places it under `en/` and `es/`. A few minutes later the post is online in all three languages.
+
+A post's frontmatter looks like this:
 
 ```
 ---
 title: "Post title"
 description: "One-line summary"
 pubDate: 2026-07-20
-lang: "en"
-translationKey: "unique-key"
+lang: "de"
 ---
 ```
 
-Then write the body in Markdown below it. Set `draft: true` in the frontmatter to keep a post out of the build until it's ready.
-
-For translations: use the same filename and the same `translationKey` in the `de/` and `es/` folders so the language versions link cleanly via `hreflang`.
+Setting `draft: true` in the frontmatter keeps a post out of the build until it's ready.

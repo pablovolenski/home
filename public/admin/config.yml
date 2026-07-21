@@ -1,32 +1,180 @@
-# Decap CMS scaffold — not wired up yet.
+# Decap CMS — edits GERMAN content only (the source of truth).
+# English/Spanish are generated automatically by the translate workflow.
 #
-# To activate this later:
-#   1. Set up an OAuth provider for the "github" backend (e.g. a small serverless
-#      function such as https://github.com/sterlingwes/netlify-cms-oauth-provider-node,
-#      or use Netlify's built-in one if you ever move hosting there).
-#   2. Fill in `repo` below with `owner/repo-name`.
-#   3. Uncomment the `backend` block.
-#   4. Visit /admin/ on the deployed site and log in.
-#
-# backend:
-#   name: github
-#   repo: pablovolenski/home
-#   branch: main
+# base_url must point at the deployed OAuth relay (Cloudflare Worker) —
+# see infra/oauth-worker/README.md for the one-time setup.
+
+backend:
+  name: github
+  repo: pablovolenski/home
+  branch: main
+  base_url: https://REPLACE-WITH-YOUR-WORKER-URL.workers.dev
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
 collections:
-  - name: "blog"
-    label: "Blog"
-    folder: "src/content/blog"
+  - name: "blog_de"
+    label: "Blog (Deutsch)"
+    label_singular: "Beitrag"
+    folder: "src/content/blog/de"
     create: true
     slug: "{{slug}}"
     extension: "md"
     format: "frontmatter"
     fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Description", name: "description", widget: "string", required: false }
-      - { label: "Publish Date", name: "pubDate", widget: "datetime" }
-      - { label: "Draft", name: "draft", widget: "boolean", default: false, required: false }
-      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Titel", name: "title", widget: "string" }
+      - { label: "Beschreibung (SEO, eine Zeile)", name: "description", widget: "string", required: false }
+      - { label: "Veröffentlichungsdatum", name: "pubDate", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "Sprache", name: "lang", widget: "hidden", default: "de" }
+      - { label: "Entwurf (nicht veröffentlichen)", name: "draft", widget: "boolean", default: false, required: false }
+      - { label: "Text", name: "body", widget: "markdown" }
+
+  - name: "seitentexte"
+    label: "Seitentexte (Deutsch)"
+    files:
+      - name: "de"
+        label: "Alle Seitentexte"
+        file: "src/i18n/de.json"
+        fields:
+          - { label: "Logo (klein, Kopfzeile)", name: "logo", widget: "string" }
+          - { label: "Markenname", name: "brand", widget: "string" }
+          - label: "Navigation"
+            name: "nav"
+            widget: "object"
+            fields:
+              - { label: "Start", name: "home", widget: "string" }
+              - { label: "Über mich", name: "about", widget: "string" }
+              - { label: "Leistungen", name: "services", widget: "string" }
+              - { label: "Marketing", name: "marketing", widget: "string" }
+              - { label: "Blog", name: "blog", widget: "string" }
+              - { label: "Kontakt", name: "contact", widget: "string" }
+          - { label: "Button: Kontakt aufnehmen", name: "getInTouch", widget: "string" }
+          - { label: "Label Sprachwahl", name: "langLabel", widget: "string" }
+          - label: "Fußzeile"
+            name: "footer"
+            widget: "object"
+            fields:
+              - { label: "E-Mail", name: "email", widget: "string" }
+              - { label: "Copyright", name: "copyright", widget: "string" }
+          - label: "SEO-Metadaten"
+            name: "meta"
+            widget: "object"
+            collapsed: true
+            fields:
+              - label: "Startseite"
+                name: "home"
+                widget: "object"
+                fields:
+                  - { label: "Titel (Browser-Tab / Google)", name: "title", widget: "string" }
+                  - { label: "Beschreibung (Google-Snippet)", name: "description", widget: "text" }
+              - label: "Über mich"
+                name: "about"
+                widget: "object"
+                fields:
+                  - { label: "Titel (Browser-Tab / Google)", name: "title", widget: "string" }
+                  - { label: "Beschreibung (Google-Snippet)", name: "description", widget: "text" }
+              - label: "Leistungen"
+                name: "services"
+                widget: "object"
+                fields:
+                  - { label: "Titel (Browser-Tab / Google)", name: "title", widget: "string" }
+                  - { label: "Beschreibung (Google-Snippet)", name: "description", widget: "text" }
+              - label: "Marketing"
+                name: "marketing"
+                widget: "object"
+                fields:
+                  - { label: "Titel (Browser-Tab / Google)", name: "title", widget: "string" }
+                  - { label: "Beschreibung (Google-Snippet)", name: "description", widget: "text" }
+              - label: "Kontakt"
+                name: "contact"
+                widget: "object"
+                fields:
+                  - { label: "Titel (Browser-Tab / Google)", name: "title", widget: "string" }
+                  - { label: "Beschreibung (Google-Snippet)", name: "description", widget: "text" }
+              - label: "Blog"
+                name: "blog"
+                widget: "object"
+                fields:
+                  - { label: "Titel (Browser-Tab / Google)", name: "title", widget: "string" }
+                  - { label: "Beschreibung (Google-Snippet)", name: "description", widget: "text" }
+          - label: "Startseite"
+            name: "home"
+            widget: "object"
+            fields:
+              - { label: "Kleine Zeile oben", name: "eyebrow", widget: "string" }
+              - { label: "Große Überschrift (Zeilen)", name: "h1", widget: "list", field: { label: "Zeile", name: "line", widget: "string" } }
+              - { label: "Einleitungstext", name: "lead", widget: "text" }
+              - { label: "Zweiter Button", name: "secondaryBtn", widget: "string" }
+          - label: "Über mich"
+            name: "about"
+            widget: "object"
+            fields:
+              - { label: "Kleine Zeile", name: "eyebrow", widget: "string" }
+              - { label: "Überschrift", name: "h2", widget: "string" }
+              - { label: "Einleitung", name: "intro", widget: "text" }
+              - label: "Karten"
+                name: "cards"
+                widget: "list"
+                fields:
+                  - { label: "Tag", name: "tag", widget: "string", required: false }
+                  - { label: "Titel", name: "title", widget: "string" }
+                  - { label: "Text", name: "text", widget: "text" }
+          - label: "Leistungen"
+            name: "services"
+            widget: "object"
+            fields:
+              - label: "Abschnitt 1: Webdesign"
+                name: "s1"
+                widget: "object"
+                fields:
+                  - { label: "Kleine Zeile", name: "eyebrow", widget: "string" }
+                  - { label: "Überschrift", name: "h2", widget: "string" }
+                  - { label: "Einleitung", name: "intro", widget: "text" }
+                  - label: "Karten"
+                    name: "cards"
+                    widget: "list"
+                    fields:
+                      - { label: "Tag (z. B. Preis)", name: "tag", widget: "string", required: false }
+                      - { label: "Titel", name: "title", widget: "string" }
+                      - { label: "Text", name: "text", widget: "text" }
+              - label: "Abschnitt 2: Arbeits-Tools"
+                name: "s2"
+                widget: "object"
+                fields:
+                  - { label: "Kleine Zeile", name: "eyebrow", widget: "string" }
+                  - { label: "Überschrift", name: "h2", widget: "string" }
+                  - { label: "Einleitung", name: "intro", widget: "text" }
+                  - label: "Einträge"
+                    name: "items"
+                    widget: "list"
+                    fields:
+                      - { label: "Titel", name: "title", widget: "string" }
+                      - { label: "Text", name: "text", widget: "text" }
+          - label: "Marketing"
+            name: "marketing"
+            widget: "object"
+            fields:
+              - { label: "Kleine Zeile", name: "eyebrow", widget: "string" }
+              - { label: "Überschrift", name: "h2", widget: "string" }
+              - label: "Einträge"
+                name: "items"
+                widget: "list"
+                fields:
+                  - { label: "Titel", name: "title", widget: "string" }
+                  - { label: "Text", name: "text", widget: "text" }
+          - label: "Kontakt"
+            name: "contact"
+            widget: "object"
+            fields:
+              - { label: "Überschrift", name: "h2", widget: "string" }
+              - { label: "Text", name: "lead", widget: "text" }
+              - { label: "Button", name: "cta", widget: "string" }
+          - label: "Blog-Seite"
+            name: "blog"
+            widget: "object"
+            fields:
+              - { label: "Kleine Zeile", name: "eyebrow", widget: "string" }
+              - { label: "Überschrift", name: "h2", widget: "string" }
+              - { label: "Text bei leerem Blog", name: "empty", widget: "string" }
+              - { label: "Zurück-Link", name: "back", widget: "string" }

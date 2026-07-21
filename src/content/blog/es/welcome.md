@@ -3,25 +3,23 @@ title: "Bienvenido"
 description: "La primera entrada del nuevo blog."
 pubDate: 2026-07-20
 lang: "es"
-translationKey: "welcome"
 ---
 
-Esta es la primera entrada. Está escrita en Markdown y vive en `src/content/blog/es/`.
+Esta es la primera entrada. Está escrita en Markdown y vive en `src/content/blog/de/` — el alemán es el idioma fuente de este sitio.
 
-## Añadir una nueva entrada
+## Cómo funciona la escritura aquí
 
-Coloca un nuevo archivo `.md` en esta carpeta con un frontmatter como este:
+Las entradas se escriben **solo en alemán** — directamente como archivo `.md` o a través del CMS en `/admin/`. Las versiones en inglés y español se crean automáticamente: tras publicar, una GitHub Action traduce la entrada y la coloca en `en/` y `es/`. Unos minutos después, la entrada está online en los tres idiomas.
+
+El frontmatter de una entrada se ve así:
 
 ```
 ---
 title: "Título de la entrada"
 description: "Resumen de una línea"
 pubDate: 2026-07-20
-lang: "es"
-translationKey: "clave-unica"
+lang: "de"
 ---
 ```
 
-Luego escribe el cuerpo en Markdown debajo. Pon `draft: true` en el frontmatter para mantener una entrada fuera del build hasta que esté lista.
-
-Para las traducciones: usa el mismo nombre de archivo y el mismo `translationKey` en las carpetas `de/` y `en/` para que las versiones de idioma se enlacen limpiamente con `hreflang`.
+Con `draft: true` en el frontmatter, una entrada queda fuera del build hasta que esté lista.
