@@ -1,54 +1,92 @@
 ---
 import '../styles/global.css';
+import { locales, defaultLang, localizedPath, languageNames, languageShort, type Lang } from '../i18n/config';
+import { content } from '../i18n/content';
 
 interface Props {
+  lang: Lang;
   title: string;
   description: string;
+  /** Canonical route without any locale prefix, e.g. '' | 'about' | 'blog/welcome'. */
+  path: string;
+  /** Which nav item to mark active. */
+  pageKey: 'home' | 'about' | 'services' | 'marketing' | 'blog' | 'contact';
 }
 
-const { title, description } = Astro.props;
-const path = Astro.url.pathname.replace(/\/index\.html$/, '/');
+const { lang, title, description, path, pageKey } = Astro.props;
+const t = content[lang];
+const site = Astro.site ?? new URL('https://pablovolenski.com');
 
-function isActive(href: string) {
-  if (href === '/') return path === '/';
-  return path.startsWith(href);
-}
+const nav = [
+  { key: 'home', href: localizedPath(lang, ''), label: t.nav.home },
+  { key: 'about', href: localizedPath(lang, 'about'), label: t.nav.about },
+  { key: 'services', href: localizedPath(lang, 'services'), label: t.nav.services },
+  { key: 'marketing', href: localizedPath(lang, 'marketing'), label: t.nav.marketing },
+  { key: 'blog', href: localizedPath(lang, 'blog'), label: t.nav.blog },
+  { key: 'contact', href: localizedPath(lang, 'contact'), label: t.nav.contact },
+];
+
+const abs = (l: Lang) => new URL(localizedPath(l, path), site).href;
+const canonical = abs(lang);
+const contactHref = localizedPath(lang, 'contact');
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang={lang}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <meta name="description" content={description}>
+<link rel="canonical" href={canonical}>
+{locales.map((l) => (
+  <link rel="alternate" hreflang={l} href={abs(l)} />
+))}
+<link rel="alternate" hreflang="x-default" href={abs(defaultLang)} />
+
+<meta property="og:type" content="website">
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:locale" content={lang}>
+<meta name="twitter:card" content="summary">
+
 <script type="application/ld+json" set:html={JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "Person",
-  "name": "Pablo Volenski",
-  "jobTitle": "Independent digital marketing practitioner",
-  "description": "Web presence, marketing and collaborative work tools for freelancers, teams and communities, outside big tech."
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Pablo Volenski',
+  url: site.href,
+  email: `mailto:${t.footer.email}`,
+  jobTitle: t.meta.home.title,
+  description: t.meta.home.description,
 })} />
 </head>
 <body>
 <header>
-  <div class="logo">independent practice</div>
+  <div class="logo">{t.logo}</div>
   <nav class="main-nav">
-    <a href="/" class={isActive('/') ? 'active' : ''}>home</a>
-    <a href="/about" class={isActive('/about') ? 'active' : ''}>about</a>
-    <a href="/services" class={isActive('/services') ? 'active' : ''}>services</a>
-    <a href="/marketing" class={isActive('/marketing') ? 'active' : ''}>marketing</a>
-    <a href="/blog" class={isActive('/blog') ? 'active' : ''}>blog</a>
-    <a href="/contact" class={isActive('/contact') ? 'active' : ''}>contact</a>
+    {nav.map((item) => (
+      <a href={item.href} class={item.key === pageKey ? 'active' : ''}>{item.label}</a>
+    ))}
   </nav>
-  <a href="/contact" class="cta-btn">Get in touch</a>
+  <div class="header-right">
+    <div class="lang-switch" aria-label={t.langLabel}>
+      {locales.map((l, i) => (
+        <>
+          {i > 0 && <span class="lang-sep">/</span>}
+          <a href={abs(l)} hreflang={l} lang={l} class={l === lang ? 'active' : ''} title={languageNames[l]}>{languageShort[l]}</a>
+        </>
+      ))}
+    </div>
+    <a href={contactHref} class="cta-btn">{t.getInTouch}</a>
+  </div>
 </header>
 
 <slot />
 
 <footer>
-  <div class="logo">independent practice</div>
-  <div>pablovolenski@gmail.com</div>
-  <div>© 2026</div>
+  <div class="logo">{t.logo}</div>
+  <div>{t.footer.email}</div>
+  <div>{t.footer.copyright}</div>
 </footer>
 </body>
 </html>

@@ -1,0 +1,22 @@
+---
+import { type Lang } from '../i18n/config';
+import { content } from '../i18n/content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = content[lang].marketing;
+---
+<section class="page-section panel">
+  <div class="wrap">
+    <p class="eyebrow tight">{t.eyebrow}</p>
+    <h2>{t.h2}</h2>
+    <div class="grid">
+      {t.items.map((item) => (
+        <div class="marketing-item">
+          <div class="title">{item.title}</div>
+          <p>{item.text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

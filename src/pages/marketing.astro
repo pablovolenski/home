@@ -1,28 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import MarketingBody from '../components/MarketingBody.astro';
+import { content } from '../i18n/content';
+const lang = 'de';
+const meta = content[lang].meta.marketing;
 ---
-<Layout
-  title="Marketing — Independent Practice"
-  description="SEO, GEO, landing pages, and interactive gadgets that get you found and make it worth the click."
->
-  <section class="page-section panel">
-    <div class="wrap">
-      <p class="eyebrow tight">// marketing</p>
-      <h2>Getting found, and making it worth the click</h2>
-      <div class="grid">
-        <div class="marketing-item">
-          <div class="title">SEO / GEO</div>
-          <p>Writing and structure reviewed for how people search — and how AI answers. I'll teach you the process, automate the repetitive parts, or run it for you.</p>
-        </div>
-        <div class="marketing-item">
-          <div class="title">Landing pages</div>
-          <p>Scan a code, click a link, land somewhere built to convert — for one campaign, or as a permanent asset.</p>
-        </div>
-        <div class="marketing-item">
-          <div class="title">Gadgets &amp; artifacts</div>
-          <p>Quizzes, games, drag-and-drop tools — small interactive pieces that earn attention instead of just holding it.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<Layout lang={lang} title={meta.title} description={meta.description} path="marketing" pageKey="marketing">
+  <MarketingBody lang={lang} />
 </Layout>

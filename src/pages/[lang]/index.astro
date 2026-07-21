@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import HomeBody from '../../components/HomeBody.astro';
+import { content } from '../../i18n/content';
+import { prefixedLangs, type Lang } from '../../i18n/config';
+
+export function getStaticPaths() {
+  return prefixedLangs.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const meta = content[lang].meta.home;
+---
+<Layout lang={lang} title={meta.title} description={meta.description} path="" pageKey="home">
+  <HomeBody lang={lang} />
+</Layout>

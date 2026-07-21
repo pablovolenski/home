@@ -1,14 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ContactBody from '../components/ContactBody.astro';
+import { content } from '../i18n/content';
+const lang = 'de';
+const meta = content[lang].meta.contact;
 ---
-<Layout
-  title="Contact — Independent Practice"
-  description="Get in touch — tell me what you're building."
->
-  <section class="contact-section">
-    <div class="contact-shape"></div>
-    <h2>Tell me what you're building.</h2>
-    <p class="lead">No form, no gatekeeping — write to me directly and I'll get back to you myself.</p>
-    <a href="mailto:pablovolenski@gmail.com" class="cta-btn solid">Get in touch</a>
-  </section>
+<Layout lang={lang} title={meta.title} description={meta.description} path="contact" pageKey="contact">
+  <ContactBody lang={lang} />
 </Layout>

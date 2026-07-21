@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+import { localizedPath, formatDate, type Lang } from '../i18n/config';
+import { content } from '../i18n/content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = content[lang].blog;
+
+const posts = (await getCollection('blog', ({ data }) => data.lang === lang && !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const slugOf = (slug: string) => slug.replace(/^(de|en|es)\//, '');
+---
+<section class="page-section">
+  <div class="wrap">
+    <p class="eyebrow tight">{t.eyebrow}</p>
+    <h2>{t.h2}</h2>
+    <div class="post-list">
+      {posts.map((post) => (
+        <a class="post-item" href={localizedPath(lang, `blog/${slugOf(post.slug)}`)}>
+          <div>
+            <div class="title">{post.data.title}</div>
+            {post.data.description && <p class="excerpt">{post.data.description}</p>}
+          </div>
+          <div class="date">{formatDate(post.data.pubDate, lang)}</div>
+        </a>
+      ))}
+      {posts.length === 0 && <p class="intro">{t.empty}</p>}
+    </div>
+  </div>
+</section>

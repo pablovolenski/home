@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ServicesBody from '../../components/ServicesBody.astro';
+import { content } from '../../i18n/content';
+import { prefixedLangs, type Lang } from '../../i18n/config';
+
+export function getStaticPaths() {
+  return prefixedLangs.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const meta = content[lang].meta.services;
+---
+<Layout lang={lang} title={meta.title} description={meta.description} path="services" pageKey="services">
+  <ServicesBody lang={lang} />
+</Layout>

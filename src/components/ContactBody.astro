@@ -1,0 +1,15 @@
+---
+import { type Lang } from '../i18n/config';
+import { content } from '../i18n/content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = content[lang].contact;
+const email = content[lang].footer.email;
+---
+<section class="contact-section">
+  <div class="contact-shape"></div>
+  <h2>{t.h2}</h2>
+  <p class="lead">{t.lead}</p>
+  <a href={`mailto:${email}`} class="cta-btn solid">{t.cta}</a>
+</section>

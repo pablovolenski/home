@@ -1,57 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ServicesBody from '../components/ServicesBody.astro';
+import { content } from '../i18n/content';
+const lang = 'de';
+const meta = content[lang].meta.services;
 ---
-<Layout
-  title="Services — Independent Practice"
-  description="Web design, WordPress builds, maintenance and work tools — drives, boards and collaboration spaces you actually control."
->
-  <section class="page-section dark">
-    <div class="wrap">
-      <p class="eyebrow tight">// services</p>
-      <h2>Web design, done with you</h2>
-      <p class="intro">I'm more than someone who builds you a page, and I'm not Google or Meta. Whatever I make, I make for you specifically — I'll teach you to run it, or keep running it for you, your call.</p>
-      <div class="grid">
-        <div class="card">
-          <div class="tag">from €200</div>
-          <div class="title">Raw site</div>
-          <p>Clean, fast, simple. No bloat, no subscriptions — just a site that works.</p>
-        </div>
-        <div class="card">
-          <div class="tag">from €400</div>
-          <div class="title">WordPress site</div>
-          <p>Same simplicity, plus a real backend — blog, forum, magazine or news feed you can edit yourself.</p>
-        </div>
-        <div class="card">
-          <div class="title">Basic maintenance</div>
-          <p>Weekly backups. Peace of mind, nothing more, nothing less.</p>
-        </div>
-        <div class="card">
-          <div class="title">Advanced maintenance</div>
-          <p>Backups, security checks, updates and monthly content edits — I keep it running so you don't have to.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="page-section">
-    <div class="wrap">
-      <p class="eyebrow tight">// work tools</p>
-      <h2>Your drives, boards &amp; spaces — kept yours</h2>
-      <p class="intro">Shared drives, planning boards, a private space for your team or community — set up on infrastructure you actually control, so nobody can change the price or the rules on you overnight.</p>
-      <div class="grid">
-        <div class="work-item">
-          <div class="title">Shared drives</div>
-          <p>Team files, organized — hosted on infrastructure you own, not a rented account.</p>
-        </div>
-        <div class="work-item">
-          <div class="title">Online boards</div>
-          <p>Planning and community boards set up to match how your group actually works.</p>
-        </div>
-        <div class="work-item">
-          <div class="title">Collaboration spaces</div>
-          <p>A private hub for a team, club or collective — docs, chat and resources in one place.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<Layout lang={lang} title={meta.title} description={meta.description} path="services" pageKey="services">
+  <ServicesBody lang={lang} />
 </Layout>
