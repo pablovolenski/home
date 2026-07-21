@@ -1,0 +1,32 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+<Layout
+  title={`${post.data.title} — Independent Practice`}
+  description={post.data.description ?? post.data.title}
+>
+  <section class="page-section">
+    <div class="wrap">
+      <a class="back-link" href="/blog">← back to blog</a>
+      <article class="post">
+        <div class="post-meta">{post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+        <h1>{post.data.title}</h1>
+        <div class="content">
+          <Content />
+        </div>
+      </article>
+    </div>
+  </section>
+</Layout>
