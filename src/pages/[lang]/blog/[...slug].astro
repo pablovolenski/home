@@ -1,23 +1,28 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
-import { localizedPath, formatDate } from '../../i18n/config';
-import { content } from '../../i18n/content';
-
-const lang = 'de';
+import { localizedPath, formatDate, prefixedLangs, type Lang } from '../../../i18n/config';
+import { content } from '../../../i18n/content';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', ({ data }) => data.lang === 'de' && !data.draft);
-  return posts.map((post) => ({
-    params: { slug: post.slug.replace(/^de\//, '') },
-    props: { post },
-  }));
+  const paths = [];
+  for (const lang of prefixedLangs) {
+    const posts = await getCollection('blog', ({ data }) => data.lang === lang && !data.draft);
+    for (const post of posts) {
+      paths.push({
+        params: { lang, slug: post.slug.replace(new RegExp(`^${lang}/`), '') },
+        props: { post },
+      });
+    }
+  }
+  return paths;
 }
 
+const lang = Astro.params.lang as Lang;
 const { post } = Astro.props;
 const { Content } = await post.render();
 const t = content[lang];
-const slug = post.slug.replace(/^de\//, '');
+const slug = post.slug.replace(new RegExp(`^${lang}/`), '');
 ---
 <Layout
   lang={lang}

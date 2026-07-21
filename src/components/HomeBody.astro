@@ -1,0 +1,21 @@
+---
+import { localizedPath, type Lang } from '../i18n/config';
+import { content } from '../i18n/content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = content[lang];
+const lines = t.home.h1;
+---
+<section class="hero">
+  <div class="hero-shape"></div>
+  <p class="eyebrow">{t.home.eyebrow}</p>
+  <h1>{lines.map((line, i) => (
+    <>{line}{i < lines.length - 1 ? <br /> : <span class="cursor">_</span>}</>
+  ))}</h1>
+  <p class="lead">{t.home.lead}</p>
+  <div class="btn-row">
+    <a href={localizedPath(lang, 'contact')} class="cta-btn solid">{t.getInTouch}</a>
+    <a href={localizedPath(lang, 'services')} class="outline-btn">{t.home.secondaryBtn}</a>
+  </div>
+</section>

@@ -1,37 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import AboutBody from '../components/AboutBody.astro';
+import { content } from '../i18n/content';
+const lang = 'de';
+const meta = content[lang].meta.about;
 ---
-<Layout
-  title="About — Independent Practice"
-  description="My story — the jobs, detours and lessons that led to this independent digital marketing practice."
->
-  <section class="page-section">
-    <div class="wrap">
-      <p class="eyebrow tight">// about</p>
-      <h2>My story, briefly</h2>
-      <p class="intro"><em class="em-note">[Write your own story here — the jobs, detours and lessons that led to this practice. Edit each card below directly.]</em></p>
-      <div class="grid">
-        <div class="card">
-          <span class="tag">chapter one</span>
-          <span class="title">Where it started</span>
-          <p>Add the first spark — how you got into this.</p>
-        </div>
-        <div class="card">
-          <span class="tag">chapter two</span>
-          <span class="title">A turning point</span>
-          <p>Add the moment that shaped your approach.</p>
-        </div>
-        <div class="card">
-          <span class="tag">chapter three</span>
-          <span class="title">What I learned</span>
-          <p>Add the experience that taught you what works.</p>
-        </div>
-        <div class="card">
-          <span class="tag">chapter four</span>
-          <span class="title">Today</span>
-          <p>Add why you do this now, for who, and how.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<Layout lang={lang} title={meta.title} description={meta.description} path="about" pageKey="about">
+  <AboutBody lang={lang} />
 </Layout>

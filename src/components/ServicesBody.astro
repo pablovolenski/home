@@ -1,0 +1,40 @@
+---
+import { type Lang } from '../i18n/config';
+import { content } from '../i18n/content';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const { s1, s2 } = content[lang].services;
+---
+<section class="page-section dark">
+  <div class="wrap">
+    <p class="eyebrow tight">{s1.eyebrow}</p>
+    <h2>{s1.h2}</h2>
+    <p class="intro">{s1.intro}</p>
+    <div class="grid">
+      {s1.cards.map((card) => (
+        <div class="card">
+          {card.tag && <div class="tag">{card.tag}</div>}
+          <div class="title">{card.title}</div>
+          <p>{card.text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="wrap">
+    <p class="eyebrow tight">{s2.eyebrow}</p>
+    <h2>{s2.h2}</h2>
+    <p class="intro">{s2.intro}</p>
+    <div class="grid">
+      {s2.items.map((item) => (
+        <div class="work-item">
+          <div class="title">{item.title}</div>
+          <p>{item.text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

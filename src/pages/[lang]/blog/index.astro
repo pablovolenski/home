@@ -1,0 +1,16 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import BlogIndexBody from '../../../components/BlogIndexBody.astro';
+import { content } from '../../../i18n/content';
+import { prefixedLangs, type Lang } from '../../../i18n/config';
+
+export function getStaticPaths() {
+  return prefixedLangs.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const meta = content[lang].meta.blog;
+---
+<Layout lang={lang} title={meta.title} description={meta.description} path="blog" pageKey="blog">
+  <BlogIndexBody lang={lang} />
+</Layout>
