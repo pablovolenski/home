@@ -1,0 +1,66 @@
+name: Translate DE → EN/ES
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/blog/de/**'
+      - 'src/i18n/de.json'
+  workflow_dispatch: # manual full re-translate
+
+permissions:
+  contents: write
+
+concurrency:
+  group: translate
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Determine changed German sources
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=--all" >> "$GITHUB_OUTPUT"
+            echo "files=" >> "$GITHUB_OUTPUT"
+          else
+            FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- \
+              'src/content/blog/de' 'src/i18n/de.json' | tr '\n' ' ')
+            echo "mode=--files" >> "$GITHUB_OUTPUT"
+            echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Translate
+        env:
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+        run: |
+          if [ -z "$DEEPL_API_KEY" ]; then
+            echo "::error::DEEPL_API_KEY secret is not set (repo Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          node scripts/translate.mjs ${{ steps.changes.outputs.mode }} ${{ steps.changes.outputs.files }}
+
+      - name: Commit translations
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/content/blog/en src/content/blog/es src/i18n/en.json src/i18n/es.json
+          if git diff --cached --quiet; then
+            echo "No translation changes."
+          else
+            git commit -m "i18n: auto-translate de → en, es"
+            git push
+          fi

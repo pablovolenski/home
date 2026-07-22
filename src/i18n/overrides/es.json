@@ -1,0 +1,14 @@
+{
+  "_comment": "Manual overrides deep-merged OVER the DeepL output for es.json. Put any string here whose machine translation you want to replace permanently. Structure mirrors de.json — include only the keys you want to pin.",
+  "logo": "práctica independiente",
+  "brand": "Práctica Independiente",
+  "home": {
+    "h1": ["HAZLO", "INCONFUNDIBLEMENTE", "TUYO"]
+  },
+  "meta": {
+    "home": {
+      "title": "Práctica Independiente — Marketing Digital y Presencia Web",
+      "description": "Llevo una práctica independiente creando presencia web, marketing y herramientas de trabajo para autónomos, equipos y comunidades — fuera de las grandes tecnológicas."
+    }
+  }
+}
