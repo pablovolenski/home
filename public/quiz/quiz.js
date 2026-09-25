@@ -6,14 +6,14 @@
      /quiz/?q=<id>               take the quiz (one question per page, same URL)
      /quiz/?r=<id>&k=<key>       results (creator only)
 
-   SETUP: set QUIZ_API to your Worker URL (infra/quiz-worker/README.md).
+   SETUP: set QUIZ_API_PROD to the quiz server's URL (infra/quiz-server/README.md).
    ───────────────────────────────────────────── */
 
 // ── A. Config ────────────────────────────────
-const QUIZ_API_PROD = 'YOUR_WORKER_URL'; // e.g. https://pv-quiz.<subdomain>.workers.dev
+const QUIZ_API_PROD = 'YOUR_API_URL'; // e.g. https://quiz-api.pablovolenski.com
 const IS_LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
 const QUIZ_API = (IS_LOCAL ? 'http://localhost:8787' : QUIZ_API_PROD).replace(/\/+$/, '');
-const API_READY = IS_LOCAL || QUIZ_API_PROD !== 'YOUR_WORKER_URL';
+const API_READY = IS_LOCAL || QUIZ_API_PROD !== 'YOUR_API_URL';
 
 const MAX_QUESTIONS = 4;
 const MIN_OPTIONS = 2;

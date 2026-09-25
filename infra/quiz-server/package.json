@@ -1,0 +1,19 @@
+{
+  "name": "pv-quiz-server",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Backend for pablovolenski.com/quiz",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "dev": "DEV_SHOW_CONFIRM_LINK=true SITE_ORIGIN=http://localhost:4321 DB_PATH=./dev.db node --disable-warning=ExperimentalWarning --watch server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

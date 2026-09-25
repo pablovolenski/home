@@ -66,4 +66,4 @@ npm run translate  # translation pipeline (see above)
   `CNAME`, `robots.txt`
 - `scripts/translate.mjs` — DE→EN/ES pipeline (DeepL, Markdown-AST-safe)
 - `infra/oauth-worker/` — CMS login relay (deployed on Cloudflare)
-- `infra/quiz-worker/` — backend for `/quiz/` (Cloudflare Worker + KV; setup in its README)
+- `infra/quiz-server/` — backend for `/quiz/` (Node + SQLite + SMTP on your own server; setup in its README)
