@@ -62,6 +62,8 @@ npm run translate  # translation pipeline (see above)
 - `src/i18n/` — `de.json` (source), `en/es.json` (generated), `overrides/`
 - `src/content/blog/{de,en,es}/` — posts; `de/` is the only hand-edited folder
 - `public/` — static passthrough: legacy apps (`a.html`, `c.html`, `d.html`,
-  `e/`, `f/`, `evaluator/`), `admin/` (CMS), `CNAME`, `robots.txt`
+  `e/`, `f/`, `evaluator/`), `quiz/` (survey/poll generator), `admin/` (CMS),
+  `CNAME`, `robots.txt`
 - `scripts/translate.mjs` — DE→EN/ES pipeline (DeepL, Markdown-AST-safe)
 - `infra/oauth-worker/` — CMS login relay (deployed on Cloudflare)
+- `infra/quiz-worker/` — backend for `/quiz/` (Cloudflare Worker + KV; setup in its README)

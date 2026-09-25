@@ -1,0 +1,15 @@
+# Used for local testing (`npx wrangler dev`) and optional CLI deploys.
+# Dashboard-only setup works too — see README.md.
+name = "pv-quiz"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+[[kv_namespaces]]
+binding = "QUIZ_KV"
+# Replace with the namespace id from Cloudflare (Workers & Pages → KV) before `wrangler deploy`.
+# `wrangler dev` ignores it and uses a local, in-memory store.
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+SITE_ORIGIN = "https://pablovolenski.com"
+EMAIL_PROVIDER = "log"
