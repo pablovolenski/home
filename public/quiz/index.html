@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary -->
+  <title>Quick Quiz — Pablo Volenski</title>
+  <meta name="description" content="Create a short survey or poll with up to 4 questions in a minute. Free, no account — just confirm your email. Each quiz gets a link that stays online for one week.">
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="Quick Quiz">
+  <meta property="og:description" content="Create a short survey or poll with up to 4 questions. One link, online for a week.">
+  <meta property="og:url"         content="https://pablovolenski.com/quiz/">
+  <meta property="og:site_name"   content="Pablo Volenski">
+
+  <!-- Twitter -->
+  <meta name="twitter:card"        content="summary">
+  <meta name="twitter:title"       content="Quick Quiz">
+  <meta name="twitter:description" content="Create a short survey or poll with up to 4 questions.">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://pablovolenski.com/quiz/">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="/" class="back-link" title="Back to pablovolenski.com">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      pablovolenski.com
+    </a>
+    <a href="/quiz/" class="brand">Quick Quiz<span class="dot">.</span></a>
+  </header>
+
+  <main class="wrap">
+
+    <div id="configNotice" class="notice" hidden>
+      The quiz backend isn't connected yet — set <code>QUIZ_API_PROD</code> in <code>quiz/quiz.js</code>
+      (see <code>infra/quiz-server/README.md</code>).
+    </div>
+
+    <!-- ═══ CREATE ═══════════════════════════════ -->
+    <section id="viewCreate" class="view" hidden>
+      <h1>Make a quick quiz<span class="dot">.</span></h1>
+      <p class="lead">Up to 4 questions, one link to share, online for 7 days. No account needed — just confirm your email.</p>
+
+      <form id="createForm" novalidate>
+        <label class="field">
+          <span class="label">Title</span>
+          <input id="quizTitle" type="text" maxlength="120" placeholder="e.g. Where should we go for the team lunch?" required>
+        </label>
+
+        <div id="questions"></div>
+
+        <button type="button" id="btnAddQuestion" class="btn ghost">+ Add question</button>
+
+        <label class="field">
+          <span class="label">Your email</span>
+          <input id="quizEmail" type="email" maxlength="254" placeholder="you@example.com" autocomplete="email" required>
+          <span class="hint">We send you a confirmation link. Your quiz goes live once you click it. Your email is never shown to anyone.</span>
+        </label>
+
+        <!-- Honeypot: hidden from humans, bots tend to fill it in. -->
+        <label class="hp" aria-hidden="true">Website <input id="quizWebsite" type="text" tabindex="-1" autocomplete="off"></label>
+
+        <p id="createError" class="error" role="alert" hidden></p>
+        <button type="submit" id="btnCreate" class="btn solid">Create quiz</button>
+      </form>
+    </section>
+
+    <!-- ═══ CHECK INBOX ══════════════════════════ -->
+    <section id="viewSent" class="view" hidden>
+      <h1>Check your inbox<span class="dot">.</span></h1>
+      <p class="lead">We sent a confirmation link to <strong id="sentEmail"></strong>. Click it within 48 hours to publish your quiz.</p>
+      <div id="devConfirm" class="notice" hidden>
+        Dev mode: email sending isn't set up yet. <a id="devConfirmLink" href="#">Open the confirmation link</a>
+      </div>
+      <a href="/quiz/" class="btn ghost">Make another quiz</a>
+    </section>
+
+    <!-- ═══ CONFIRMED ════════════════════════════ -->
+    <section id="viewConfirm" class="view" hidden>
+      <p id="confirmLoading" class="lead">Confirming…</p>
+      <div id="confirmDone" hidden>
+        <h1>Your quiz is live<span class="dot">.</span></h1>
+        <p class="lead"><strong id="confirmTitle"></strong> is online until <span id="confirmExpires"></span>.</p>
+
+        <div class="linkbox">
+          <span class="label">Share this link</span>
+          <div class="copyrow">
+            <input id="shareUrl" type="text" readonly>
+            <button type="button" class="btn solid" data-copy="shareUrl">Copy</button>
+          </div>
+        </div>
+        <div class="linkbox">
+          <span class="label">Your results link: keep it private</span>
+          <div class="copyrow">
+            <input id="resultsUrl" type="text" readonly>
+            <button type="button" class="btn" data-copy="resultsUrl">Copy</button>
+          </div>
+          <span class="hint">Bookmark it. We also email both links to you.</span>
+        </div>
+      </div>
+      <p id="confirmError" class="error" role="alert" hidden></p>
+    </section>
+
+    <!-- ═══ TAKE ═════════════════════════════════ -->
+    <section id="viewTake" class="view" hidden>
+      <p id="takeLoading" class="lead">Loading…</p>
+      <div id="takeQuiz" hidden>
+        <h1 id="takeTitle"></h1>
+        <div class="progress"><div id="takeBar" class="progress-bar"></div></div>
+        <p id="takeStep" class="step"></p>
+        <h2 id="takeQuestion"></h2>
+        <div id="takeOptions" class="options" role="radiogroup"></div>
+        <p id="takeError" class="error" role="alert" hidden></p>
+        <div class="nav">
+          <button type="button" id="btnBack" class="btn ghost">Back</button>
+          <button type="button" id="btnNext" class="btn solid" disabled>Next</button>
+        </div>
+      </div>
+      <div id="takeDone" hidden>
+        <h1>Thanks for answering<span class="dot">.</span></h1>
+        <p class="lead">Your answers have been recorded.</p>
+        <a href="/quiz/" class="btn ghost">Make your own quiz</a>
+      </div>
+      <p id="takeMissing" class="error" role="alert" hidden></p>
+    </section>
+
+    <!-- ═══ RESULTS ══════════════════════════════ -->
+    <section id="viewResults" class="view" hidden>
+      <p id="resultsLoading" class="lead">Loading results…</p>
+      <div id="resultsBody" hidden>
+        <h1 id="resultsTitle"></h1>
+        <p class="lead"><strong id="resultsTotal"></strong> · online until <span id="resultsExpires"></span></p>
+        <div id="resultsList"></div>
+        <div class="linkbox">
+          <span class="label">Share link</span>
+          <div class="copyrow">
+            <input id="resultsShareUrl" type="text" readonly>
+            <button type="button" class="btn" data-copy="resultsShareUrl">Copy</button>
+          </div>
+        </div>
+        <button type="button" id="btnRefresh" class="btn ghost">Refresh</button>
+        <p class="hint">New answers can take up to a minute to show up.</p>
+      </div>
+      <p id="resultsError" class="error" role="alert" hidden></p>
+    </section>
+
+  </main>
+
+  <script src="quiz.js"></script>
+</body>
+</html>
