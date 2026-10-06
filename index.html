@@ -1,122 +1,287 @@
-<!DOCTYPE html>
+<!doctype html>
+<!--
+  Pablo* — EDITING NOTES
+  Keep index.html, pricing.html, style.css and script.js in the same folder.
+  Open index.html in a browser to preview. No install or build step is needed.
+  Both pages share style.css. Navigation is repeated in each HTML file:
+  if you change a menu item, update it in both pages.
+  Edit visible text between HTML tags; preserve class names for styling.
+  Prices and project examples are illustrative. Add real contact details before launch.
+  All calculator prices are in the PRICES object at the top of script.js.
+-->
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pablo Volenski</title>
-    <style>
-        :root {
-            --thick-border: 6px solid black;
-            --color-a: #ff5f56; --color-b: #ffbd2e; --color-c: #27c93f;
-            --color-d: #007aff; --color-e: #af52de; --color-f: #ff9500;
-            --color-g: #00bcd4;
-        }
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pablo* — An internet of your own.</title>
+    <meta name="description" content="Independent web design and marketing by Pablo. Thoughtful websites, portable tools and direct collaboration for small businesses and organisations.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23eb482d'/%3E%3Ctext x='32' y='58' font-size='70' font-family='Arial' text-anchor='middle' fill='%231c1c19'%3E*%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <!-- SHARED HEADER — Keep the navigation consistent on both pages. -->
+    <header class="masthead wrap">
+      <a href="#" class="wordmark" aria-label="Pablo home">Pablo<span>*</span></a>
+      <p class="mast-caption">Independent web<br>& marketing studio</p>
+      <nav aria-label="Main navigation">
+        <a href="#services">Services</a>
+        <a href="#work">Work</a>
+        <a href="#about">About</a>
+        <a href="/pricing.html">Build & price</a>
+        <a href="#contact">Let’s talk <span aria-hidden="true">*</span></a>
+      </nav>
+    </header>
+    <main id="main">
+      <!-- HOMEPAGE HERO — Edit the main headline and introduction here. -->
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="edition mono">
+          <span>Small studio. Independent thinking.</span>
+          <span>Vienna / Working everywhere</span>
+        </div>
+        <h1 id="hero-title">An internet<br>of <em>your own.</em><span class="hero-star" aria-hidden="true">*</span></h1>
+        <div class="hero-bottom">
+          <p class="margin-note mono"><span>*</span> Less dependency.<br>More possibility.</p>
+          <div class="hero-intro">
+            <p>Websites and marketing for people who want more control over their corner of the internet.</p>
+            <p class="secondary">Built with care. Made to be yours. From the first conversation to the files you take with you.</p>
+            <a class="button dark" href="/pricing.html">Build your starting point</a>
+          </div>
+          <div class="side-note mono">
+            A personal alternative
+            <br>
+            to the platform default.
+          </div>
+        </div>
+      </section>
+      <div class="red-band" aria-label="Studio principles">
+        <span>Your website.</span>
+        <span>Your tools.</span>
+        <span>Your terms.</span>
+        <span aria-hidden="true">*</span>
+      </div>
+      <!-- PRODUCT STORY — An intentionally small starting point, with optional additions. -->
+      <section class="product-start wrap section" aria-labelledby="product-title">
+        <div class="section-meta mono">
+          <span>A small beginning / A website you can own</span>
+          <span>You set the scope.</span>
+        </div>
+        <div class="product-grid">
+          <div>
+            <h2 id="product-title">Start with enough.<br><em>Add what matters.</em></h2>
+            <p>A single page. A considered layout. Your words, your domain, your files. A complete little website — with room to make it more yours.</p>
+            <a class="button dark" href="/pricing.html">Make your own combination</a>
+          </div>
+          <div class="product-receipt">
+            <span class="mono">Your starting point</span>
+            <p class="starting-price" data-price="base">€650</p>
+            <p>More pages? A different design? More time to work it out together? Add them only if you need them.</p>
+            <p class="mono">Illustrative one-off estimate.<br>Excludes VAT and third-party costs.</p>
+          </div>
+        </div>
+      </section>
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+      <!-- SERVICES — Each <details> element is a native, keyboard-accessible accordion. -->
+      <section class="services wrap section" id="services" aria-labelledby="services-title">
+        <div class="section-meta mono">
+          <span>01 / What I do</span>
+          <span>From first idea to handover</span>
+        </div>
+        <div class="section-heading">
+          <h2 id="services-title">Small by choice.<br>Useful by design.</h2>
+          <p>I help small businesses, cultural organisations and independent people build a web presence they can understand, manage and move.</p>
+        </div>
+        <div class="service-list">
+          <details>
+            <summary>
+              <span class="number mono">01.1</span>
+              <h3>Websites with a life<br>outside a platform.</h3>
+              <span class="service-summary">Design & development</span>
+              <span class="toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="service-content">
+              <p>A clear, responsive website around what you do and what your visitors need. Lightweight code or an editable CMS, chosen for the job.</p>
+              <div>
+                <strong>You leave with</strong>
+                <p>Your source files, account access, a content guide and a documented path to another host. Domain and hosting accounts stay in your name.</p>
+              </div>
+            </div>
+          </details>
+          <details>
+            <summary>
+              <span class="number mono">01.2</span>
+              <h3>Marketing that builds<br>something you keep.</h3>
+              <span class="service-summary">Content & communication</span>
+              <span class="toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="service-content">
+              <p>Positioning, website copy, landing pages and newsletters that explain your work clearly and give people a reason to stay in touch.</p>
+              <div>
+                <strong>You leave with</strong>
+                <p>Reusable content, editable templates and a practical publishing plan. Where a mailing tool is involved, we check export options before committing.</p>
+              </div>
+            </div>
+          </details>
+          <details>
+            <summary>
+              <span class="number mono">01.3</span>
+              <h3>Fewer moving parts.<br>More room to work.</h3>
+              <span class="service-summary">Tools & thoughtful systems</span>
+              <span class="toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="service-content">
+              <p>Forms, contact management and small automations that connect the work you already do. We start with the problem, then choose the tool.</p>
+              <div>
+                <strong>You leave with</strong>
+                <p>A map of what connects to what, recurring costs made visible, and instructions for everyday tasks. Open-source and self-hosted options considered where they fit.</p>
+              </div>
+            </div>
+          </details>
+        </div>
+        <p class="service-foot mono">A focused project or ongoing support. Scope and costs agreed before we start. <a href="/pricing.html">Build your own estimate.</a></p>
+      </section>
+      <!-- ILLUSTRATIVE PROJECTS — Replace these examples with real work when ready. -->
+      <section class="work wrap section" id="work" aria-labelledby="work-title">
+        <div class="section-meta mono">
+          <span>02 / Possible directions</span>
+          <span>Illustrative projects — not client work</span>
+        </div>
+        <div class="section-heading">
+          <h2 id="work-title">Different people.<br>Different possibilities.</h2>
+          <p>Two example briefs showing what an independent web presence could look like. No invented clients. No borrowed results.</p>
+        </div>
+        <div class="projects">
+          <article class="project project-a">
+            <div class="project-visual cultural">
+              <div class="mock-top mono">
+                <span>COMMON ROOM</span>
+                <span>Independent culture / Vienna</span>
+              </div>
+              <p class="mock-head">A place<br>for <i>other</i><br>ideas<span>*</span></p>
+              <div class="mock-bottom mono">
+                <span>Gatherings. Conversations. Culture.</span>
+                <span>Come on in.</span>
+              </div>
+            </div>
+            <div class="project-label mono">
+              Illustrative concept / 01
+            </div>
+            <h3>A cultural space,<br>with its own front door.</h3>
+            <p>An editable programme, event information and a direct newsletter signup. A place to gather an audience beyond a social feed.</p>
+            <details class="brief">
+              <summary>Read the example brief <span aria-hidden="true">+</span></summary>
+              <p><strong>The starting point:</strong> Event details live across social posts and messages. <strong>The approach:</strong> One accessible programme on the organisation’s own domain, simple editing and an exportable mailing list. <strong>The handover:</strong> Templates and a short guide for the next person taking over.</p>
+            </details>
+          </article>
+          <article class="project project-b">
+            <div class="project-visual practice">
+              <div class="mock-top mono">
+                <span>FIELDNOTES</span>
+                <span>Independent practice</span>
+              </div>
+              <p class="practice-small">Good work deserves<br>a clear explanation.</p>
+              <p class="practice-head">Less noise.<br><i>More sense.</i></p>
+              <div class="practice-line">
+              </div>
+              <div class="mock-bottom mono">
+                <span>Strategy / Research / Collaboration</span>
+                <span>*</span>
+              </div>
+            </div>
+            <div class="project-label mono">
+              Illustrative concept / 02
+            </div>
+            <h3>A small practice.<br>A clearer presence.</h3>
+            <p>A concise website, useful service copy and a straightforward enquiry path. Built to work without a stack of monthly subscriptions.</p>
+            <details class="brief">
+              <summary>Read the example brief <span aria-hidden="true">+</span></summary>
+              <p><strong>The starting point:</strong> A specialist’s offer is difficult to explain online. <strong>The approach:</strong> A focused site with clear services, selected work and direct contact. <strong>The handover:</strong> Portable files, domain ownership and documented editing options.</p>
+            </details>
+          </article>
+        </div>
+      </section>
+      <!-- MANIFESTO — Studio principles; no images are needed for this layout. -->
+      <section class="manifesto" id="principles" aria-labelledby="manifesto-title">
+        <div class="wrap">
+          <div class="section-meta mono">
+            <span>03 / A few things I believe</span>
+            <span>Independent, on purpose.</span>
+          </div>
+          <div class="manifesto-grid">
+            <h2 id="manifesto-title">The web<br>can still<br>be <em>ours.</em></h2>
+            <div class="principles">
+              <div>
+                <span class="mono">I.</span>
+                <p><strong>Ownership should be ordinary.</strong><br>Your domain, your content, your accounts. Access isn’t a favour, and leaving shouldn’t mean starting again.</p>
+              </div>
+              <div>
+                <span class="mono">II.</span>
+                <p><strong>Tools should come with explanations.</strong><br>What they cost. Where the data goes. What happens if you change your mind. Trade-offs belong in the conversation.</p>
+              </div>
+              <div>
+                <span class="mono">III.</span>
+                <p><strong>Automation needs a reason.</strong><br>No AI added by default. If it serves a clear purpose, we discuss its limits, data use and human oversight first.</p>
+              </div>
+              <div>
+                <span class="mono">IV.</span>
+                <p><strong>Small is a way of working.</strong><br>You speak with the person doing the work. Decisions stay close to the people who have to live with them.</p>
+              </div>
+            </div>
+          </div>
+          <div class="manifesto-bottom mono">
+            <span>Not a promise of perfect independence.<br>A practice of making more deliberate choices.</span>
+            <span class="asterisk" aria-hidden="true">*</span>
+          </div>
+        </div>
+      </section>
+      <!-- ABOUT — Edit the personal introduction here. -->
+      <section class="about wrap section" id="about" aria-labelledby="about-title">
+        <div class="section-meta mono">
+          <span>04 / The person behind the asterisk</span>
+          <span>One person. A direct line.</span>
+        </div>
+        <div class="about-grid">
+          <div class="name-block">
+            <span class="mono">Based in Vienna</span>
+            <p>Pablo<span>*</span></p>
+            <span class="mono">Design, marketing & the bits in between.</span>
+          </div>
+          <div>
+            <h2 id="about-title">Hello. You’ll be<br>working with me.</h2>
+            <p>I’m Pablo, a marketing specialist working across websites, content and the tools that connect them. I work with people who care about what they put into the world — and how they put it there.</p>
+            <p>I like clear questions, useful constraints and things that can be repaired. We’ll work directly, make decisions together and keep the process understandable.</p>
+            <a class="text-link" href="#contact">Tell me what you’re working on</a>
+          </div>
+        </div>
+      </section>
+      <!-- CONTACT — Add a real contact email before launch. The button only copies a prompt. -->
+      <section class="contact wrap section" id="contact" aria-labelledby="contact-title">
+        <div class="section-meta mono">
+          <span>05 / Start a conversation</span>
+          <span>No pitch deck required.</span>
+        </div>
+        <h2 id="contact-title">What would you<br>like to <em>own?</em><span aria-hidden="true">*</span></h2>
+        <div class="contact-bottom">
+          <p>A new site? A way out of a platform?<br>A tangle of tools that needs untangling?<br>Start with where you are.</p>
+          <div class="contact-actions">
+            <button type="button" class="button dark" id="copy-brief">Copy a conversation starter</button>
+            <p id="copy-status" class="mono" role="status" aria-live="polite"><a href="mailto:pablovolenski@gmail.com">pablovolenski@gmail.com</a></p>
+            <details class="brief">
+              <summary>View conversation starter <span aria-hidden="true">+</span></summary>
+              <p id="brief-text">Hi Pablo, I’m working on…<br>At the moment, my website or tools…<br>I’d like more control over…<br>My rough timing and budget are…</p>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- SHARED FOOTER -->
+    <footer class="wrap footer">
+      <a class="wordmark" href="#">Pablo<span>*</span></a>
+      <p class="mono">An independent corner of the internet.</p>
+      <p class="mono">Independent web &amp; marketing</p>
+      <a class="mono" href="#">Back to top</a>
+    </footer>
 
-        body {
-            display: flex;
-            flex-direction: column; /* Stacks name over grid */
-            height: 100vh;
-            font-family: sans-serif;
-            background-color: white;
-            overflow: hidden; /* Prevents stray scrollbars */
-        }
-
-        /* Top 1/3: The Name and Email */
-        .name-section {
-            flex: 1; /* Takes 1/3 */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-bottom: var(--thick-border);
-            background-color: white;
-            padding: 10px;
-        }
-
-        h1 {
-            font-size: clamp(2.5rem, 8vw, 5rem);
-            line-height: 0.9;
-        }
-
-        .email {
-            font-size: clamp(0.8rem, 2vw, 1.2rem);
-            color: #555;
-            margin-top: -5px; /* The "rule" to attach it immediately under */
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
-
-        /* Bottom 2/3: The Grid */
-        .grid-container {
-            flex: 2; /* Takes 2/3 */
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            grid-auto-rows: 1fr;
-        }
-
-        .square {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: clamp(2rem, 10vh, 4rem);
-            font-weight: bold;
-            border: var(--thick-border);
-            /* Avoid double borders between squares */
-            margin: -3px; 
-            transition: all 0.2s ease-in-out;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Initial colors and text */
-        .a { background-color: var(--color-a); color: white; }
-        .b { background-color: var(--color-b); color: white; }
-        .c { background-color: var(--color-c); color: white; }
-        .d { background-color: var(--color-d); color: white; }
-        .e { background-color: var(--color-e); color: white; }
-        .f { background-color: var(--color-f); color: white; }
-        .g { background-color: var(--color-g); color: white; }
-
-        /* Hover Effect */
-        .square:hover { 
-            background-color: black !important; 
-            z-index: 10; /* Keeps border visible on hover */
-        }
-        .a:hover { color: var(--color-a); }
-        .b:hover { color: var(--color-b); }
-        .c:hover { color: var(--color-c); }
-        .d:hover { color: var(--color-d); }
-        .e:hover { color: var(--color-e); }
-        .f:hover { color: var(--color-f); }
-        .g:hover { color: var(--color-g); }
-
-        /* Mobile adjustments for vertical height */
-        @media (max-width: 600px) {
-            h1 { font-size: 3rem; }
-            .grid-container { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="name-section">
-        <h1>Pablo Volenski</h1>
-        <p class="email">pablovolenski@gmail.com</p>
-    </div>
-
-    <div class="grid-container">
-        <a href="/a.html" class="square a">a</a>
-        <a href="/b/" class="square b">b</a>
-        <a href="/c.html" class="square c">c</a>
-        <a href="/d.html" class="square d">d</a>
-        <a href="/e" class="square e">e</a>
-        <a href="/f" class="square f">f</a>
-        <a href="/evaluator/" class="square g">g</a>
-    </div>
-
-</body>
+    <script src="/script.js" defer></script>
+  </body>
 </html>

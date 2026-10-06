@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pablo Volenski</title>
+    <style>
+        :root {
+            --thick-border: 6px solid black;
+            --color-a: #ff5f56; --color-b: #ffbd2e; --color-c: #27c93f;
+            --color-d: #007aff; --color-e: #af52de; --color-f: #ff9500;
+            --color-g: #00bcd4;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            display: flex;
+            flex-direction: column; /* Stacks name over grid */
+            height: 100vh;
+            font-family: sans-serif;
+            background-color: white;
+            overflow: hidden; /* Prevents stray scrollbars */
+        }
+
+        /* Top 1/3: The Name and Email */
+        .name-section {
+            flex: 1; /* Takes 1/3 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-bottom: var(--thick-border);
+            background-color: white;
+            padding: 10px;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            line-height: 0.9;
+        }
+
+        .email {
+            font-size: clamp(0.8rem, 2vw, 1.2rem);
+            color: #555;
+            margin-top: -5px; /* The "rule" to attach it immediately under */
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* Bottom 2/3: The Grid */
+        .grid-container {
+            flex: 2; /* Takes 2/3 */
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            grid-auto-rows: 1fr;
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: clamp(2rem, 10vh, 4rem);
+            font-weight: bold;
+            border: var(--thick-border);
+            /* Avoid double borders between squares */
+            margin: -3px; 
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Initial colors and text */
+        .a { background-color: var(--color-a); color: white; }
+        .b { background-color: var(--color-b); color: white; }
+        .c { background-color: var(--color-c); color: white; }
+        .d { background-color: var(--color-d); color: white; }
+        .e { background-color: var(--color-e); color: white; }
+        .f { background-color: var(--color-f); color: white; }
+        .g { background-color: var(--color-g); color: white; }
+
+        /* Hover Effect */
+        .square:hover { 
+            background-color: black !important; 
+            z-index: 10; /* Keeps border visible on hover */
+        }
+        .a:hover { color: var(--color-a); }
+        .b:hover { color: var(--color-b); }
+        .c:hover { color: var(--color-c); }
+        .d:hover { color: var(--color-d); }
+        .e:hover { color: var(--color-e); }
+        .f:hover { color: var(--color-f); }
+        .g:hover { color: var(--color-g); }
+
+        /* Mobile adjustments for vertical height */
+        @media (max-width: 600px) {
+            h1 { font-size: 3rem; }
+            .grid-container { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="name-section">
+        <h1>Pablo Volenski</h1>
+        <p class="email">pablovolenski@gmail.com</p>
+    </div>
+
+    <div class="grid-container">
+        <a href="/a.html" class="square a">a</a>
+        <a href="/b/" class="square b">b</a>
+        <a href="/c.html" class="square c">c</a>
+        <a href="/d.html" class="square d">d</a>
+        <a href="/e" class="square e">e</a>
+        <a href="/f" class="square f">f</a>
+        <a href="/evaluator/" class="square g">g</a>
+    </div>
+
+</body>
+</html>

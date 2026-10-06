@@ -1,0 +1,258 @@
+<!doctype html>
+<!--
+  Pablo* — BUILD & PRICE
+  Keep the four files in one folder. Open index.html or pricing.html to preview.
+  No dependencies, installation, remote fonts or build step.
+
+  EDITING GUIDE
+  - Visible descriptions and included scope: this file.
+  - All amounts and collaboration bundles: PRICES in script.js.
+  - Colours, spacing and responsive rules: style.css.
+  - Keep input names/values and element IDs: script.js uses them.
+  - These are example prices. Confirm your real rates and scope before launch.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Build your own — Pablo*</title>
+    <meta name="description" content="Start with a small website. Add pages, design and time together. See an itemised, illustrative estimate as you choose.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ec482c'/%3E%3Ctext x='32' y='58' font-size='70' font-family='Arial' text-anchor='middle' fill='%2320201c'%3E*%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/style.css">
+    <script src="/script.js" defer></script>
+  </head>
+  <body class="builder-page">
+    <a class="skip" href="#main">Skip to content</a>
+
+    <!-- HEADER — Navigation is shared in appearance, repeated in both HTML files. -->
+    <header class="masthead wrap">
+      <a href="/" class="wordmark" aria-label="Pablo home">Pablo<span>*</span></a>
+      <p class="mast-caption">Independent web<br>& marketing studio</p>
+      <nav aria-label="Main navigation">
+        <a href="/#services">Services</a>
+        <a href="/#work">Work</a>
+        <a href="/#about">About</a>
+        <a href="/pricing.html" aria-current="page">Build & price</a>
+        <a href="/#contact">Let’s talk <span aria-hidden="true">*</span></a>
+      </nav>
+    </header>
+
+    <main id="main" class="wrap">
+      <!-- The tool starts immediately below this short introduction. -->
+      <div class="builder-heading">
+        <div>
+          <p class="mono eyebrow">The small website workshop / 01</p>
+          <h1>A little website.<br><em>Your kind of little.</em></h1>
+        </div>
+        <p>Start with enough. Add what matters.<br>Every choice has a price. Nothing is preselected beyond the basics.</p>
+      </div>
+      <p class="estimate-disclaimer">A working prototype with illustrative prices. Your estimate is a conversation starter, not a quote. EUR, excluding VAT where applicable.</p>
+      <noscript>
+        <p class="no-script">The basic site starts at an illustrative €650. Enable JavaScript to use the calculator, or <a href="/#contact">discuss your project directly</a>.</p>
+      </noscript>
+
+      <div class="builder-layout" id="builder">
+        <!-- Native form controls keep the calculator usable by keyboard and touch. -->
+        <form id="project-form" aria-label="Build your website estimate">
+          <fieldset class="builder-step base-step">
+            <legend><span class="step-number mono">01</span> The small beginning.</legend>
+            <div class="base-heading">
+              <p>A complete one-page website.<br><span>Enough to get your corner of the internet started.</span></p>
+              <strong data-price="base">€650</strong>
+            </div>
+            <ul class="base-inclusions">
+              <li>One page, up to five sections</li>
+              <li>An existing layout, with your colours</li>
+              <li>Your supplied text and images</li>
+              <li>One language and an email contact link</li>
+              <li>Responsive layout and basic accessibility checks</li>
+              <li>One written feedback round, launch and source files</li>
+            </ul>
+            <p class="small-note">Written communication is included. You provide final content, domain and hosting access. No scheduled meetings, CMS or custom integrations in the basic option.</p>
+            <div class="included-stamp mono"><span aria-hidden="true">*</span> Ownership is included. It is never an upgrade.</div>
+          </fieldset>
+
+          <fieldset class="builder-step">
+            <legend><span class="step-number mono">02</span> Make room for your ideas.</legend>
+            <p class="step-intro">Choose what we build. Keep everything else simple.</p>
+
+            <div class="quantity-row">
+              <div>
+                <label for="pages">Extra pages</label>
+                <p>Up to five sections per page, using the same design. Supplied content.</p>
+                <span class="option-price"><span data-price="page">€180</span> / page</span>
+              </div>
+              <div class="stepper">
+                <button type="button" data-step="pages" data-delta="-1" aria-label="Remove an extra page">−</button>
+                <input id="pages" name="pages" type="number" min="0" max="8" step="1" value="0" aria-label="Number of extra pages">
+                <button type="button" data-step="pages" data-delta="1" aria-label="Add an extra page">+</button>
+              </div>
+            </div>
+
+            <!-- Each checkbox is a one-off addition; prices come from script.js. -->
+            <label class="option-row">
+              <input type="checkbox" name="customDesign">
+              <span class="option-copy"><strong>A visual direction of your own</strong><span>One bespoke design direction, applied across the selected pages. Uses the included feedback round; meetings are chosen separately.</span></span>
+              <span class="option-price" data-price="customDesign">+ €450</span>
+            </label>
+            <label class="option-row">
+              <input type="checkbox" name="copywriting">
+              <span class="option-copy"><strong>Help finding the words</strong><span>Copy for the main page, up to 800 words, based on your written brief. Extra-page writing is quoted separately.</span></span>
+              <span class="option-price" data-price="copywriting">+ €220</span>
+            </label>
+            <label class="option-row">
+              <input type="checkbox" name="cms">
+              <span class="option-copy"><strong>Edit it yourself</strong><span>A straightforward CMS setup for the selected pages, plus a written editing guide. Hosting and paid extensions are separate.</span></span>
+              <span class="option-price" data-price="cms">+ €350</span>
+            </label>
+            <label class="option-row">
+              <input type="checkbox" name="form">
+              <span class="option-copy"><strong>A simple enquiry form</strong><span>One form with up to five fields, basic spam protection and email delivery. Any delivery service fees are separate.</span></span>
+              <span class="option-price" data-price="form">+ €120</span>
+            </label>
+            <label class="option-row">
+              <input type="checkbox" name="newsletter">
+              <span class="option-copy"><strong>A place for your subscribers</strong><span>One signup form connected to your existing mailing service. Subscription costs, campaigns and data migration are separate.</span></span>
+              <span class="option-price" data-price="newsletter">+ €180</span>
+            </label>
+          </fieldset>
+
+          <fieldset class="builder-step collaboration-step">
+            <legend><span class="step-number mono">03</span> Decide how we decide.</legend>
+            <p class="step-intro">A little website can involve a lot of conversation. Choose how much time we spend figuring things out together.</p>
+            <div class="meeting-note">
+              <span aria-hidden="true">*</span>
+              <p><strong>A meeting is more than the call.</strong><br>Each <span data-price="meeting">€130</span> session includes 60 minutes together and 30 minutes for preparation and written follow-up.</p>
+            </div>
+
+            <label class="option-row collaboration-option">
+              <input type="radio" name="collaboration" value="async" checked>
+              <span class="option-copy"><strong>“I’ll bring a clear brief.”</strong><span>Written questions, decisions and one consolidated feedback round. No scheduled calls.</span></span>
+              <span class="option-price">Included</span>
+            </label>
+            <label class="option-row collaboration-option">
+              <input type="radio" name="collaboration" value="guided">
+              <span class="option-copy"><strong>“Let’s work it out together.”</strong><span>One 60-minute kickoff and one 60-minute review. Preparation and follow-up included. Uses the included revision round.</span></span>
+              <span class="option-price" data-bundle="guided">+ €260</span>
+            </label>
+            <label class="option-row collaboration-option">
+              <input type="radio" name="collaboration" value="explore">
+              <span class="option-copy"><strong>“I want to explore.”</strong><span>One two-hour workshop, plus two 60-minute reviews. Includes one extra revision round. Design production is selected in step 02.</span></span>
+              <span class="option-price" data-bundle="explore">+ €670</span>
+            </label>
+
+            <div class="quantity-row">
+              <div>
+                <label for="meetings">A little more time together</label>
+                <p>Extra sessions on top of your chosen collaboration option.</p>
+                <span class="option-price"><span data-price="meeting">€130</span> / session</span>
+              </div>
+              <div class="stepper">
+                <button type="button" data-step="meetings" data-delta="-1" aria-label="Remove an extra meeting">−</button>
+                <input id="meetings" name="meetings" type="number" min="0" max="6" step="1" value="0" aria-label="Number of extra meetings">
+                <button type="button" data-step="meetings" data-delta="1" aria-label="Add an extra meeting">+</button>
+              </div>
+            </div>
+            <div class="quantity-row">
+              <div>
+                <label for="revisions">Another look, another round</label>
+                <p>Extra consolidated revisions within the agreed scope. Meetings are separate.</p>
+                <span class="option-price"><span data-price="revision">€150</span> / round</span>
+              </div>
+              <div class="stepper">
+                <button type="button" data-step="revisions" data-delta="-1" aria-label="Remove an extra revision round">−</button>
+                <input id="revisions" name="revisions" type="number" min="0" max="4" step="1" value="0" aria-label="Number of extra revision rounds">
+                <button type="button" data-step="revisions" data-delta="1" aria-label="Add an extra revision round">+</button>
+              </div>
+            </div>
+          </fieldset>
+          <div class="reset-row">
+            <p class="mono">Small is a perfectly good choice.</p>
+            <button type="reset" class="plain-button">Back to the basics</button>
+          </div>
+        </form>
+
+        <!-- LIVE RECEIPT — Updated from the same calculation used by the project brief. -->
+        <aside class="receipt" id="estimate" aria-labelledby="receipt-title" tabindex="-1">
+          <div class="receipt-heading"><span class="mono">Your combination</span><span aria-hidden="true">*</span></div>
+          <h2 id="receipt-title">Made to measure.<br>By you.</h2>
+          <div id="receipt-lines" class="receipt-lines">
+            <div class="receipt-line"><span>The small beginning</span><span>€650</span></div>
+          </div>
+          <div class="receipt-total">
+            <span class="mono">Illustrative one-off estimate</span>
+            <strong id="total">€650</strong>
+            <span>Excluding VAT and third-party costs.</span>
+          </div>
+          <div class="cost-split" aria-label="Estimate breakdown">
+            <div><span>Making the website</span><strong id="work-total">€650</strong></div>
+            <div><span>Time together + prep</span><strong id="meeting-total">€0</strong></div>
+          </div>
+          <p class="receipt-scope" id="scope-note">1 page · no scheduled meetings · 1 revision round</p>
+          <button type="button" class="button dark" id="prepare-brief">Make this my starting point</button>
+          <p class="small-note">No checkout. No commitment. Turn your choices into a brief for our first conversation.</p>
+        </aside>
+      </div>
+      <p id="estimate-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+      <!-- The brief is generated locally. No email address is invented and nothing is sent. -->
+      <section class="brief-output" id="project-brief" aria-labelledby="brief-title" hidden>
+        <div class="section-meta mono"><span>04 / Your next move</span><span>A brief, not a booking</span></div>
+        <div class="brief-output-grid">
+          <div>
+            <h2 id="brief-title" tabindex="-1">A starting point.<br><em>Not a dotted line.</em></h2>
+            <p>Here’s your combination. Copy it, add a little about your project, and use it to start a conversation.</p>
+            <p class="small-note">Demo: a contact email will be added before launch. This tool does not send enquiries or store personal data.</p>
+            <button type="button" class="button dark" id="copy-estimate">Copy my project brief</button>
+            <p id="brief-status" role="status" aria-live="polite"></p>
+          </div>
+          <div>
+            <label class="mono" for="brief-content">Your selected scope / Copy or select the text</label>
+            <textarea id="brief-content" rows="18" readonly></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="builder-faq section" aria-labelledby="faq-title">
+        <div class="section-meta mono"><span>The fine print, in plain sight</span><span>Worth knowing before we start.</span></div>
+        <div class="builder-faq-grid">
+          <h2 id="faq-title">More clarity.<br>Fewer surprises.</h2>
+          <div>
+            <details class="brief">
+              <summary>What does the estimate leave out?<span aria-hidden="true">+</span></summary>
+              <p>Domain registration, hosting, paid software, subscriptions and any applicable VAT. Multilingual sites, e-commerce, booking systems, complex integrations and migrations need a separate review and quote. No ongoing support subscription is added automatically.</p>
+            </details>
+            <details class="brief">
+              <summary>Can I keep it really basic?<span aria-hidden="true">+</span></summary>
+              <p>Yes. The basic option is a complete small website. A clear written brief, final supplied content and consolidated feedback keep the scope contained. Ownership, responsive layout and a written handover are always included.</p>
+            </details>
+            <details class="brief">
+              <summary>What counts as a revision?<span aria-hidden="true">+</span></summary>
+              <p>One consolidated set of feedback on the agreed work. New features, extra pages or a different brief change the scope and are quoted before work continues. A meeting is time to discuss decisions; a revision round is time to implement them.</p>
+            </details>
+            <details class="brief">
+              <summary>Does exploring include custom design?<span aria-hidden="true">+</span></summary>
+              <p>The exploration option adds discussion time and one revision round. Select “A visual direction of your own” separately if you want bespoke design production. You can also choose custom design with a clear written brief and no meetings.</p>
+            </details>
+            <details class="brief">
+              <summary>What happens after I choose?<span aria-hidden="true">+</span></summary>
+              <p>We confirm your content, technical needs, timing and scope, then agree a written quote before work starts. The calculator is a guide to that conversation. It does not reserve time, take payment or create a contract.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- A compact mobile shortcut keeps the changing total within reach. -->
+    <div class="mobile-estimate">
+      <span><small>Illustrative estimate</small><strong id="mobile-total">€650</strong></span>
+      <a href="#estimate">See my combination</a>
+    </div>
+    <footer class="wrap footer">
+      <a class="wordmark" href="/">Pablo<span>*</span></a>
+      <p class="mono">An independent corner of the internet.</p>
+      <p class="mono">Prototype / Illustrative prices</p>
+      <a class="mono" href="#">Back to top</a>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HomeBody from '../components/HomeBody.astro';
+import { content } from '../i18n/content';
+const lang = 'de';
+const meta = content[lang].meta.home;
+---
+<Layout lang={lang} title={meta.title} description={meta.description} path="" pageKey="home">
+  <HomeBody lang={lang} />
+</Layout>
